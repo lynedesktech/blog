@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#05020c">
+<meta name="description" content="Jogo de fases em primeira pessoa sobre viés algorítmico, inspirado no estudo Gender Shades de Joy Buolamwini.">
+<title>O Corredor Codificado</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305020c'/%3E%3Cpath d='M16 4 L25 11 L23 24 L16 28 L9 24 L7 11 Z' fill='none' stroke='%23FFC93C' stroke-width='2'/%3E%3Crect x='11' y='14' width='4' height='2' fill='%2300E5FF'/%3E%3Crect x='17' y='14' width='4' height='2' fill='%2300E5FF'/%3E%3C/svg%3E">
+<style>
+  :root{ --void:#05020c; --cyan:#00E5FF; --gold:#FFC93C; --mag:#FF2D9B; --bone:#F3EFE6; --fs:16px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--void);color:var(--bone);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:var(--fs);
+    -webkit-tap-highlight-color:transparent;touch-action:none}
+  body.big{--fs:20px}
+  canvas{display:block}
+  #host{position:fixed;inset:0}
+
+  .screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:1.1rem;padding:max(1.2rem,env(safe-area-inset-top)) 1.2rem;
+    background:radial-gradient(ellipse at 50% 40%,rgba(42,15,74,.92),rgba(5,2,12,.97) 70%);
+    z-index:20;overflow-y:auto;text-align:center}
+  .screen.on{display:flex}
+  #s-title{background:linear-gradient(rgba(5,2,12,.72),rgba(5,2,12,.94)),
+    url('https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/2342ec04-0c5f-422f-ac07-7f7e965e67cc.jpg') center 30%/cover no-repeat}
+  .aya-face{width:clamp(90px,16vw,150px);height:auto;border-radius:50%;
+    border:2px solid var(--gold);box-shadow:0 0 34px rgba(255,201,60,.4);
+    background:#05020c;object-fit:cover}
+  .aya-tag{font-size:.68rem;letter-spacing:.22em;color:var(--gold);margin-top:.35rem}
+
+  h1{font-size:clamp(1.8rem,6.5vw,4rem);font-weight:900;letter-spacing:.14em;line-height:1;
+    color:var(--gold);text-shadow:0 0 30px rgba(255,201,60,.45)}
+  h2{font-size:clamp(1.1rem,3.2vw,1.7rem);letter-spacing:.22em;color:var(--cyan);font-weight:700}
+  .sub{max-width:48ch;color:#b9c6d4;font-size:1rem;line-height:1.6}
+  .body{max-width:62ch;text-align:left;display:flex;flex-direction:column;gap:.75rem;
+    color:#cfd8e3;line-height:1.65;font-size:.98rem}
+  .body b,.body strong{color:var(--gold)}
+  .row{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center}
+
+  button,.btn{font:inherit;font-weight:700;letter-spacing:.1em;cursor:pointer;
+    padding:.85rem 1.6rem;border-radius:2px;border:2px solid var(--cyan);
+    background:transparent;color:var(--cyan);transition:background .15s,color .15s;
+    text-transform:uppercase;font-size:.92rem}
+  button:hover,.btn:hover{background:var(--cyan);color:var(--void)}
+  button.primary{border-color:var(--gold);color:var(--gold)}
+  button.primary:hover{background:var(--gold);color:var(--void)}
+  button.ghost{border-color:#4a4258;color:#9aa4b4;font-size:.78rem;padding:.5rem .9rem}
+  button.ghost:hover{background:#4a4258;color:var(--bone)}
+
+  .grid4{display:grid;grid-template-columns:repeat(4,minmax(70px,1fr));gap:.6rem;max-width:620px;width:100%}
+  .cell{border:1px solid #2a2050;padding:.6rem .3rem;background:rgba(0,0,0,.35)}
+  .cell .n{font-size:1.35rem;font-weight:800}
+  .cell .l{font-size:.62rem;letter-spacing:.06em;color:#8fa0b4;margin-top:.2rem}
+
+  #vrslot{display:flex;justify-content:center}
+  #vrslot button{position:static!important;width:auto!important;left:auto!important;
+    bottom:auto!important;transform:none!important;border:2px solid var(--gold)!important;
+    background:transparent!important;color:var(--gold)!important;opacity:1!important;
+    padding:.85rem 1.6rem!important;font:inherit!important;font-weight:700!important;
+    letter-spacing:.1em!important;border-radius:2px!important;cursor:pointer!important;
+    font-size:.92rem!important;text-transform:uppercase}
+
+  /* botões de tela — só em aparelho com toque, nunca em VR */
+  #touch{position:fixed;right:.9rem;bottom:1.4rem;z-index:15;display:none;
+    flex-direction:column;gap:.55rem;align-items:flex-end}
+  body.touch #touch.on{display:flex}
+  #touch button{padding:1rem 1.15rem;font-size:.72rem;background:rgba(5,2,12,.72);min-width:104px}
+  #touch button.act{background:var(--gold);color:var(--void);border-color:var(--gold)}
+
+  /* ---------- HUD fixo de tela (PC/celular; em VR o painel é dentro do mundo) */
+  #hud2d{position:fixed;top:.9rem;left:.9rem;z-index:13;display:none;min-width:230px;
+    background:rgba(5,2,12,.82);border:1px solid rgba(0,229,255,.45);padding:.7rem .9rem;
+    font-size:.8rem;letter-spacing:.04em;backdrop-filter:blur(2px)}
+  #hud2d.on{display:block}
+  #hud2d .row{display:flex;justify-content:space-between;gap:1.2rem;margin:.18rem 0;align-items:baseline}
+  #hud2d .lab{color:#8fb6c8;font-size:.62rem;letter-spacing:.16em}
+  #hud2d .big{font-size:1.5rem;font-weight:800;color:var(--bone)}
+  #hud2d .gold{color:var(--gold)} #hud2d .cyan{color:var(--cyan)} #hud2d .mag{color:var(--mag)}
+  #hud2d .hearts span{display:inline-block;width:.85rem;height:.85rem;border-radius:50%;
+    margin-left:.25rem;background:var(--mag)}
+  #hud2d .hearts span.off{background:transparent;border:2px solid #4a4258}
+  #maskbar{width:110px;height:.7rem;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
+  #maskfill{position:absolute;inset:0;transform-origin:left;background:var(--cyan)}
+  #hud2d .phase{margin-top:.4rem;padding-top:.35rem;border-top:1px solid rgba(255,201,60,.3);
+    color:var(--gold);font-size:.66rem;letter-spacing:.14em}
+  #aya2d{position:fixed;left:50%;transform:translateX(-50%);bottom:4.2rem;z-index:13;display:none;
+    max-width:min(680px,92vw);background:rgba(5,2,12,.88);border:1px solid rgba(255,201,60,.55);
+    padding:.65rem 1rem;font-size:.92rem;line-height:1.45}
+  #aya2d.on{display:block}
+  #aya2d b{color:var(--gold);margin-right:.5rem;letter-spacing:.12em}
+  #banner2d{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%);z-index:16;display:none;
+    text-align:center;background:rgba(5,2,12,.9);border:2px solid var(--gold);
+    padding:1.1rem 2.2rem;pointer-events:none}
+  #banner2d.on{display:block;animation:bpop .35s ease-out}
+  #banner2d h3{color:var(--gold);font-size:clamp(1.4rem,4.5vw,2.4rem);letter-spacing:.1em;margin-bottom:.35rem}
+  #banner2d p{color:#cfd8e3;font-size:.95rem}
+  @keyframes bpop{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  #toast{position:fixed;left:50%;top:58%;transform:translateX(-50%);z-index:15;display:none;
+    color:var(--gold);font-weight:900;font-size:1.5rem;text-shadow:0 0 18px rgba(255,201,60,.8);
+    pointer-events:none}
+  #toast.on{display:block;animation:tup .9s ease-out forwards}
+  @keyframes tup{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-46px)}}
+
+  #hint{position:fixed;left:50%;transform:translateX(-50%);top:.9rem;z-index:14;
+    color:#05020c;background:var(--gold);font-size:.8rem;font-weight:700;letter-spacing:.04em;
+    text-align:center;pointer-events:none;display:none;padding:.55rem 1rem;max-width:92vw;
+    box-shadow:0 0 24px rgba(255,201,60,.35)}
+  #hint.on{display:block}
+  #hint b{display:block;font-size:.6rem;letter-spacing:.18em;opacity:.7;margin-bottom:.12rem}
+  #keys{position:fixed;left:50%;transform:translateX(-50%);bottom:.8rem;z-index:14;
+    color:#7f8ca0;font-size:.7rem;letter-spacing:.05em;text-align:center;
+    pointer-events:none;display:none;padding:0 1rem}
+  #keys.on{display:block}
+  #dev{position:fixed;top:6px;left:8px;color:#0f0;font:12px monospace;z-index:30;display:none}
+  .fine{font-size:.72rem;color:#6d7789;letter-spacing:.05em}
+</style>
+</head>
+<body>
+
+<div id="host"></div>
+<div id="dev"></div>
+
+<div id="touch">
+  <button id="b-mask"></button>
+  <button id="b-duck"></button>
+  <button id="b-jump"></button>
+</div>
+<div id="hint"></div>
+<div id="keys"></div>
+
+<div id="hud2d">
+  <div class="row"><span class="lab" id="hl-face"></span><span class="big gold" id="hv-face">0/0</span></div>
+  <div class="row"><span class="lab" id="hl-time"></span><span class="big" id="hv-time">–:––</span></div>
+  <div class="row"><span class="lab" id="hl-lives"></span><span class="hearts" id="hv-lives"></span></div>
+  <div class="row"><span class="lab" id="hl-mask"></span>
+    <span style="display:flex;align-items:center;gap:.5rem"><span id="maskbar"><span id="maskfill"></span></span><span id="hv-mask" style="font-size:.62rem;color:#8fa0b4"></span></span></div>
+  <div class="phase" id="hv-phase"></div>
+</div>
+<div id="aya2d"><b id="aya2d-name"></b><span id="aya2d-text"></span></div>
+<div id="banner2d"><h3 id="banner2d-t"></h3><p id="banner2d-s"></p></div>
+<div id="toast"></div>
+
+<section class="screen on" id="s-title">
+  <img class="aya-face" src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/8aaddb26-1ca7-435b-92f8-8b6dea9e1fbd.jpg" alt="AYA, a guia do jogo">
+  <div class="aya-tag">AYA · SUA GUIA NO SISTEMA</div>
+  <h1 id="t-title"></h1>
+  <p class="sub" id="t-sub"></p>
+  <div id="vrslot"></div>
+  <div class="row">
+    <button class="primary" id="b-flat"></button>
+    <button id="b-how"></button>
+    <button id="b-credits"></button>
+  </div>
+  <p class="fine" id="t-ctrl"></p>
+  <p class="fine" id="t-vrmsg"></p>
+  <div class="row" style="margin-top:.3rem">
+    <button class="ghost" id="b-sound"></button>
+    <button class="ghost" id="b-shake"></button>
+    <button class="ghost" id="b-flash"></button>
+    <button class="ghost" id="b-text"></button>
+    <button class="ghost" id="b-snap"></button>
+  </div>
+</section>
+
+<section class="screen" id="s-how">
+  <h2 id="h-title"></h2>
+  <div class="body" id="h-body"></div>
+  <div class="body" id="h-ctrl" style="color:#8fa0b4;font-size:.85rem"></div>
+  <button id="b-how-back"></button>
+</section>
+
+<section class="screen" id="s-credits">
+  <h2 id="c-title"></h2>
+  <div class="body" id="c-body"></div>
+  <p class="fine" id="c-link"></p>
+  <button id="b-cred-back"></button>
+</section>
+
+<section class="screen" id="s-res">
+  <h2 id="r-title"></h2>
+  <p class="sub" id="r-body"></p>
+  <div class="grid4" id="r-grid"></div>
+  <div class="row">
+    <button class="primary" id="b-again"></button>
+    <button id="b-res-credits"></button>
+  </div>
+</section>
+
+<script type="module">
+import { Game } from './src/main.js';
+import { STR } from './src/strings.js';
+
+const $ = (id) => document.getElementById(id);
+const isTouch = matchMedia('(hover:none)').matches || navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+if (isTouch) document.body.classList.add('touch');
+
+$('t-title').textContent   = STR.title;
+$('t-sub').textContent     = STR.subtitle;
+$('b-flat').textContent    = STR.btn_flat;
+$('b-how').textContent     = STR.btn_how;
+$('b-credits').textContent = STR.btn_credits;
+$('h-title').textContent   = STR.how_title;
+$('c-title').textContent   = STR.credits_title;
+$('c-link').textContent    = STR.credits_link;
+$('b-how-back').textContent  = STR.btn_back;
+$('b-cred-back').textContent = STR.btn_back;
+$('b-again').textContent     = STR.btn_again;
+$('b-res-credits').textContent = STR.btn_credits;
+$('b-jump').textContent = STR.btn_jump;
+$('b-duck').textContent = STR.btn_duck;
+$('b-mask').textContent = STR.btn_mask;
+$('t-ctrl').textContent = isTouch ? STR.ctrl_touch : STR.ctrl_desk;
+$('keys').textContent   = isTouch ? STR.ctrl_touch : STR.ctrl_desk;
+
+STR.how_body.forEach(t => { const p = document.createElement('p'); p.textContent = t; $('h-body').appendChild(p); });
+[STR.ctrl_title, STR.ctrl_vr, STR.ctrl_desk, STR.ctrl_touch, STR.ctrl_pad]
+  .forEach(t => { const p = document.createElement('p'); p.textContent = t; $('h-ctrl').appendChild(p); });
+STR.credits_body.forEach(t => { const p = document.createElement('p'); p.textContent = t; $('c-body').appendChild(p); });
+
+const game = new Game($('host'));
+window.game = game;
+
+try {
+  const vb = game.vrButton();
+  $('vrslot').appendChild(vb);
+  const PT = { 'ENTER VR': STR.btn_vr, 'EXIT VR': 'SAIR DO VR', 'VR NOT SUPPORTED': 'VR INDISPONÍVEL' };
+  const relabel = () => { const t = PT[vb.textContent.trim().toUpperCase()]; if (t && vb.textContent !== t) vb.textContent = t; };
+  relabel();
+  new MutationObserver(relabel).observe(vb, { childList: true, characterData: true, subtree: true });
+} catch (e) { /* navegador sem WebXR */ }
+if (!navigator.xr) $('t-vrmsg').textContent = STR.vr_unsupported;
+
+const screens = ['s-title', 's-how', 's-credits', 's-res'];
+function show(id) {
+  screens.forEach(s => $(s).classList.toggle('on', s === id));
+  ['touch', 'hint', 'keys'].forEach(e => $(e).classList.remove('on'));
+}
+function hideAll() {
+  screens.forEach(s => $(s).classList.remove('on'));
+  ['touch', 'hint', 'keys'].forEach(e => $(e).classList.add('on'));
+}
+
+$('b-how').onclick     = () => show('s-how');
+$('b-credits').onclick = () => show('s-credits');
+$('b-res-credits').onclick = () => show('s-credits');
+$('b-how-back').onclick  = () => show('s-title');
+$('b-cred-back').onclick = () => show(game.mode === 'over' ? 's-res' : 's-title');
+
+function play() { hideAll(); game.start(0); }
+$('b-flat').onclick = play;
+$('b-again').onclick = play;
+
+// botões de tela: pulo e máscara são toque, agachar é liga/desliga
+for (const [id, act] of [['b-jump', 'jump'], ['b-mask', 'mask'], ['b-duck', 'duck']]) {
+  const el = $(id);
+  const fire = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    game.press(act);
+    if (act === 'duck') el.classList.toggle('act', game.duckBtn);
+    else { el.classList.add('act'); setTimeout(() => el.classList.remove('act'), 140); }
+  };
+  el.addEventListener('touchstart', fire, { passive: false });
+  el.addEventListener('click', fire);
+}
+
+// objetivo sempre visível no topo — é o "alguém te ajudando a jogar"
+game.onObjective = (txt) => {
+  $('hint').innerHTML = '<b>' + STR.hud_obj + '</b>';
+  $('hint').appendChild(document.createTextNode(txt));
+};
+game.onObjective(STR.obj_collect);
+
+game.onEnd = (r) => {
+  if (game.renderer.xr.isPresenting) return;
+  $('r-title').textContent = r.won ? STR.win_title : STR.lose_title;
+  $('r-body').textContent  = r.won ? STR.win_body  : STR.lose_body;
+  const cells = [
+    [STR.res_phase, r.phase, '#00E5FF'],
+    [STR.res_frag, r.frags, '#FFC93C'],
+    [STR.res_drones, r.drones, '#FF2D9B'],
+    [STR.res_deaths, r.deaths, '#FF2D9B'],
+  ];
+  const grid = $('r-grid');
+  grid.innerHTML = '';
+  for (const [label, val, col] of cells) {
+    const d = document.createElement('div');
+    d.className = 'cell';
+    d.innerHTML = '<div class="n"></div><div class="l"></div>';
+    d.querySelector('.n').style.color = col;
+    d.querySelector('.n').textContent = val;
+    d.querySelector('.l').textContent = label;
+    grid.appendChild(d);
+  }
+  show('s-res');
+};
+
+const opt = (key, btn, label, apply) => {
+  const el = $(btn);
+  const draw = () => { el.textContent = `${label}: ${game.opts[key] ? STR.a11y_on : STR.a11y_off}`; };
+  el.onclick = () => { game.opts[key] = !game.opts[key]; if (apply) apply(game.opts[key]); draw(); };
+  draw();
+};
+opt('sound', 'b-sound', 'SOM', (v) => game.sfx.setEnabled(v));
+opt('shake', 'b-shake', STR.a11y_shake.toUpperCase());
+opt('flash', 'b-flash', STR.a11y_flash.toUpperCase());
+opt('bigText', 'b-text', STR.a11y_text.toUpperCase(), (v) => document.body.classList.toggle('big', v));
+opt('snapTurn', 'b-snap', STR.a11y_snap.toUpperCase());
+
+// ---------------------------------------------------------------- HUD de tela
+// No PC/celular a informação fica FIXA na tela (o painel de mundo é só VR).
+$('hl-face').textContent = STR.hud_frag;
+$('hl-time').textContent = STR.hud_time;
+$('hl-lives').textContent = STR.hud_lives;
+$('hl-mask').textContent = STR.hud_mask;
+$('aya2d-name').textContent = STR.aya_name;
+
+let lastFrags = -1, lastBannerT = null, tId = 0;
+setInterval(() => {
+  const s = game.s;
+  const jogando = game.mode === 'playing' && s && !game.renderer.xr.isPresenting &&
+    !document.querySelector('.screen.on');
+  $('hud2d').classList.toggle('on', jogando);
+  if (!jogando) { $('aya2d').classList.remove('on'); $('banner2d').classList.remove('on'); lastFrags = -1; return; }
+
+  // números grandes e sempre no mesmo lugar
+  $('hv-face').textContent = `${s.frags}/${s.need}`;
+  $('hv-face').className = 'big ' + (s.frags >= s.need ? 'cyan' : 'gold');
+  const mm = Math.floor(s.left / 60), ss = String(Math.floor(s.left % 60)).padStart(2, '0');
+  $('hv-time').textContent = `${mm}:${ss}`;
+  $('hv-time').className = 'big' + (s.left < 20 ? ' mag' : '');
+  $('hv-lives').innerHTML = Array.from({ length: 3 }, (_, i) =>
+    `<span class="${i < s.lives ? '' : 'off'}"></span>`).join('');
+  const heat = 1 - s.maskHeat / 5.5;
+  $('maskfill').style.transform = `scaleX(${s.maskHave ? Math.max(0, heat) : 0})`;
+  $('maskfill').style.background = s.maskLock > 0 ? 'var(--mag)' : s.maskOn ? 'var(--bone)' : 'var(--cyan)';
+  $('hv-mask').textContent = !s.maskHave ? '—' : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'F LIGA');
+  $('hv-phase').textContent = `${STR.hud_phase} ${s.phase + 1}/5 · ${s.objective}`;
+
+  // fala da AYA como legenda fixa
+  $('aya2d').classList.toggle('on', !!s.aya);
+  if (s.aya) $('aya2d-text').textContent = s.aya;
+
+  // banner central de fase
+  const b = s.banner;
+  if (b && b !== lastBannerT) {
+    lastBannerT = b;
+    $('banner2d-t').textContent = b.title || '';
+    $('banner2d-s').textContent = b.sub || '';
+    $('banner2d').classList.remove('on'); void $('banner2d').offsetWidth;
+    $('banner2d').classList.add('on');
+  }
+  if (!b) { $('banner2d').classList.remove('on'); lastBannerT = null; }
+
+  // toast de coleta: +ROSTO com o novo total
+  if (lastFrags >= 0 && s.frags > lastFrags) {
+    const t = $('toast');
+    t.textContent = `+ ${STR.hud_frag} ${s.frags}/${s.need}`;
+    t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+    clearTimeout(tId); tId = setTimeout(() => t.classList.remove('on'), 950);
+  }
+  lastFrags = s.frags;
+}, 120);
+
+if (new URLSearchParams(location.search).has('dev')) {
+  const d = $('dev'); d.style.display = 'block';
+  let f = 0, t0 = performance.now();
+  setInterval(() => {
+    const now = performance.now();
+    const s = game.s;
+    d.textContent = `${Math.round(f * 1000 / (now - t0))} fps · draws ${game.renderer.info.render.calls}` +
+      (s ? ` · fase ${s.phase + 1} · frag ${s.frags}/${s.need} · y ${game.pl.pos.y.toFixed(2)} · h ${game.pl.h.toFixed(2)} · solo ${game.pl.onGround}` : '');
+    f = 0; t0 = now;
+  }, 500);
+  const raf = () => { f++; requestAnimationFrame(raf); };
+  requestAnimationFrame(raf);
+}
+</script>
+</body>
+</html>

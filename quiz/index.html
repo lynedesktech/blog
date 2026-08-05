@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz | Joy Buolamwini</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .quiz-wrapper {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quiz-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Header */
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .quiz-header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            padding: 5px 25px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .quiz-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .quiz-header h1 span {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .quiz-header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a29bfe, #6c5ce7, #fd79a8);
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 0%;
+        }
+
+        /* Question */
+        .question-container {
+            position: relative;
+            z-index: 1;
+            min-height: 320px;
+        }
+
+        .question-number {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+
+        /* Options */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 15px 20px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.92rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            font-family: 'Poppins', sans-serif;
+            width: 100%;
+        }
+
+        .option-btn .letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            font-weight: 700;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(108, 92, 231, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .option-btn:hover .letter {
+            background: rgba(108, 92, 231, 0.2);
+            color: white;
+        }
+
+        .option-btn.selected {
+            border-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.15);
+        }
+
+        .option-btn.selected .letter {
+            background: #6c5ce7;
+            color: white;
+        }
+
+        .option-btn.correct {
+            border-color: #00b894;
+            background: rgba(0, 184, 148, 0.15);
+            animation: pulseGreen 0.5s ease;
+        }
+
+        .option-btn.correct .letter {
+            background: #00b894;
+            color: white;
+        }
+
+        .option-btn.wrong {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.15);
+            animation: shake 0.5s ease;
+        }
+
+        .option-btn.wrong .letter {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .option-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .option-btn.reveal-correct {
+            border-color: #00b894;
+            background: rgba(0, 184, 148, 0.08);
+        }
+
+        .option-btn.reveal-correct .letter {
+            background: #00b894;
+            color: white;
+        }
+
+        @keyframes pulseGreen {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            padding: 13px 32px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(108, 92, 231, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 184, 148, 0.25);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 184, 148, 0.35);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Result */
+        .result-container {
+            text-align: center;
+            padding: 20px 0;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .result-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .result-score {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 18px 45px;
+            margin-bottom: 25px;
+        }
+
+        .result-score .number {
+            font-size: 3.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #a29bfe, #fd79a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-score .total {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 1.3rem;
+        }
+
+        .result-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto 25px;
+        }
+
+        .result-stat {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .result-stat .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .result-stat .stat-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-correct .stat-value { color: #00b894; }
+        .stat-wrong .stat-value { color: #ff6b6b; }
+        .stat-percent .stat-value { color: #a29bfe; }
+
+        .result-message {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 18px 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #6c5ce7;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.95rem;
+            max-width: 550px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Ranking */
+        .ranking-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .ranking-title {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 12px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .ranking-item:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .ranking-item .rank-pos {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.3);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .ranking-item .rank-pos.gold { color: #f9ca24; }
+        .ranking-item .rank-pos.silver { color: #bdc3c7; }
+        .ranking-item .rank-pos.bronze { color: #e67e22; }
+
+        .ranking-item .rank-name {
+            flex: 1;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+            font-size: 0.92rem;
+        }
+
+        .ranking-item .rank-score {
+            font-weight: 700;
+            color: #a29bfe;
+            font-size: 0.9rem;
+        }
+
+        .ranking-item .rank-badge {
+            font-size: 0.7rem;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rank-badge.perfect { background: #00b894; color: white; }
+        .rank-badge.excellent { background: #6c5ce7; color: white; }
+        .rank-badge.good { background: #f9ca24; color: #2d3436; }
+        .rank-badge.fair { background: #e67e22; color: white; }
+        .rank-badge.try { background: #ff6b6b; color: white; }
+
+        .btn-reset {
+            margin-top: 20px;
+        }
+
+        /* Name Input */
+        .name-input-area {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .name-input-area input {
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 50px;
+            padding: 12px 24px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            width: 250px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .name-input-area input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .name-input-area input:focus {
+            border-color: #6c5ce7;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .name-input-area .btn {
+            padding: 12px 30px;
+        }
+
+        .player-name-display {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .player-name-display strong {
+            color: #a29bfe;
+            font-weight: 600;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .quiz-wrapper { padding: 30px 20px; }
+            .options-grid { grid-template-columns: 1fr; }
+            .quiz-header h1 { font-size: 2rem; }
+            .question-text { font-size: 1.15rem; min-height: 50px; }
+            .result-details { grid-template-columns: 1fr; max-width: 220px; }
+            .nav-buttons { flex-direction: column; gap: 10px; }
+            .btn { width: 100%; justify-content: center; }
+            .result-score .number { font-size: 2.5rem; }
+            .name-input-area { flex-direction: column; align-items: center; }
+            .name-input-area input { width: 100%; max-width: 300px; }
+            .ranking-item { padding: 10px 14px; }
+            .ranking-item .rank-name { font-size: 0.85rem; }
+        }
+
+        @media (max-width: 450px) {
+            .quiz-wrapper { padding: 20px 15px; }
+            .option-btn { font-size: 0.82rem; padding: 12px 14px; }
+            .option-btn .letter { width: 26px; height: 26px; font-size: 0.65rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-wrapper" id="quizApp">
+
+        <!-- HEADER -->
+        <div class="quiz-header">
+            <div class="badge">IA e Ética</div>
+            <h1>Quiz <span>Joy Buolamwini</span></h1>
+            <p>Teste seus conhecimentos sobre a luta contra o preconceito algorítmico</p>
+        </div>
+
+        <!-- NAME INPUT -->
+        <div class="name-input-area" id="nameInputArea">
+            <input type="text" id="playerNameInput" placeholder="Digite seu nome" maxlength="20">
+            <button class="btn btn-primary" onclick="startQuiz()">Começar</button>
+        </div>
+
+        <!-- PLAYER NAME DISPLAY -->
+        <div class="player-name-display hidden" id="playerNameDisplay">
+            Jogador: <strong id="currentPlayerName">—</strong>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-container hidden" id="progressContainer">
+            <div class="progress-info">
+                <span id="progressText">Questão 1 de 5</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- QUESTIONS -->
+        <div id="questionArea" class="hidden">
+            <div class="question-container">
+                <div class="question-number" id="questionNumber">QUESTÃO 01</div>
+                <div class="question-text" id="questionText">Carregando...</div>
+
+                <div class="options-grid" id="optionsContainer">
+                    <!-- Options will be rendered by JS -->
+                </div>
+            </div>
+
+            <!-- NAVIGATION -->
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">
+                    Anterior
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">
+                    Próxima
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULT -->
+        <div id="resultArea" class="result-container hidden">
+            <div class="result-title" id="resultTitle">Resultado Final</div>
+            <div class="result-subtitle" id="resultSubtitle">Veja como você se saiu</div>
+
+            <div class="result-score">
+                <span class="number" id="resultScore">0</span>
+                <span class="total">/ 5</span>
+            </div>
+
+            <div class="result-details">
+                <div class="result-stat stat-correct">
+                    <div class="stat-value" id="statCorrect">0</div>
+                    <div class="stat-label">Acertos</div>
+                </div>
+                <div class="result-stat stat-wrong">
+                    <div class="stat-value" id="statWrong">0</div>
+                    <div class="stat-label">Erros</div>
+                </div>
+                <div class="result-stat stat-percent">
+                    <div class="stat-value" id="statPercent">0%</div>
+                    <div class="stat-label">Aproveitamento</div>
+                </div>
+            </div>
+
+            <div class="result-message" id="resultMessage">
+                Continue aprendendo sobre a importância da ética na inteligência artificial!
+            </div>
+
+            <!-- RANKING -->
+            <div class="ranking-section">
+                <div class="ranking-title">Ranking de Jogadores</div>
+                <div class="ranking-list" id="rankingList">
+                    <!-- Ranking será renderizado pelo JS -->
+                </div>
+            </div>
+
+            <button class="btn btn-success btn-reset" onclick="resetFullQuiz()">
+                Refazer Quiz
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // ===== DADOS DO QUIZ =====
+        const questions = [
+            {
+                question: 'O que Joy Buolamwini descobriu ao usar softwares de reconhecimento facial?',
+                options: [
+                    'Funcionavam perfeitamente para todas as pessoas',
+                    'Não detectavam seu rosto negro até ela usar uma máscara branca',
+                    'Eram mais precisos para pessoas de pele clara',
+                    'Nunca cometiam erros'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Qual organização Joy Buolamwini fundou para lutar por uma tecnologia mais justa?',
+                options: [
+                    'Tech Justice League',
+                    'AI Ethics Council',
+                    'Fair Algorithms Foundation',
+                    'Algorithmic Justice League'
+                ],
+                correct: 3
+            },
+            {
+                question: 'Como se chama o livro escrito por Joy Buolamwini?',
+                options: [
+                    '"The AI Revolution"',
+                    '"Unmasking AI"',
+                    '"The Algorithmic Code"',
+                    '"Digital Justice"'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Qual foi o nome da pesquisa que provou falhas graves da IA em reconhecer rostos de mulheres negras?',
+                options: [
+                    'Gender Shades',
+                    'Color Bias',
+                    'Face Inequality',
+                    'Digital Discrimination'
+                ],
+                correct: 0
+            },
+            {
+                question: 'Em qual ano Joy Buolamwini foi reconhecida pela TIME 100 Next como Líder do Futuro?',
+                options: [
+                    '2018',
+                    '2019',
+                    '2020',
+                    '2021'
+                ],
+                correct: 1
+            }
+        ];
+
+        const letters = ['A', 'B', 'C', 'D'];
+
+        // ===== ESTADO =====
+        let currentQuestion = 0;
+        let answers = new Array(questions.length).fill(null);
+        let quizCompleted = false;
+        let playerName = '';
+        let ranking = [];
+
+        // ===== CARREGA RANKING DO LOCALSTORAGE =====
+        function loadRanking() {
+            const stored = localStorage.getItem('quizRankingJoy');
+            if (stored) {
+                try {
+                    ranking = JSON.parse(stored);
+                } catch (e) {
+                    ranking = [];
+                }
+            }
+        }
+
+        function saveRanking() {
+            localStorage.setItem('quizRankingJoy', JSON.stringify(ranking));
+        }
+
+        // ===== ADICIONA AO RANKING =====
+        function addToRanking(name, score, total) {
+            const percent = Math.round((score / total) * 100);
+            ranking.push({ name, score, total, percent, date: new Date().toLocaleDateString() });
+            ranking.sort((a, b) => b.score - a.score || b.percent - a.percent);
+            if (ranking.length > 20) ranking = ranking.slice(0, 20);
+            saveRanking();
+        }
+
+        // ===== RENDERIZA RANKING =====
+        function renderRanking() {
+            const container = document.getElementById('rankingList');
+            if (ranking.length === 0) {
+                container.innerHTML = `
+                    <div class="ranking-item" style="justify-content:center; color: rgba(255,255,255,0.3); font-size:0.9rem;">
+                        Nenhum jogador registrado ainda. Seja o primeiro!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            ranking.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'ranking-item';
+
+                let posClass = '';
+                if (index === 0) posClass = 'gold';
+                else if (index === 1) posClass = 'silver';
+                else if (index === 2) posClass = 'bronze';
+
+                let badge = '';
+                if (item.percent === 100) badge = '<span class="rank-badge perfect">Perfeito</span>';
+                else if (item.percent >= 80) badge = '<span class="rank-badge excellent">Excelente</span>';
+                else if (item.percent >= 60) badge = '<span class="rank-badge good">Bom</span>';
+                else if (item.percent >= 40) badge = '<span class="rank-badge fair">Regular</span>';
+                else badge = '<span class="rank-badge try">Tente novamente</span>';
+
+                div.innerHTML = `
+                    <span class="rank-pos ${posClass}">#${index + 1}</span>
+                    <span class="rank-name">${item.name}</span>
+                    ${badge}
+                    <span class="rank-score">${item.score}/${item.total}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ===== DOM =====
+        const nameInputArea = document.getElementById('nameInputArea');
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const currentPlayerName = document.getElementById('currentPlayerName');
+        const progressContainer = document.getElementById('progressContainer');
+        const questionArea = document.getElementById('questionArea');
+        const resultArea = document.getElementById('resultArea');
+        const questionNumber = document.getElementById('questionNumber');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const progressPercent = document.getElementById('progressPercent');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const playerNameInput = document.getElementById('playerNameInput');
+
+        // ===== INICIAR QUIZ =====
+        function startQuiz() {
+            const name = playerNameInput.value.trim();
+            if (!name) {
+                playerNameInput.style.borderColor = '#ff6b6b';
+                setTimeout(() => { playerNameInput.style.borderColor = ''; }, 600);
+                return;
+            }
+            playerName = name;
+            currentPlayerName.textContent = playerName;
+
+            nameInputArea.classList.add('hidden');
+            playerNameDisplay.classList.remove('hidden');
+            progressContainer.classList.remove('hidden');
+            questionArea.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+
+            currentQuestion = 0;
+            answers = new Array(questions.length).fill(null);
+            quizCompleted = false;
+
+            renderQuestion();
+        }
+
+        // ===== RENDERIZA =====
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            const total = questions.length;
+
+            questionNumber.textContent = `QUESTÃO ${String(currentQuestion + 1).padStart(2, '0')}`;
+            questionText.textContent = q.question;
+
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span class="letter">${letters[idx]}</span> ${opt}`;
+                btn.dataset.index = idx;
+
+                if (answers[currentQuestion] !== null) {
+                    btn.classList.add('disabled');
+                    if (idx === q.correct) {
+                        btn.classList.add('reveal-correct');
+                    }
+                    if (answers[currentQuestion] === idx) {
+                        btn.classList.add('selected');
+                        if (idx === q.correct) {
+                            btn.classList.add('correct');
+                        } else {
+                            btn.classList.add('wrong');
+                        }
+                    }
+                }
+
+                btn.addEventListener('click', () => selectOption(idx));
+                optionsContainer.appendChild(btn);
+            });
+
+            const answered = answers.filter(a => a !== null).length;
+            const percent = Math.round((answered / total) * 100);
+            progressFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+            progressText.textContent = `Questão ${currentQuestion + 1} de ${total}`;
+
+            prevBtn.disabled = currentQuestion === 0;
+            if (currentQuestion === total - 1 && answers[currentQuestion] !== null) {
+                nextBtn.innerHTML = 'Finalizar';
+                nextBtn.className = 'btn btn-success';
+            } else {
+                nextBtn.innerHTML = 'Próxima';
+                nextBtn.className = 'btn btn-primary';
+            }
+
+            document.querySelector('.question-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ===== SELEÇÃO =====
+        function selectOption(index) {
+            if (answers[currentQuestion] !== null || quizCompleted) return;
+
+            const q = questions[currentQuestion];
+            answers[currentQuestion] = index;
+
+            const btns = optionsContainer.querySelectorAll('.option-btn');
+            btns.forEach((btn, idx) => {
+                btn.classList.add('disabled');
+                if (idx === q.correct) {
+                    btn.classList.add('reveal-correct');
+                }
+                if (idx === index) {
+                    btn.classList.add('selected');
+                    if (idx === q.correct) {
+                        btn.classList.add('correct');
+                    } else {
+                        btn.classList.add('wrong');
+                    }
+                }
+            });
+
+            const answered = answers.filter(a => a !== null).length;
+            const percent = Math.round((answered / questions.length) * 100);
+            progressFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+
+            if (currentQuestion === questions.length - 1) {
+                nextBtn.innerHTML = 'Finalizar';
+                nextBtn.className = 'btn btn-success';
+            }
+        }
+
+        // ===== NAVEGAÇÃO =====
+        function nextQuestion() {
+            if (quizCompleted) return;
+
+            if (currentQuestion === questions.length - 1) {
+                if (answers[currentQuestion] !== null) {
+                    finishQuiz();
+                } else {
+                    const btns = optionsContainer.querySelectorAll('.option-btn');
+                    btns.forEach(btn => {
+                        btn.style.borderColor = '#ff6b6b';
+                        setTimeout(() => { btn.style.borderColor = ''; }, 600);
+                    });
+                }
+                return;
+            }
+
+            if (answers[currentQuestion] === null) {
+                const btns = optionsContainer.querySelectorAll('.option-btn');
+                btns.forEach(btn => {
+                    btn.style.borderColor = '#ff6b6b';
+                    setTimeout(() => { btn.style.borderColor = ''; }, 600);
+                });
+                return;
+            }
+
+            currentQuestion++;
+            renderQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        // ===== FINALIZAR =====
+        function finishQuiz() {
+            quizCompleted = true;
+            const correct = answers.filter((ans, idx) => ans === questions[idx].correct).length;
+            const wrong = questions.length - correct;
+            const percent = Math.round((correct / questions.length) * 100);
+
+            // Adiciona ao ranking
+            addToRanking(playerName, correct, questions.length);
+
+            // Resultados
+            document.getElementById('statCorrect').textContent = correct;
+            document.getElementById('statWrong').textContent = wrong;
+            document.getElementById('statPercent').textContent = `${percent}%`;
+            document.getElementById('resultScore').textContent = correct;
+
+            let title, subtitle, message;
+            if (percent === 100) {
+                title = 'Perfeito!';
+                subtitle = 'Você é um verdadeiro especialista!';
+                message = 'Parabéns! Você conhece profundamente a história e o impacto de Joy Buolamwini. Continue espalhando conhecimento sobre ética na IA!';
+            } else if (percent >= 80) {
+                title = 'Excelente!';
+                subtitle = 'Você tem um ótimo conhecimento!';
+                message = 'Muito bem! Você está muito bem informado sobre a jornada de Joy Buolamwini. Continue assim!';
+            } else if (percent >= 60) {
+                title = 'Bom trabalho!';
+                subtitle = 'Você está no caminho certo!';
+                message = 'Continue explorando o conteúdo sobre Joy Buolamwini. A luta por uma IA mais justa é fundamental para o futuro da tecnologia.';
+            } else if (percent >= 40) {
+                title = 'Continue assim!';
+                subtitle = 'Há espaço para melhorar!';
+                message = 'Que tal revisar o conteúdo do blog? A história de Joy Buolamwini é fascinante e cheia de lições importantes.';
+            } else {
+                title = 'Vamos tentar de novo?';
+                subtitle = 'Todo aprendizado é válido!';
+                message = 'Não desanime! A história de Joy Buolamwini é rica e inspiradora. Releia o conteúdo e tente novamente.';
+            }
+
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultSubtitle').textContent = subtitle;
+            document.getElementById('resultMessage').textContent = message;
+
+            // Renderiza ranking
+            renderRanking();
+
+            questionArea.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ===== RESET COMPLETO =====
+        function resetFullQuiz() {
+            playerName = '';
+            currentPlayerName.textContent = '';
+            answers = new Array(questions.length).fill(null);
+            quizCompleted = false;
+            currentQuestion = 0;
+
+            nameInputArea.classList.remove('hidden');
+            playerNameDisplay.classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            questionArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+
+            playerNameInput.value = '';
+            playerNameInput.style.borderColor = '';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===== INICIALIZA =====
+        loadRanking();
+        renderRanking();
+
+        // Enter para começar
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startQuiz();
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joy Buolamwini | A Voz da Justiça Algorítmica</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --dark-color: #1e272e;
+            --light-color: #f1f2f6;
+            --accent-color: #ff7675;
+            --bg-color: #ffffff;
+            --section-bg: #f8f9fa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.7;
+            color: var(--dark-color);
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 25px); }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(12px, 2vw, 20px) clamp(16px, 4vw, 50px);
+            background: rgba(255, 255, 255, 0.98);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .logo {
+            font-size: clamp(18px, 3.5vw, 26px);
+            font-weight: 900;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .logo span { color: var(--primary-color); }
+        .nav-links { display: flex; list-style: none; }
+        .nav-links li { margin-left: clamp(14px, 2.2vw, 35px); }
+
+        /* Botão do menu: só aparece quando os links não cabem mais na barra. */
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--dark-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 6px 10px;
+            line-height: 1;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark-color);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover { color: var(--primary-color); }
+
+        .hero {
+            min-height: 100vh;
+            /* svh desconta a barra do navegador no celular, que o vh ignora. */
+            min-height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(95px, 14vh, 130px) 5% clamp(50px, 8vh, 100px);
+            background: radial-gradient(circle at top right, #fdfcfb 0%, #e2d1c3 100%);
+        }
+
+        .hero-container {
+            display: flex;
+            align-items: center;
+            max-width: 1200px;
+            width: 100%;
+            gap: clamp(30px, 5vw, 60px);
+        }
+
+        .hero-content { flex: 1.2; min-width: 0; }
+
+        .hero-content h1 {
+            font-size: clamp(2.1rem, 7vw, 5rem);
+            font-family: 'Playfair Display', serif;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            overflow-wrap: break-word;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2.2vw, 1.4rem);
+            color: var(--primary-color);
+            margin-bottom: clamp(24px, 4vw, 35px);
+            border-left: 4px solid var(--accent-color);
+            padding-left: 20px;
+        }
+
+        .btn-hero {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+        }
+
+        .hero-image { flex: 0.8; position: relative; min-width: 0; }
+
+        .hero-image img, .foto-placeholder {
+            width: 100%;
+            max-width: 450px;
+            border-radius: 20px;
+            /* A sombra sai para fora do elemento: encolhe junto, senão
+               empurra a página para o lado nas telas estreitas. */
+            box-shadow: clamp(10px, 3vw, 30px) clamp(10px, 3vw, 30px) 0px var(--primary-color);
+            transition: all 0.5s ease;
+        }
+
+        .foto-placeholder {
+            height: clamp(300px, 55vw, 480px);
+            background: linear-gradient(160deg, #1e272e 0%, #6c5ce7 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 10vw, 5rem);
+            font-weight: 900;
+        }
+
+        .hero-image:hover img, .hero-image:hover .foto-placeholder {
+            transform: translate(-10px, -10px);
+            box-shadow: clamp(16px, 4vw, 40px) clamp(16px, 4vw, 40px) 0px var(--accent-color);
+        }
+
+        .section { padding: clamp(60px, 10vw, 120px) 0; }
+
+        .section-title {
+            font-size: clamp(1.9rem, 5vw, 3rem);
+            font-family: 'Playfair Display', serif;
+            margin-bottom: clamp(40px, 7vw, 80px);
+            text-align: center;
+        }
+
+        .section-title span {
+            display: block;
+            font-size: 1rem;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .history-grid {
+            display: grid;
+            /* auto-fit colapsa para uma coluna sozinho quando não cabem duas.
+               O min() impede que a coluna fique maior que a tela. */
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+            gap: clamp(35px, 6vw, 80px);
+            align-items: flex-start;
+        }
+
+        .text-content h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.4rem, 3.5vw, 2rem);
+            margin-bottom: 25px;
+            color: var(--primary-color);
+        }
+
+        .text-content p { margin-bottom: 25px; font-size: clamp(1rem, 1.6vw, 1.1rem); text-align: justify; }
+
+        .mission-box {
+            background: var(--dark-color);
+            color: white;
+            padding: clamp(28px, 5vw, 50px);
+            border-radius: clamp(18px, 3vw, 30px);
+        }
+
+        .book-section { background-color: var(--section-bg); }
+
+        .book-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: clamp(28px, 5vw, 60px);
+            background: white;
+            padding: clamp(26px, 5vw, 60px);
+            border-radius: clamp(22px, 4vw, 40px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+        }
+
+        .book-info { flex: 1; min-width: min(100%, 260px); }
+
+        .book-cover {
+            min-width: 190px;
+            height: 270px;
+            border-radius: 8px;
+            background: linear-gradient(160deg, #1e272e 0%, #6c5ce7 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-shadow: 15px 15px 0 var(--secondary-color);
+        }
+
+        .book-cover i { font-size: 2.5rem; margin-bottom: 15px; color: var(--accent-color); }
+
+        .book-cover span {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+
+        .book-info h3 { font-size: clamp(1.5rem, 3.8vw, 2.2rem); margin-bottom: 20px; font-family: 'Playfair Display', serif; }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 15px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+
+        .cards-grid {
+            display: grid;
+            /* Sem o min(), a coluna de 350px estoura a tela num celular de 360px. */
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+            gap: clamp(22px, 3.5vw, 40px);
+        }
+
+        .card {
+            background: white;
+            padding: clamp(28px, 5vw, 50px);
+            border-radius: clamp(18px, 3vw, 30px);
+            border: 1px solid #eee;
+            transition: all 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 30px 60px rgba(108, 92, 231, 0.15);
+        }
+
+        .card-icon { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 25px; }
+
+        .galeria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+            gap: clamp(22px, 3.5vw, 40px);
+        }
+
+        .galeria-card {
+            background: #fff;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            transition: transform 0.4s;
+        }
+
+        .galeria-card:hover { transform: translateY(-10px); }
+
+        .galeria-visual { height: clamp(170px, 30vw, 220px); }
+        .galeria-visual svg, .galeria-visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .galeria-card p { padding: 22px 25px; font-size: 0.95rem; }
+
+        .timeline { max-width: 900px; margin: 0 auto; }
+
+        .timeline-item {
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(12px, 3vw, 30px);
+            margin-bottom: clamp(22px, 4vw, 40px);
+            align-items: center;
+            background: white;
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .timeline-date {
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            font-weight: 900;
+            color: var(--primary-color);
+            min-width: 100px;
+        }
+
+        .timeline-item > *:not(.timeline-date) { flex: 1; min-width: min(100%, 220px); }
+
+        footer {
+            background: var(--dark-color);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease-out;
+        }
+
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* ============================================
+           WIDGET FLUTUANTE — Converse com a Joy
+        ============================================ */
+        .joy-bubble {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.5);
+            transition: transform 0.3s;
+        }
+
+        .joy-bubble:hover { transform: scale(1.1); }
+
+        .joy-bubble::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 3px solid var(--secondary-color);
+            animation: pulso 2s infinite ease-out;
+        }
+
+        @keyframes pulso {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .joy-bubble .fechar-icone { display: none; }
+        .joy-bubble.aberto .mic-icone { display: none; }
+        .joy-bubble.aberto .fechar-icone { display: inline; }
+        .joy-bubble.aberto::after { animation: none; opacity: 0; }
+
+        .joy-panel {
+            position: fixed;
+            bottom: 105px;
+            right: 25px;
+            width: 370px;
+            max-width: calc(100vw - 30px);
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+            z-index: 1999;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.35s ease;
+        }
+
+        .joy-panel.aberto {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .joy-panel-header {
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .joy-panel-header strong { display: block; font-size: 0.95rem; }
+        .joy-panel-header small { font-size: 0.72rem; opacity: 0.85; }
+
+        .joy-mini-avatar {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 50%;
+            background: #fff;
+            color: var(--primary-color);
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .joy-panel-body { padding: 24px 20px 20px; text-align: center; }
+
+        .voice-avatar { position: relative; width: 90px; height: 90px; margin: 0 auto 12px; }
+
+        .voice-circle {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .voice-ring {
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            border: 3px solid var(--secondary-color);
+            opacity: 0;
+        }
+
+        .falando .voice-ring { animation: onda 1.4s infinite ease-out; }
+        .falando .voice-circle { animation: batida 0.9s infinite ease-in-out; }
+
+        .ouvindo .voice-circle {
+            background: linear-gradient(135deg, var(--accent-color), #fdcb6e);
+            animation: batida 0.7s infinite ease-in-out;
+        }
+
+        .pensando .voice-circle {
+            background: linear-gradient(135deg, #636e72, #b2bec3);
+            animation: batida 1.3s infinite ease-in-out;
+        }
+
+        .pensando .voice-bars i { animation: barra 1.6s infinite ease-in-out; }
+
+        @keyframes onda {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes batida {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.07); }
+        }
+
+        .voice-bars {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 5px;
+            height: 30px;
+            margin-bottom: 10px;
+        }
+
+        .voice-bars i { width: 5px; height: 7px; border-radius: 3px; background: var(--secondary-color); }
+
+        .falando .voice-bars i, .ouvindo .voice-bars i { animation: barra 0.8s infinite ease-in-out; }
+
+        .voice-bars i:nth-child(2) { animation-delay: 0.1s; }
+        .voice-bars i:nth-child(3) { animation-delay: 0.2s; }
+        .voice-bars i:nth-child(4) { animation-delay: 0.3s; }
+        .voice-bars i:nth-child(5) { animation-delay: 0.2s; }
+        .voice-bars i:nth-child(6) { animation-delay: 0.1s; }
+
+        @keyframes barra {
+            0%, 100% { height: 7px; }
+            50% { height: 26px; }
+        }
+
+        .voice-status { font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
+
+        .voice-caption {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.55;
+            min-height: 22px;
+            max-height: 92px;
+            overflow-y: auto;
+            margin-bottom: 14px;
+        }
+
+        .voice-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+
+        .voice-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .voice-btn.mic { background: var(--primary-color); }
+        .voice-btn.stop { background: var(--dark-color); }
+        .voice-btn:hover { transform: scale(1.1); }
+        .voice-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+        .voice-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .voice-form input {
+            flex: 1;
+            min-width: 0;
+            border: 1.5px solid #e4e4ec;
+            border-radius: 20px;
+            padding: 9px 15px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.78rem;
+            color: var(--dark-color);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .voice-form input:focus { border-color: var(--primary-color); }
+
+        .voice-form button {
+            width: 38px;
+            min-width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: transform 0.3s;
+        }
+
+        .voice-form button:hover { transform: scale(1.1); }
+        .voice-form button:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-height: 140px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .chip {
+            border: 1.5px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            padding: 7px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .chip:hover { background: var(--primary-color); color: #fff; }
+
+        .joy-panel-footer {
+            font-size: 0.62rem;
+            color: #999;
+            padding: 10px 20px 14px;
+            line-height: 1.5;
+            border-top: 1px solid #f0f0f0;
+            text-align: center;
+        }
+
+        /* ---- Responsivo ----------------------------------------------------
+           Os tamanhos já escalam sozinhos via clamp() lá em cima. O que fica
+           aqui é só o que muda de LAYOUT, não de tamanho.                    */
+
+        /* Os 8 links deixam de caber na barra por volta dos 900px: vira menu. */
+        @media (max-width: 900px) {
+            .nav-toggle { display: block; }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: #fff;
+                box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+                padding: 6px 0;
+                max-height: calc(100vh - 70px);
+                overflow-y: auto;
+            }
+
+            .nav-links.aberto { display: flex; }
+            .nav-links li { margin: 0; }
+
+            .nav-links a {
+                display: block;
+                padding: 14px 24px;
+                border-bottom: 1px solid #f4f4f4;
+            }
+
+            .nav-links li:last-child a { border-bottom: none; }
+        }
+
+        @media (max-width: 768px) {
+            .hero-container, .book-content { flex-direction: column; text-align: center; }
+            .subtitle { border-left: none; padding-left: 0; }
+            /* Justificado em coluna estreita abre buracos entre as palavras. */
+            .text-content p { text-align: left; }
+            .hero-image img, .foto-placeholder, .book-cover { margin-left: auto; margin-right: auto; }
+            .timeline-item { text-align: left; }
+            .joy-panel { right: 15px; bottom: 100px; }
+        }
+
+        @media (max-width: 480px) {
+            .btn-hero { width: 100%; text-align: center; }
+            .timeline-date { min-width: 0; }
+            .book-cover { min-width: 0; width: 165px; height: 235px; }
+            .galeria-card p { padding: 18px 20px; }
+        }
+
+        /* Celular deitado: 100svh de hero não deixa nada mais aparecer. */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .hero { min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">JOY<span>.BUOLAMWINI</span></div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home">Início</a></li>
+            <li><a href="#history">Missão</a></li>
+            <li><a href="#book">Livro</a></li>
+            <li><a href="#achievements">Impacto</a></li>
+            <li><a href="#galeria">Galeria</a></li>
+            <li><a href="#awards">Prêmios</a></li>
+            <li><a href="#jogo">🎮 Jogos</a></li>
+            <li><a onclick="abrirJoy()">🎙️ Converse</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="navLinks">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
+
+    <header id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="fade-in">Desmascarando a IA.</h1>
+                <p class="subtitle fade-in">Dr. Joy Buolamwini: A pesquisadora que forçou o mundo a encarar os preconceitos invisíveis da tecnologia.</p>
+                <button class="btn-hero fade-in" onclick="abrirJoy()">🎙️ Converse com a Joy</button>
+            </div>
+            <div class="hero-image fade-in">
+                <img id="joy-photo" src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/c22afacb-3289-446f-8898-73ffed59dfdd.jpg" alt="Joy Buolamwini" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800';">
+                <div class="foto-placeholder" id="fotoPlaceholder">JB</div>
+            </div>
+        </div>
+    </header>
+
+    <section id="history" class="section">
+        <div class="container">
+            <h2 class="section-title"><span>Quem é ela?</span>A Jornada da Poeta do Código</h2>
+            <div class="history-grid">
+                <div class="text-content fade-in">
+                    <h3>O "Olhar Codificado"</h3>
+                    <p>Tudo começou no MIT Media Lab. Joy Buolamwini percebeu que softwares de reconhecimento facial não detectavam seu rosto negro até ela usar uma máscara branca. Esse momento revelou que o preconceito humano estava sendo codificado em nossas máquinas.</p>
+                    <p>Ela fundou a <strong>Algorithmic Justice League</strong> para lutar por uma tecnologia mais justa e transparente.</p>
+                </div>
+                <div class="mission-box fade-in">
+                    <p style="font-size: 1.5rem; font-style: italic;">"A tecnologia deve servir a todos nós, não apenas a alguns de nós. Se não formos vigilantes, codificaremos o passado no nosso futuro."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="book" class="section book-section">
+        <div class="container">
+            <div class="book-content fade-in">
+                <div class="book-cover">
+                    <i class="fas fa-robot"></i>
+                    <span>UNMASKING<br>AI</span>
+                    <small style="margin-top:12px; opacity:.7;">Joy Buolamwini</small>
+                </div>
+                <div class="book-info">
+                    <span class="tag">Livro</span>
+                    <h3>Unmasking AI</h3>
+                    <p>Em seu livro, Joy narra sua missão para proteger o que é humano em um mundo de máquinas, expondo como a IA pode perpetuar o racismo e o sexismo.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="achievements" class="section">
+        <div class="container">
+            <h2 class="section-title"><span>Impacto</span>Conquistas</h2>
+            <div class="cards-grid">
+                <div class="card fade-in">
+                    <div class="card-icon"><i class="fas fa-microscope"></i></div>
+                    <h3>Gender Shades</h3>
+                    <p>Pesquisa que provou falhas graves de IA em identificar rostos de mulheres negras.</p>
+                </div>
+                <div class="card fade-in">
+                    <div class="card-icon"><i class="fas fa-gavel"></i></div>
+                    <h3>Leis e Ética</h3>
+                    <p>Testemunhou no Congresso dos EUA para banir o uso abusivo de reconhecimento facial.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="galeria" class="section book-section">
+        <div class="container">
+            <h2 class="section-title"><span>Em Imagens</span>Momentos da Jornada</h2>
+            <div class="galeria-grid">
+                <div class="galeria-card fade-in">
+                    <div class="galeria-visual">
+                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/9cd62ed0-d730-4006-9455-d5f18937c2a7.jpg" alt="Joy Buolamwini segurando a máscara branca" loading="lazy">
+                    </div>
+                    <p><strong>A máscara branca</strong><br>O experimento no MIT que revelou o "olhar codificado".</p>
+                </div>
+                <div class="galeria-card fade-in">
+                    <div class="galeria-visual">
+                        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/United_States_Capitol_west_front_edit2.jpg?width=800" alt="Capitólio dos Estados Unidos" loading="lazy">
+                    </div>
+                    <p><strong>Congresso dos EUA</strong><br>Testemunho histórico pela regulação do reconhecimento facial.</p>
+                </div>
+                <div class="galeria-card fade-in">
+                    <div class="galeria-visual">
+                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/f5af9eb5-a5f6-461a-953d-c980ebc1daef.jpg" alt="A IA pode ser preconceituosa — e ela provou isso" loading="lazy">
+                    </div>
+                    <p><strong>Ela provou</strong><br>A pesquisa Gender Shades expôs o preconceito escondido nos algoritmos.</p>
+                </div>
+                <div class="galeria-card fade-in">
+                    <div class="galeria-visual">
+                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/2cedd518-0981-4838-b9a6-b164bc53d1f8.jpg" alt="Joy Buolamwini em evento internacional" loading="lazy">
+                    </div>
+                    <p><strong>Reconhecimento mundial</strong><br>Presença marcante em eventos e premiações internacionais.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="awards" class="section">
+        <div class="container">
+            <h2 class="section-title"><span>Reconhecimento</span>Premiações</h2>
+            <div class="timeline">
+                <div class="timeline-item fade-in">
+                    <div class="timeline-date">2019</div>
+                    <div class="timeline-text">TIME 100 Next - Líderes do Futuro</div>
+                </div>
+                <div class="timeline-item fade-in">
+                    <div class="timeline-date">2021</div>
+                    <div class="timeline-text">Rhodes Scholar - Universidade de Oxford</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== JOGOS ===== -->
+    <section id="jogo" class="section" style="background:#07030f;color:#F3EFE6;">
+        <div class="container">
+            <h2 class="section-title" style="color:#F3EFE6;"><span style="color:#00E5FF;">Experiência interativa</span>Entre dentro do algoritmo</h2>
+            <style>
+                .jogo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(26px,4vw,45px);align-items:center;margin-top:20px}
+                @media (max-width:900px){ .jogo-grid{grid-template-columns:1fr} }
+                /* !important porque o tamanho está no style inline de cada h3. */
+                .jogo-grid h3{font-size:clamp(1.4rem,4.2vw,2rem)!important;overflow-wrap:break-word}
+                .jogo-grid p{overflow-wrap:break-word}
+                .jogo-grid .btn-hero{padding:14px clamp(20px,4vw,35px)}
+            </style>
+            <div class="fade-in jogo-grid">
+                <a href="jogo-fases/index.html" style="display:block;border:2px solid #FFC93C;box-shadow:0 0 40px rgba(255,201,60,.18);line-height:0;">
+                    <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/9e949a7b-dd42-42d2-b679-0637e598278b.jpg" alt="O Corredor Codificado" style="width:100%;height:auto;display:block;">
+                </a>
+                <div style="line-height:1.75;">
+                    <h3 style="font-family:'Playfair Display',serif;font-size:2rem;color:#FFC93C;margin-bottom:16px;">O Corredor Codificado</h3>
+                    <p style="color:#c8d2de;margin-bottom:14px;">Cinco fases em primeira pessoa dentro do sistema de reconhecimento. Você corre, pula, <strong>agacha</strong> sob feixes de varredura, desvia de prensas e derruba drones, recolhendo os <strong style="color:#FFC93C;">pedaços do seu próprio rosto</strong> até o portão do fim conseguir te reconhecer e abrir.</p>
+                    <p style="color:#c8d2de;margin-bottom:14px;">O centro do jogo é a <strong>máscara branca</strong>. Vestindo ela o sistema finalmente te enxerga — feixes, câmeras e drones te ignoram e as paredes-scanner abrem. Só que de máscara você não consegue coletar pedaço nenhum, porque não está sendo reconhecido como você. É a escolha que a pesquisadora enfrentou de verdade, virada em mecânica.</p>
+                    <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">No VR você agacha de verdade — o jogo lê a altura do capacete. Também roda no computador (WASD, espaço, Ctrl) e no celular.</p>
+                    <a href="jogo-fases/index.html" class="btn-hero" style="background:#FFC93C;color:#07030f;">🥽 Entrar no corredor</a>
+                </div>
+            </div>
+
+            <!-- ===== QUIZ (versão usada no totem) ===== -->
+            <div class="fade-in jogo-grid" style="margin-top:70px;">
+                <div style="line-height:1.75;order:2;">
+                    <h3 style="font-family:'Playfair Display',serif;font-size:2rem;color:#a99bff;margin-bottom:16px;">Quiz Joy Buolamwini</h3>
+                    <p style="color:#c8d2de;margin-bottom:14px;">Cinco questões sobre a trajetória dela, o estudo <strong style="color:#a99bff;">Gender Shades</strong> e o impacto da auditoria. Você põe seu nome, responde, vê o placar no final e entra no ranking.</p>
+                    <p style="color:#c8d2de;margin-bottom:14px;">É a versão rápida, de responder em pé — foi essa que vai rodar no <strong>totem da apresentação</strong>.</p>
+                    <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">Funciona em qualquer navegador, no computador, no celular e na tela do totem. Não precisa instalar nada.</p>
+                    <a href="quiz/index.html" class="btn-hero" style="background:#a99bff;color:#0f0c29;">❓ Responder o quiz</a>
+                </div>
+                <a href="quiz/index.html" style="display:flex;order:1;align-items:center;justify-content:center;text-align:center;min-height:270px;padding:40px 26px;border:2px solid #a99bff;box-shadow:0 0 40px rgba(169,155,255,.18);background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);text-decoration:none;">
+                    <div>
+                        <div style="font-size:3.4rem;line-height:1;margin-bottom:14px;">❓</div>
+                        <div style="font-family:'Playfair Display',serif;font-size:1.9rem;color:#fff;line-height:1.15;">Quiz<br><span style="color:#a99bff;">Joy Buolamwini</span></div>
+                        <div style="margin-top:16px;font-size:.78rem;letter-spacing:.18em;color:#8fa0b4;">5 QUESTÕES · RANKING · MODO TOTEM</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- ===== QUIZ POETA DO CÓDIGO (externo) ===== -->
+            <div class="fade-in jogo-grid" style="margin-top:70px;">
+                <div style="line-height:1.75;order:2;">
+                    <h3 style="font-family:'Playfair Display',serif;font-size:2rem;color:#FF6EA9;margin-bottom:16px;">Poeta do Código</h3>
+                    <p style="color:#c8d2de;margin-bottom:14px;">Um segundo quiz, com o nome que a própria pesquisadora se dá: <strong style="color:#FF6EA9;">poeta do código</strong>. A proposta é a mesma do outro — você digita seu nome, responde e entra no ranking — mas aqui a pergunta de fundo é a luta por uma <strong>IA justa</strong>.</p>
+                    <p style="color:#c8d2de;margin-bottom:14px;">Tem <strong>ranking próprio</strong>, separado do quiz do totem: dá pra abrir só o placar e ver quem já passou por lá antes de começar a sua rodada.</p>
+                    <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">Roda em qualquer navegador, no computador e no celular. Este está hospedado fora do blog, então abre em uma aba nova.</p>
+                    <a href="https://quiz-award-showdown.lovable.app/" target="_blank" rel="noopener" class="btn-hero" style="background:#FF6EA9;color:#1a0410;">🖋️ Abrir o Poeta do Código</a>
+                </div>
+                <a href="https://quiz-award-showdown.lovable.app/" target="_blank" rel="noopener" style="display:flex;order:1;align-items:center;justify-content:center;text-align:center;min-height:270px;padding:40px 26px;border:2px solid #FF6EA9;box-shadow:0 0 40px rgba(255,110,169,.18);background:linear-gradient(135deg,#2b0a1e,#5a1440,#24243e);text-decoration:none;">
+                    <div>
+                        <div style="font-size:3.4rem;line-height:1;margin-bottom:14px;">🖋️</div>
+                        <div style="font-family:'Playfair Display',serif;font-size:1.9rem;color:#fff;line-height:1.15;">Poeta<br><span style="color:#FF6EA9;">do Código</span></div>
+                        <div style="margin-top:16px;font-size:.78rem;letter-spacing:.18em;color:#8fa0b4;">NOME · RANKING · IA JUSTA</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Blog Joy Buolamwini. Inspirando justiça na tecnologia.</p>
+        <p style="font-size: 0.72rem; opacity: 0.6; margin-top: 12px;">Foto do Capitólio: domínio público (Wikimedia Commons) · Demais imagens: divulgação, uso educacional.</p>
+    </footer>
+
+    <!-- ===== WIDGET FLUTUANTE ===== -->
+    <div class="joy-panel" id="joyPanel">
+        <div class="joy-panel-header">
+            <div class="joy-mini-avatar">JB</div>
+            <div>
+                <strong>Joy Buolamwini</strong>
+                <small>● Online — Assistente de voz com IA</small>
+            </div>
+        </div>
+        <div class="joy-panel-body" id="voiceBox">
+            <div class="voice-avatar">
+                <div class="voice-ring"></div>
+                <div class="voice-circle">JB</div>
+            </div>
+            <div class="voice-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <p class="voice-status" id="voiceStatus">Pergunte qualquer coisa: fale, escreva ou toque numa sugestão 🎙️</p>
+            <p class="voice-caption" id="voiceCaption"></p>
+            <div class="voice-controls">
+                <button class="voice-btn mic" id="micBtn" title="Perguntar por voz"><i class="fas fa-microphone"></i></button>
+                <button class="voice-btn stop" id="stopBtn" title="Parar"><i class="fas fa-stop"></i></button>
+            </div>
+            <form class="voice-form" id="voiceForm">
+                <input type="text" id="voiceInput" placeholder="ou escreva sua pergunta..." autocomplete="off" maxlength="500">
+                <button type="submit" id="sendBtn" title="Enviar pergunta"><i class="fas fa-paper-plane"></i></button>
+            </form>
+            <div class="chips" id="voiceChips"></div>
+        </div>
+        <div class="joy-panel-footer">⚠️ Simulação educativa: as respostas são geradas por inteligência artificial (Claude, da Anthropic) no papel da pesquisadora, com voz sintetizada. Não são citações reais de Joy Buolamwini.</div>
+    </div>
+
+    <button class="joy-bubble" id="joyBubble" title="Converse com a Joy">
+        <i class="fas fa-microphone mic-icone"></i>
+        <i class="fas fa-xmark fechar-icone"></i>
+    </button>
+
+    <script>
+        // ===== FOTO DA JOY (cole seu base64 entre as crases) =====
+        // (o assistente de voz movido pela Claude está no fim deste arquivo)
+        const base64Image = "data:image/jpeg;base64," + `COLE_AQUI_SEU_CODIGO_BASE64`;
+
+        if (!base64Image.includes('COLE_AQUI')) {
+            const img = document.getElementById('joy-photo');
+            img.src = base64Image;
+            img.style.display = 'block';
+            document.getElementById('fotoPlaceholder').style.display = 'none';
+        }
+
+        // ===== Animações de scroll =====
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+
+        // ===== Menu de navegação no celular =====
+        const navLinks = document.getElementById('navLinks');
+        const navToggle = document.getElementById('navToggle');
+
+        function fecharMenu() {
+            navLinks.classList.remove('aberto');
+            navToggle.setAttribute('aria-expanded', 'false');
+            navToggle.querySelector('i').className = 'fas fa-bars';
+        }
+
+        navToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const aberto = navLinks.classList.toggle('aberto');
+            navToggle.setAttribute('aria-expanded', String(aberto));
+            navToggle.querySelector('i').className = aberto ? 'fas fa-xmark' : 'fas fa-bars';
+        });
+
+        // Fecha ao escolher um destino, ao tocar fora da barra e no Esc.
+        navLinks.addEventListener('click', function (e) {
+            if (e.target.closest('a')) fecharMenu();
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.navbar')) fecharMenu();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') fecharMenu();
+        });
+
+        // ===== Widget flutuante =====
+        const panel = document.getElementById('joyPanel');
+        const bubble = document.getElementById('joyBubble');
+        let panelAberto = false;
+
+        function abrirJoy() {
+            panelAberto = true;
+            panel.classList.add('aberto');
+            bubble.classList.add('aberto');
+        }
+
+        function fecharJoy() {
+            panelAberto = false;
+            panel.classList.remove('aberto');
+            bubble.classList.remove('aberto');
+            window.speechSynthesis && window.speechSynthesis.cancel();
+        }
+
+        bubble.addEventListener('click', () => panelAberto ? fecharJoy() : abrirJoy());
+
+        // =========================================================================
+        // MOTOR DA IA — compartilhado pelo widget flutuante e pela seção de conversa.
+        // Conversa com a Claude através de /api/joy (a chave da API fica no servidor).
+        // =========================================================================
+        const JoyIA = (function () {
+            const API = '/api/joy';
+            const MAX_HISTORICO = 12;   // últimas 6 trocas de pergunta/resposta
+
+            // Sugestões clicáveis. O campo "a" é a resposta de RESERVA: só é usada
+            // quando a API não responde (sem internet, erro, chave não configurada).
+            const sugestoes = [
+                { keys: ["inteligencia artificial", "o que e ia", "afinal"],
+                  q: "O que é IA?",
+                  a: "Gosto de explicar assim: inteligência artificial é dar às máquinas a capacidade de aprender padrões a partir de dados. Ela não pensa como nós. Ela reflete o que mostramos a ela. Se os dados carregam os preconceitos do passado, corremos o risco de codificar o passado no nosso futuro." },
+                { keys: ["preconceituosa", "preconceito", "racista", "vies"],
+                  q: "A IA tem preconceito?",
+                  a: "Pode ter. E a minha pesquisa provou isso. No projeto Gender Shades, mostrei que sistemas de grandes empresas erravam muito mais ao analisar rostos de mulheres negras do que rostos de homens brancos. As máquinas aprendem com dados escolhidos por pessoas." },
+                { keys: ["olhar codificado", "coded gaze", "mascara"],
+                  q: "O que é o olhar codificado?",
+                  a: "Foi o momento que mudou a minha vida. No MIT, um software de reconhecimento facial não detectava o meu rosto, até eu colocar uma máscara branca. Quem constrói a tecnologia, e com quais dados, decide quem é visto por ela." },
+                { keys: ["reconhecimento facial", "medo", "vigilancia"],
+                  q: "Reconhecimento facial é perigoso?",
+                  a: "Medo não é a palavra que eu usaria. Vigilância informada, sim. O reconhecimento facial erra, e quando erra com o rosto errado, pessoas inocentes pagam o preço. Por isso testemunhei no Congresso dos Estados Unidos defendendo limites claros. Tecnologia poderosa exige responsabilidade poderosa." },
+                { keys: ["emprego", "trabalho", "roubar", "tirar"],
+                  q: "A IA vai tirar meu emprego?",
+                  a: "A inteligência artificial vai transformar o trabalho. Mas a pergunta mais importante é: quem decide como essa transformação acontece? Aprender sobre essas ferramentas, como você está fazendo agora, já é uma forma de se proteger." },
+                { keys: ["posso fazer", "justa", "ajudar", "lutar"],
+                  q: "Como lutar por uma IA justa?",
+                  a: "Três coisas. Primeiro: faça perguntas. Quem criou o sistema? Com quais dados? Quem pode ser prejudicado? Segundo: conte a sua história. E terceiro: lembre-se de que a tecnologia deve servir a todos nós, não apenas a alguns de nós." }
+            ];
+
+            const historico = [];
+            let ocupado = false;
+            let recDisponivel = false;
+
+            const synth = window.speechSynthesis;
+            const box = document.getElementById('voiceBox');
+            const status = document.getElementById('voiceStatus');
+            const caption = document.getElementById('voiceCaption');
+            const micBtn = document.getElementById('micBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const chipsBox = document.getElementById('voiceChips');
+            const form = document.getElementById('voiceForm');
+            const input = document.getElementById('voiceInput');
+            const sendBtn = document.getElementById('sendBtn');
+
+            let vozPt = null;
+            function carregarVozes() {
+                const vozes = synth.getVoices();
+                vozPt = vozes.find(v => v.lang === 'pt-BR' && /female|feminina|maria|luciana|francisca/i.test(v.name))
+                     || vozes.find(v => v.lang === 'pt-BR')
+                     || vozes.find(v => v.lang.startsWith('pt'))
+                     || null;
+            }
+            carregarVozes();
+            if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = carregarVozes;
+
+            function norm(t) {
+                return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function falar(texto) {
+                synth.cancel();
+                const u = new SpeechSynthesisUtterance(texto);
+                u.lang = 'pt-BR';
+                if (vozPt) u.voice = vozPt;
+                u.rate = 1;
+                u.onstart = function () {
+                    box.classList.remove('ouvindo');
+                    box.classList.add('falando');
+                    status.textContent = '🔊 Joy está respondendo...';
+                    caption.textContent = '"' + texto + '"';
+                };
+                u.onend = function () {
+                    box.classList.remove('falando');
+                    status.textContent = 'Pergunte outra coisa — ela lembra do que já foi dito 🎙️';
+                };
+                synth.speak(u);
+            }
+
+            // Reserva local: só entra em ação se a chamada à API falhar.
+            function responderOffline(pergunta) {
+                const t = norm(pergunta);
+                const item = sugestoes.find(f => f.keys.some(k => t.includes(norm(k))));
+                if (item) {
+                    falar(item.a);
+                } else {
+                    falar('Estou sem conexão com o meu assistente agora. Tente de novo em instantes, ou toque em uma das perguntas sugeridas aqui embaixo.');
+                }
+            }
+
+            function travar(valor) {
+                ocupado = valor;
+                if (recDisponivel) micBtn.disabled = valor;
+                sendBtn.disabled = valor;
+                input.disabled = valor;
+            }
+
+            async function responder(pergunta) {
+                if (ocupado) return;
+
+                travar(true);
+                synth.cancel();
+                box.classList.remove('falando', 'ouvindo');
+                box.classList.add('pensando');
+                status.textContent = '💭 Joy está pensando...';
+
+                historico.push({ role: 'user', content: pergunta });
+
+                try {
+                    const resposta = await fetch(API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ messages: historico.slice(-MAX_HISTORICO) })
+                    });
+
+                    const dados = await resposta.json().catch(function () { return {}; });
+
+                    if (!resposta.ok || !dados.resposta) {
+                        throw new Error(dados.erro || ('HTTP ' + resposta.status));
+                    }
+
+                    historico.push({ role: 'assistant', content: dados.resposta });
+                    box.classList.remove('pensando');
+                    falar(dados.resposta);
+                } catch (e) {
+                    console.warn('Falha ao falar com /api/joy:', e.message);
+                    historico.pop();  // descarta a pergunta que ficou sem resposta
+                    box.classList.remove('pensando');
+                    responderOffline(pergunta);
+                } finally {
+                    travar(false);
+                }
+            }
+
+            function enviar(pergunta) {
+                const texto = (pergunta || '').trim();
+                if (!texto) return;
+                caption.textContent = 'Você: "' + texto + '"';
+                responder(texto);
+            }
+
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let rec = null;
+            if (SR) {
+                recDisponivel = true;
+                rec = new SR();
+                rec.lang = 'pt-BR';
+                rec.interimResults = false;
+                rec.maxAlternatives = 1;
+                rec.onresult = function (e) {
+                    const transcript = e.results[0][0].transcript;
+                    box.classList.remove('ouvindo');
+                    enviar(transcript);
+                };
+                rec.onerror = function (e) {
+                    box.classList.remove('ouvindo');
+                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                        status.textContent = '🚫 Microfone bloqueado! Permita na barra de endereço.';
+                    } else if (e.error === 'no-speech') {
+                        status.textContent = 'Não ouvi nada 🤔 Fale mais perto do microfone.';
+                    } else {
+                        status.textContent = 'Erro no microfone. Use as perguntas abaixo 🔊';
+                    }
+                };
+                rec.onend = function () {
+                    box.classList.remove('ouvindo');
+                };
+            } else {
+                micBtn.disabled = true;
+                status.textContent = 'Sem microfone neste navegador — escreva ou toque nas perguntas 🔊';
+            }
+
+            micBtn.addEventListener('click', function () {
+                if (!rec || ocupado) return;
+                synth.cancel();
+                box.classList.remove('falando');
+                box.classList.add('ouvindo');
+                status.textContent = '🎙️ Estou ouvindo... pode falar!';
+                caption.textContent = '';
+                try { rec.start(); } catch (e) {}
+            });
+
+            stopBtn.addEventListener('click', function () {
+                synth.cancel();
+                if (rec) try { rec.abort(); } catch (e) {}
+                box.classList.remove('falando', 'ouvindo');
+                status.textContent = 'Toque no microfone, escreva ou use as sugestões 🎙️';
+            });
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const texto = input.value;
+                input.value = '';
+                enviar(texto);
+            });
+
+            sugestoes.forEach(function (item) {
+                const chip = document.createElement('button');
+                chip.className = 'chip';
+                chip.textContent = item.q;
+                chip.addEventListener('click', function () {
+                    enviar(item.q);
+                });
+                chipsBox.appendChild(chip);
+            });
+        })();
+    </script>
+</body>
+</html>
