@@ -1,0 +1,8 @@
+{
+  "name": "blog-psy",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0"
+  }
+}
