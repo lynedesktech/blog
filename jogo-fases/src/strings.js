@@ -48,6 +48,7 @@ export const STR = {
   obj_collect: 'Recolha os pedaços do seu rosto',
   obj_gate: 'Rosto completo — vá até o portão',
   obj_boss: 'Agache no feixe e atire quando a lente abrir',
+  obj_mask: 'Parede-scanner à frente — vista a máscara (F) para o sistema te reconhecer',
 
   gate_locked: 'ROSTO INCOMPLETO',
   gate_open: 'RECONHECIDO',
@@ -56,7 +57,7 @@ export const STR = {
   aya: {
     start: 'Cada pedaço desses é um dado do seu rosto que o sistema não tem. Junte tudo e ele é obrigado a te reconhecer.',
     first_frag: 'Um pedaço. O portão do fim só abre com o rosto completo.',
-    mask_found: 'A máscara branca. Vista ela e o sistema passa a te enxergar — foi literalmente assim que a pesquisadora descobriu a falha.',
+    mask_found: 'Pegou. Aquela parede logo ali só abre para quem o sistema reconhece — vista a máscara e ela te deixa passar. Foi literalmente assim que a pesquisadora descobriu a falha.',
     mask_on: 'Agora ele te vê. Mas repare: de máscara você não consegue recolher nada. Você não é você para ele.',
     mask_hot: 'A máscara superaqueceu. Tire e espere esfriar.',
     duck: 'Agache. O feixe passa na altura do peito.',

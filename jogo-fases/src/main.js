@@ -170,7 +170,8 @@ export class Game {
     };
     this._buildSky();
 
-    s.add(new THREE.AmbientLight(0x5566ff, 0.75));
+    this.amb = new THREE.AmbientLight(0x5566ff, 0.75);
+    s.add(this.amb);
     const key = new THREE.PointLight(0x00e5ff, 1.2, 26, 2);
     key.position.set(0, 4, 0);
     this.rig.add(key);                 // luz acompanha o jogador
@@ -222,6 +223,29 @@ export class Game {
     );
     this.sky.position.y = 14;
     this.scene.add(this.sky);
+  }
+
+  // Horizonte por fase. MirroredRepeatWrapping em vez de RepeatWrapping: o
+  // espelhamento faz qualquer imagem casar consigo mesma na volta do cilindro,
+  // então não existe a emenda vertical que denunciava a repetição. E repeat 3
+  // em vez de 6 deixa o panorama em escala maior, menos "papel de parede".
+  _trocaHorizonte(url) {
+    if (!url || !this.sky) return;
+    this._ceus = this._ceus || {};
+    const aplica = (t) => {
+      if (!this.sky) return;
+      this.sky.material.map = t;
+      this.sky.material.needsUpdate = true;
+    };
+    if (this._ceus[url]) { aplica(this._ceus[url]); return; }
+    new THREE.TextureLoader().load(url, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = THREE.MirroredRepeatWrapping;
+      t.wrapT = THREE.ClampToEdgeWrapping;
+      t.repeat.set(3, 1);
+      this._ceus[url] = t;
+      aplica(t);
+    });
   }
 
   _panel(w, h, cw, ch, order) {
@@ -441,35 +465,61 @@ export class Game {
     this._buildSurfaces(lv);
 
     // --- feixes
+    // Feixes. Antes eram tres cilindros opacos empilhados e um retangulo chapado
+    // no chao: lia como cano de plastico rosa, nao como luz. Agora e' luz de
+    // verdade — tudo em AdditiveBlending, que soma com o que esta atras em vez
+    // de tapar, com nucleo quente, duas camadas de brilho, poca de luz radial no
+    // chao e emissores nas duas paredes.
+    const cor = (def.pal && def.pal.accent) || COL.mag;
     this.beamMeshes = lv.beams.map((b) => {
-      const m = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.07, 0.07, def.w, 6),
-        new THREE.MeshBasicMaterial({ color: COL.mag })
+      const g = new THREE.Group();
+      g.position.set(0, b.y, b.z);
+
+      const tubo = (r, c, op, add) => {
+        const m = new THREE.Mesh(
+          new THREE.CylinderGeometry(r, r, def.w, 10, 1, true),
+          new THREE.MeshBasicMaterial({
+            color: c, transparent: true, opacity: op, depthWrite: false,
+            blending: add ? THREE.AdditiveBlending : THREE.NormalBlending,
+            side: THREE.DoubleSide, fog: false,
+          })
+        );
+        m.rotation.z = Math.PI / 2;
+        return m;
+      };
+
+      const core = tubo(0.028, 0xffffff, 1.0, true);   // filamento branco
+      const mid = tubo(0.10, cor, 0.85, true);         // corpo do feixe
+      const halo = tubo(0.34, cor, 0.20, true);        // brilho que sangra
+      const bloom = tubo(0.75, cor, 0.07, true);       // brilho longe, quase ar
+      g.add(bloom, halo, mid, core);
+
+      // poça de luz no chão: radial, não um retângulo de borda dura
+      const poca = new THREE.Mesh(
+        new THREE.PlaneGeometry(def.w, b.range * 2 + 3.0),
+        new THREE.MeshBasicMaterial({
+          map: this.tex.dust, color: cor, transparent: true, opacity: 0.30,
+          blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+        })
       );
-      m.rotation.z = Math.PI / 2;
-      m.position.set(0, b.y, b.z);
-      // núcleo branco-quente + halo largo: o feixe tem que berrar contra a
-      // parede texturizada, não se misturar com ela
-      const core = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.035, def.w, 6),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      m.add(core);
-      const halo = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.30, 0.30, def.w, 6),
-        new THREE.MeshBasicMaterial({ color: COL.mag, transparent: true, opacity: 0.30 })
-      );
-      m.add(halo);
-      this.levelRoot.add(m);
-      // faixa de aviso no chão cobrindo o percurso inteiro do feixe
-      const stripe = new THREE.Mesh(
-        new THREE.PlaneGeometry(def.w, b.range * 2 + 0.8),
-        new THREE.MeshBasicMaterial({ color: COL.mag, transparent: true, opacity: 0.14 })
-      );
-      stripe.rotation.x = -Math.PI / 2;
-      stripe.position.set(0, 0.035, b.z);
-      this.levelRoot.add(stripe);
-      return m;
+      poca.rotation.x = -Math.PI / 2;
+      poca.position.set(0, 0.03, b.z);
+      this.levelRoot.add(poca);
+
+      // emissores: dizem de onde a luz sai, e dão escala ao corredor
+      for (const lado of [-1, 1]) {
+        const em = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.16, 0.22, 0.30, 8),
+          new THREE.MeshBasicMaterial({ color: cor, fog: false })
+        );
+        em.rotation.z = Math.PI / 2;
+        em.position.x = lado * (def.w / 2 + 0.05);
+        g.add(em);
+      }
+
+      g.userData = { core, mid, halo, bloom, poca, fase: Math.random() * 6.28 };
+      this.levelRoot.add(g);
+      return g;
     });
 
     // --- paredes-scanner (com placa dizendo o que ela é)
@@ -580,7 +630,13 @@ export class Game {
       // raio de coleta de 1,9: quem andasse reto NUNCA encostava. Agora fica a
       // 1,4 m do eixo — perto o bastante para o trajeto normal pegar, longe o
       // bastante para não virar um paredão na frente da câmera.
-      g.position.set(-1.4, 1.35, -8);
+      //
+      // E fica logo ANTES da primeira parede-scanner, não lá na entrada. Pegar o
+      // item a 8 m do começo e só descobrir para que serve 38 m depois não ensina
+      // nada; pegar e dar de cara com a parede que só abre de máscara ensina.
+      const primeiroScan = lv.scanners.length ? lv.scanners[0].z : null;
+      const zPed = primeiroScan !== null ? primeiroScan + 7 : -8;
+      g.position.set(-1.4, 1.35, zPed);
       const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex.maskClean, transparent: true, depthWrite: false }));
       spr.scale.set(0.75, 0.75, 1);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -679,6 +735,20 @@ export class Game {
     this._say(i === 0 ? STR.aya.start : def.sub, 6);
     // a guia se posta ao lado da entrada de cada fase
     this.ayaGroup.position.set(-def.w / 2 + 1.4, 2.4, -6);
+    // Identidade da fase: cor do ar, cor da luz e alcance da vista. É o que faz
+    // cinco corredores da mesma geometria pararem de ler como a mesma sala.
+    const pal = def.pal;
+    if (pal) {
+      this.scene.fog.color.setHex(pal.fog);
+      this.scene.fog.density = pal.fogD;
+      this.scene.background.setHex(pal.fog);
+      if (this.amb) { this.amb.color.setHex(pal.amb); this.amb.intensity = pal.ambI; }
+      if (this.sky) {
+        this.sky.material.color.setHex(pal.sky);
+        this._trocaHorizonte(pal.skyImg);
+      }
+    }
+
     // a fase do chefe troca a trilha: e' o unico ponto do jogo onde a pressao
     // vira o assunto, e a musica precisa dizer isso antes do jogador ler nada
     this.sfx.musicStart(def.boss ? TRILHAS.auditoria : TRILHAS.corredor);
@@ -1157,7 +1227,20 @@ export class Game {
     for (let i = 0; i < lv.beams.length; i++) {
       const b = lv.beams[i];
       b.cz = b.z + Math.sin(s.t * b.speed + b.phase) * b.range;
-      if (this.beamMeshes[i]) this.beamMeshes[i].position.z = b.cz;
+      const bm = this.beamMeshes[i];
+      if (bm) {
+        bm.position.z = b.cz;
+        // pulso: luz viva respira. sem isso o feixe parece um adesivo colado.
+        const u = bm.userData;
+        const k = 0.82 + Math.sin(s.t * 5.5 + u.fase) * 0.18;
+        u.mid.material.opacity = 0.85 * k;
+        u.halo.material.opacity = 0.20 * k;
+        u.bloom.material.opacity = 0.07 * k;
+        u.halo.scale.set(k, 1, k);
+        u.bloom.scale.set(k, 1, k);
+        u.poca.position.z = b.cz;
+        u.poca.material.opacity = 0.30 * k;
+      }
     }
     for (let i = 0; i < lv.cams.length; i++) {
       const c = lv.cams[i];
@@ -1204,7 +1287,13 @@ export class Game {
       if (Math.abs(pl.pos.z - b.z) < 7) this._sayOnce(b.kind === 'low' ? 'duck' : 'jump', 4);
     }
     for (const sc of lv.scanners) {
-      if (Math.abs(pl.pos.z - sc.z) >= 7) continue;
+      const dz = pl.pos.z - sc.z;   // > 0 = ainda não chegou nela
+      if (dz > 0 && dz < 16 && s.maskHave && !s.maskOn && !s.done) {
+        // Diz o QUE fazer e o PORQUÊ, no momento em que a informação serve.
+        // O pedestal sozinho entregava o item sem nunca explicar para quê.
+        this._setObjective(STR.obj_mask);
+      }
+      if (Math.abs(dz) >= 7) continue;
       this._sayOnce('scan', 5);
       // Rede de segurança: a parede-scanner é sólida para quem não está de
       // máscara. Chegar aqui sem ela — por ter passado reto pelo pedestal —

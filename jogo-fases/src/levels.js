@@ -20,9 +20,14 @@ export const SEG = {
   ARENA: 'arena',   // sala aberta (chefe)
 };
 
+// Paleta POR FASE. Antes fog, luz ambiente e tom do horizonte eram globais e
+// iguais nas cinco: com a mesma geometria de corredor, tudo lia como a mesma
+// sala repetida. A identidade de cada fase vem daqui — cor do ar, cor da luz,
+// densidade do fog (quanto se enxerga adiante) e o tom do fundo.
 export const LEVELS = [
   {
     name: 'CORREDOR',
+    pal: { fog: 0x07030f, fogD: 0.030, amb: 0x5566ff, ambI: 0.75, sky: 0x777d99, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_ea4ea2f4-c9c2-43f7-911d-c66f202ef4a6.png', accent: 0x00E5FF },
     sub: 'Ande, pule e recolha os pedaços do seu rosto.',
     time: 150, need: 5, w: 9, h: 5,
     segs: [
@@ -36,6 +41,7 @@ export const LEVELS = [
   },
   {
     name: 'VARREDURA',
+    pal: { fog: 0x0a0616, fogD: 0.034, amb: 0x4a5fd0, ambI: 0.70, sky: 0x8a7fb5, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_3cc93d16-5892-48d1-9d05-7e9a43db08fa.png', accent: 0xFF2D9B },
     sub: 'Os feixes te apagam. A máscara te faz passar — mas de máscara você não coleta.',
     time: 140, need: 7, w: 9, h: 5,
     mask: true,
@@ -51,6 +57,7 @@ export const LEVELS = [
   },
   {
     name: 'VIGILÂNCIA',
+    pal: { fog: 0x050d14, fogD: 0.026, amb: 0x36a8c8, ambI: 0.68, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF },
     sub: 'Câmeras e drones. Sem máscara você é alvo; com máscara você é invisível.',
     time: 140, need: 9, w: 10, h: 5,
     mask: true,
@@ -66,6 +73,7 @@ export const LEVELS = [
   },
   {
     name: 'PRESSÃO',
+    pal: { fog: 0x150a05, fogD: 0.042, amb: 0xff8a44, ambI: 0.62, sky: 0xb08a5e, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_1ed67f71-2ef2-4e0d-9498-09e2b9dbf80c.png', accent: 0xFFC93C },
     sub: 'Plataformas, prensas e tempo curto. O modelo está prestes a ser lançado.',
     time: 130, need: 11, w: 10, h: 6,
     mask: true,
@@ -82,6 +90,7 @@ export const LEVELS = [
   },
   {
     name: 'AUDITORIA',
+    pal: { fog: 0x0d0418, fogD: 0.020, amb: 0xa866ff, ambI: 0.80, sky: 0xa27fc4, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210812_d8e9aa60-491b-41d0-89b0-e1441ba35c88.png', accent: 0xFFC93C },
     sub: 'O olho central. Agache no feixe, atire quando a lente abrir.',
     time: 180, need: 6, w: 26, h: 9,
     mask: true, boss: true,
