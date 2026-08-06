@@ -28,16 +28,13 @@ arquivos aqui foram baixados do site no ar em 2026-08-05 e são idênticos ao qu
 está em produção naquele momento. Os dois arquivos em `vendor/` vieram do pacote
 `three@0.169.0` no npm (`three.module.js` bate com os 1.304.820 bytes servidos).
 
-## O que ainda falta
+## `api/joy.js`
 
-### 1. `api/joy.js` — não está aqui
-
-Roda no servidor e não é servido publicamente, então não deu para baixar do
-site. **Não recriar do zero**: o prompt de sistema dele é conteúdo autoral, e
-reescrever troca o texto por outro parecido em vez de restaurar o original.
-
-Pegar em: Vercel → projeto `blog` → deployment mais recente → aba **Source** →
-`api/joy.js`. Começa com `import Anthropic from "@anthropic-ai/sdk";`.
+Recuperado da aba Source do deployment `dpl_CshnUbBdNAYnhGyLjUkLiYTpFHgU` e
+conferido contra o original colado à mão: mesmo sha256
+(`17ff9495228f102120b57393b1bcfac28617fdadece8a3f76e97b4e2f81e38f5`), 5.815
+bytes, 122 linhas. O prompt de sistema (`SISTEMA`, linhas 7–40) é conteúdo
+autoral e está byte a byte igual ao que estava no ar.
 
 Contrato que o front-end espera (`index.html`, função `JoyIA`):
 
@@ -56,15 +53,16 @@ deploy: se a Joy responder só as frases prontas, a função não subiu.
 A variável `ANTHROPIC_API_KEY` é configuração do projeto na Vercel e sobrevive
 ao redeploy sozinha.
 
-### 2. `package.json` — reconstruído, confira contra o original
+## `package.json` — reconstruído, mas validado em produção
 
-O que está aqui foi montado a partir da dependência que o `api/joy.js` importa.
-O `"type": "module"` foi acrescentado porque `api/joy.js` usa `import` em um
-arquivo `.js`, e sem isso o runtime Node da Vercel derruba a função com
-`Cannot use import statement outside a module`. Se o `package.json` original
-aparecer na aba Source, use ele no lugar deste.
+O original não foi recuperado. Este foi montado a partir da dependência que o
+`api/joy.js` importa, mais `"type": "module"`, que é obrigatório porque
+`api/joy.js` usa `import` em um arquivo `.js` — sem ele o runtime Node da Vercel
+derruba a função com `Cannot use import statement outside a module`. O deploy
+`dpl_7wJg9EZmzy3fyVZdNAm1Aym3zGL1` confirmou que funciona: `GET /api/joy`
+responde `405 {"erro":"Use POST."}`, ou seja, a função carrega e roda.
 
-### 3. As três correções do jogo
+## O que ainda falta: as três correções do jogo
 
 Existem versões corrigidas de `jogo-fases/index.html`, `jogo-fases/src/main.js`
 e `jogo-fases/src/levels.js` que **não estão neste repositório** — elas estavam
@@ -86,13 +84,15 @@ ainda com os quatro problemas:
 
 ## Publicar
 
-```bash
-vercel --prod
-```
+O projeto `blog` na Vercel está ligado a este repositório: **todo push na
+`main` vira deploy de produção automático**. Não existe mais passo manual.
 
-Só depois que `api/joy.js` estiver no lugar. Publicar sem ele substitui a
-produção por uma versão em que a conversa com a Joy cai nas respostas de
-reserva — e todo deployment antigo continua servindo de rollback no painel.
+Consequência prática: nunca dê push na `main` com um arquivo faltando. Foi
+assim que a produção ficou sem o `api/joy.js` por uns minutos em 06/08/2026 —
+e como o front-end tem respostas de reserva embutidas, o site *parecia*
+funcionar. Para mudanças de risco, empurre numa branch primeiro: a Vercel gera
+um preview e a produção não é tocada. Todo deployment antigo continua servindo
+de rollback no painel.
 
 ## Pendência conhecida
 
