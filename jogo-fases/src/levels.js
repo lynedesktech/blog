@@ -320,12 +320,31 @@ export function buildLevel(def, rng) {
     frags.push(f);
   }
 
+  // ---------------------------------------------------------------------------
+  // Máscaras soltas. São item de INVENTÁRIO: você acha pelo mapa, guarda, e
+  // encaixa no pedestal para vestir. Ficam sempre ANTES da primeira parede-
+  // scanner — achar depois de já precisar não é achado, é castigo.
+  // ---------------------------------------------------------------------------
+  const maskItems = [];
+  if (def.mask) {
+    const fim = scanners.length ? scanners[0].z + 4 : zEnd + 4;
+    const ini = -3;
+    for (let i = 0; i < (def.masks || 2); i++) {
+      for (let k = 0; k < 500; k++) {
+        const x = (rng() - 0.5) * (W - 3.2);
+        const z2 = ini + rng() * (fim - ini);
+        const y = 1.05;
+        if (okAt(x, y, z2)) { maskItems.push({ x, y, z: z2, taken: false }); break; }
+      }
+    }
+  }
+
   // Trava de sanidade (§7.1): se a fase pedir mais pedaços do que existem no
   // mapa, o portão nunca abriria e nenhum teste apontaria o erro.
   if (def.need > frags.length) def = { ...def, need: frags.length };
 
   return {
-    def, blocks, frags, beams, cams, drones, movers, crushers, scanners, decor,
+    def, blocks, frags, maskItems, beams, cams, drones, movers, crushers, scanners, decor,
     end: z, gate: { x: 0, y: 1.6, z: z + 2.6 },
     spawn: { x: 0, y: 0.1, z: -2 },
   };

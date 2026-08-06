@@ -36,6 +36,7 @@ export const STR = {
   hud_time: 'TEMPO',
   hud_lives: 'VIDAS',
   hud_mask: 'MÁSCARA',
+  hud_masks: 'NA MOCHILA',
   hud_phase: 'FASE',
   hud_obj: 'OBJETIVO',
   hud_boss: 'OLHO CENTRAL',
@@ -48,6 +49,7 @@ export const STR = {
   obj_collect: 'Recolha os pedaços do seu rosto',
   obj_gate: 'Rosto completo — vá até o portão',
   obj_boss: 'Agache no feixe e atire quando a lente abrir',
+  slot_label: 'ENCAIXE A MÁSCARA',
   obj_mask: 'Parede-scanner à frente — vista a máscara (F) para o sistema te reconhecer',
 
   gate_locked: 'ROSTO INCOMPLETO',
@@ -57,7 +59,9 @@ export const STR = {
   aya: {
     start: 'Cada pedaço desses é um dado do seu rosto que o sistema não tem. Junte tudo e ele é obrigado a te reconhecer.',
     first_frag: 'Um pedaço. O portão do fim só abre com o rosto completo.',
-    mask_found: 'Pegou. Aquela parede logo ali só abre para quem o sistema reconhece — vista a máscara e ela te deixa passar. Foi literalmente assim que a pesquisadora descobriu a falha.',
+    mask_item: 'Uma máscara branca. Guarda contigo — é ela que faz o sistema aceitar que você existe.',
+    slot_empty: 'O encaixe está vazio e você não tem máscara nenhuma. Tem uma largada aí atrás; volta e procura.',
+    mask_found: 'Encaixou, e ela foi para o seu rosto. Agora aquela parede te deixa passar — não porque você mudou, mas porque parou de parecer você. Foi literalmente assim que a pesquisadora descobriu a falha.',
     mask_on: 'Agora ele te vê. Mas repare: de máscara você não consegue recolher nada. Você não é você para ele.',
     mask_hot: 'A máscara superaqueceu. Tire e espere esfriar.',
     duck: 'Agache. O feixe passa na altura do peito.',

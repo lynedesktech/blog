@@ -73,6 +73,7 @@ const ASSETS = {
   floor: CDN + 'b2921ab3-5b4b-44aa-b7ae-3c7287a022ba.jpg',
   panel: CDN + 'ddae4f29-0bbd-41ab-b47b-18d1e5c17bd0.jpg',
   sky: CDN + '796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg',
+  door: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_211921_99c1d9a0-c27e-437c-a361-a73e98a7b7de.png',
   // AYA nova: personagem fictícia, na paleta do jogo (vácuo preto-violeta,
   // luz ciano de um lado, contraluz dourado do outro). A anterior não
   // conversava com o resto da cena.
@@ -167,6 +168,7 @@ export class Game {
       wall: load(ASSETS.wall),
       floor: load(ASSETS.floor),
       panel: load(ASSETS.panel),
+      door: load(ASSETS.door),
     };
     this._buildSky();
 
@@ -644,36 +646,95 @@ export class Game {
       }));
       halo.scale.set(1.8, 1.8, 1);
       const lb = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: this._label(STR.hud_mask + ' · APERTE F', '#FFC93C', 44), transparent: true, depthWrite: false,
+        map: this._label(STR.slot_label, '#FFC93C', 44), transparent: true, depthWrite: false,
       }));
-      lb.scale.set(2.2, 0.55, 1);
+      lb.scale.set(2.6, 0.6, 1);
       lb.position.y = 0.85;
       g.add(halo, spr, lb);
+      g.userData = { spr, halo, lb };
       this.levelRoot.add(g);
       this.maskPickup = g;
     }
 
-    // --- portão de reconhecimento
+    // --- máscaras SOLTAS pelo mapa (o que entra na mochila)
+    this.maskItemMeshes = (lv.maskItems || []).map((mi) => {
+      const g2 = new THREE.Group();
+      g2.position.set(mi.x, mi.y, mi.z);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: this.tex.maskClean, transparent: true, depthWrite: false,
+      }));
+      sp.scale.set(0.55, 0.55, 1);
+      const ha = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: this.tex.ringG, transparent: true, blending: THREE.AdditiveBlending,
+        depthWrite: false, opacity: 0.55,
+      }));
+      ha.scale.set(1.3, 1.3, 1);
+      g2.add(ha, sp);
+      this.levelRoot.add(g2);
+      return g2;
+    });
+
+    // --- PORTA de reconhecimento
+    // Era um anel chapado flutuando no meio do corredor: não lia como saída,
+    // lia como decoração. Agora é uma porta que fecha o corredor de parede a
+    // parede e ABRE, com as duas folhas correndo para os lados e a luz do outro
+    // lado vazando pela fresta que cresce.
     const gate = new THREE.Group();
-    gate.position.set(lv.gate.x, lv.gate.y, lv.gate.z);
-    this.gateRing = new THREE.Mesh(
-      new THREE.TorusGeometry(1.7, 0.10, 8, 40),
-      new THREE.MeshBasicMaterial({ color: COL.mag })
+    gate.position.set(lv.gate.x, 0, lv.gate.z);
+    const DW = def.w, DH = def.h, meia = DW / 2;
+
+    const painel = () => new THREE.MeshLambertMaterial({ map: this.surf.door, color: 0xb9c2d6 });
+
+    // luz do outro lado: fica ATRÁS das folhas, então só se vê pelo que abriu
+    this.gateGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(DW, DH),
+      new THREE.MeshBasicMaterial({
+        color: COL.mag, transparent: true, opacity: 0.55,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+      })
     );
-    gate.add(this.gateRing);
-    this.gateFill = new THREE.Mesh(
-      new THREE.CircleGeometry(1.65, 32),
-      new THREE.MeshBasicMaterial({ color: COL.mag, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
-    );
-    gate.add(this.gateFill);
+    this.gateGlow.position.set(0, DH / 2, -0.28);
+    gate.add(this.gateGlow);
+
+    // as duas folhas
+    this.gateLeaves = [-1, 1].map((lado) => {
+      const folha = new THREE.Mesh(new THREE.BoxGeometry(meia, DH, 0.32), painel());
+      folha.position.set(lado * meia / 2, DH / 2, 0);
+      // fresta luminosa na borda interna de cada folha
+      const fresta = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.09, DH * 0.98),
+        new THREE.MeshBasicMaterial({
+          color: COL.mag, transparent: true, opacity: 0.9,
+          blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+        })
+      );
+      fresta.position.set(-lado * meia / 2, 0, 0.17);
+      folha.add(fresta);
+      folha.userData.fresta = fresta;
+      gate.add(folha);
+      return folha;
+    });
+
+    // batentes: dão espessura e dizem que a porta está encaixada na parede
+    for (const lado of [-1, 1]) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.5, DH, 0.6), painel());
+      b.position.set(lado * (meia + 0.25), DH / 2, 0);
+      gate.add(b);
+    }
+    const verga = new THREE.Mesh(new THREE.BoxGeometry(DW + 1.0, 0.6, 0.6), painel());
+    verga.position.set(0, DH - 0.3, 0);
+    gate.add(verga);
+
     this.gateLabel = new THREE.Sprite(new THREE.SpriteMaterial({
       map: this._label(STR.gate_locked, '#FF2D9B'), transparent: true, depthWrite: false,
     }));
     this.gateLabel.scale.set(3.2, 0.8, 1);
-    this.gateLabel.position.y = 2.4;
+    this.gateLabel.position.set(0, DH - 0.85, 0.4);
     gate.add(this.gateLabel);
+
     this.levelRoot.add(gate);
     this.gateGroup = gate;
+    this.gateW = meia;
 
     // --- chefe
     this.bossGroup = null;
@@ -716,6 +777,8 @@ export class Game {
       // Antes era `!!def.mask`, ou seja, ja vinha no bolso — o pedestal virava
       // enfeite e a cena de achar a mascara nunca acontecia.
       maskHave: false, maskOn: false, maskHeat: 0, maskLock: 0,
+      masks: 0, encaixeT: null,   // inventário e animação do encaixe
+
       shotCd: 0, shotVis: 0, shots: [],
       gateOpen: false, done: false,
       boss: def.boss ? { hp: P.BOSS_HP, t: 0, open: false, ang: 0 } : null,
@@ -1207,14 +1270,44 @@ export class Game {
       if (s.frags >= s.need) { this._setObjective(STR.obj_gate); this._sayOnce('gate_ready', 5); }
     }
 
-    if (this.maskPickup && this.maskPickup.visible) {
+    // máscaras soltas: vão para a mochila, não para o rosto
+    const itens = lv.maskItems || [];
+    for (let i = 0; i < itens.length; i++) {
+      const mi = itens[i];
+      if (mi.taken) continue;
+      if (Math.hypot(mi.x - _v1.x, mi.y - _v1.y, mi.z - _v1.z) > 1.7) continue;
+      mi.taken = true;
+      s.masks++;
+      if (this.maskItemMeshes[i]) this.maskItemMeshes[i].visible = false;
+      this.sfx.lock();
+      this._sayOnce('mask_item', 5);
+    }
+
+    // O pedestal deixou de DAR a máscara: ele RECEBE a que você achou. É aqui
+    // que a escolha vira gesto — você encaixa e ela vai para o seu rosto.
+    if (this.maskPickup && this.maskPickup.visible && !s.maskHave && s.encaixeT == null) {
       const p = this.maskPickup.position;
       if (Math.hypot(p.x - _v1.x, p.y - _v1.y, p.z - _v1.z) < P.MASK_PICK_R) {
-        // apanhou: o item some da cena e vai para o rosto/HUD
-        this.maskPickup.visible = false;
+        if (s.masks > 0) { s.encaixeT = s.t; this.sfx.lock(); }
+        else this._sayOnce('slot_empty', 6);
+      }
+    }
+
+    if (s.encaixeT != null) {
+      const a = Math.min(1, (s.t - s.encaixeT) / 1.1);
+      const u = this.maskPickup.userData;
+      u.spr.scale.setScalar(0.75 * (1 + a * 0.7));
+      u.spr.material.opacity = 1 - a * 0.9;
+      u.halo.scale.setScalar(1.8 * (1 + a));
+      u.halo.material.opacity = 0.7 * (1 - a);
+      if (a >= 1) {
+        s.encaixeT = null;
+        s.masks--;
         s.maskHave = true;
+        s.maskOn = true;                 // sai do encaixe já no rosto
+        this.maskPickup.visible = false;
         this.sfx.purify();
-        this._sayOnce('mask_found', 7);
+        this._sayOnce('mask_found', 8);
       }
     }
   }
@@ -1464,10 +1557,28 @@ export class Game {
     const ready = s.frags >= s.need && (!s.boss || s.boss.hp <= 0);
     if (ready !== s.gateOpen) {
       s.gateOpen = ready;
-      this.gateRing.material.color.setHex(ready ? 0x00E5FF : 0xFF2D9B);
-      this.gateFill.material.color.setHex(ready ? 0x00E5FF : 0xFF2D9B);
+      s.gateT = s.t;                       // marca o instante da destrava
       this.gateLabel.material.map = this._label(ready ? STR.gate_open : STR.gate_locked, ready ? '#00E5FF' : '#FF2D9B');
       this.gateLabel.material.needsUpdate = true;
+      if (ready) this.sfx.pulse();         // o baque de destravar
+    }
+
+    // Abertura: 1,4 s de folhas correndo para os lados. A fresta vira uma
+    // fenda de luz que cresce, então a porta ABRE em vez de sumir.
+    if (this.gateLeaves) {
+      const alvo = s.gateOpen ? 1 : 0;
+      const a = alvo === 0 ? 0 : Math.min(1, (s.t - (s.gateT || 0)) / 1.4);
+      const e = a * a * (3 - 2 * a);       // suaviza início e fim
+      const cor = s.gateOpen ? 0x00E5FF : 0xFF2D9B;
+      for (let i = 0; i < 2; i++) {
+        const folha = this.gateLeaves[i];
+        const lado = i === 0 ? -1 : 1;
+        folha.position.x = lado * (this.gateW / 2 + e * this.gateW);
+        folha.userData.fresta.material.color.setHex(cor);
+        folha.userData.fresta.material.opacity = 0.9 * (1 - e * 0.7);
+      }
+      this.gateGlow.material.color.setHex(cor);
+      this.gateGlow.material.opacity = 0.35 + e * 0.5;
     }
     if (!ready || s.done) return;
     if (Math.hypot(pl.pos.x - g.x, pl.pos.z - g.z) < P.GATE_R && Math.abs(pl.pos.y - 0) < 4) {
@@ -1580,7 +1691,8 @@ export class Game {
     g.fillStyle = !s.maskHave ? '#3a3350' : s.maskLock > 0 ? '#FF2D9B' : s.maskOn ? '#F3EFE6' : '#00E5FF';
     g.fillRect(bx, 60, bw * (1 - heat), 30);
     g.fillStyle = '#8fa0b4'; g.font = '20px system-ui, sans-serif';
-    g.fillText(!s.maskHave ? '—' : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'GUARDADA'), W - 30, 112);
+    g.fillText(!s.maskHave ? (s.masks > 0 ? 'NA MOCHILA x' + s.masks : '—')
+      : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'GUARDADA'), W - 30, 112);
 
     // faixa do objetivo
     g.fillStyle = 'rgba(255,201,60,0.14)'; g.fillRect(0, H - 74, W, 74);
@@ -1664,7 +1776,11 @@ export class Game {
       }
     }
     if (this.maskPickup) this.maskPickup.rotation.y = Math.sin(t) * 0.5;
-    if (this.gateGroup) this.gateRing.rotation.z += dt * 0.5;
+    // a porta não gira (o anel girava); ela respira enquanto está travada,
+    // para continuar chamando atenção do outro lado do corredor
+    if (this.gateGlow && this.s && !this.s.gateOpen) {
+      this.gateGlow.material.opacity = 0.30 + Math.sin(this.s.t * 2.4) * 0.10;
+    }
     if (this.scanMeshes) {
       for (const m of this.scanMeshes) {
         m.material.opacity = s && s.maskOn ? 0.06 : 0.32 + Math.sin(t * 4) * 0.08;
