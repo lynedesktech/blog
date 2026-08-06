@@ -9,6 +9,7 @@
 // depender de CORS e sem baixar o arquivo inteiro antes de começar.
 export const TRILHAS = {
   corredor: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_203156_675ced0c-fc38-4d9f-84cb-4d24f932a630.m4a',
+  auditoria: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_204307_c5a30154-6e19-42a4-bd93-5960f743e204.m4a',
 };
 
 export class Sfx {

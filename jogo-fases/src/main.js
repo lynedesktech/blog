@@ -676,6 +676,9 @@ export class Game {
     this._say(i === 0 ? STR.aya.start : def.sub, 6);
     // a guia se posta ao lado da entrada de cada fase
     this.ayaGroup.position.set(-def.w / 2 + 1.4, 2.4, -6);
+    // a fase do chefe troca a trilha: e' o unico ponto do jogo onde a pressao
+    // vira o assunto, e a musica precisa dizer isso antes do jogador ler nada
+    this.sfx.musicStart(def.boss ? TRILHAS.auditoria : TRILHAS.corredor);
     if (this.onPhase) this.onPhase(i + 1, LEVELS.length);
   }
 
