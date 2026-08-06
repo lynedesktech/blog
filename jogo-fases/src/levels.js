@@ -327,7 +327,10 @@ export function buildLevel(def, rng) {
   // ---------------------------------------------------------------------------
   const maskItems = [];
   if (def.mask) {
-    const fim = scanners.length ? scanners[0].z + 4 : zEnd + 4;
+    // O pedestal fica em scanners[0].z + 7 (ver main.js). As soltas param 7 m
+    // ANTES dele: com uma nascendo a 1,5 m do encaixe, você pegava e encaixava
+    // no mesmo passo e a mecânica de procurar deixava de existir.
+    const fim = scanners.length ? scanners[0].z + 14 : zEnd + 4;
     const ini = -3;
     for (let i = 0; i < (def.masks || 2); i++) {
       for (let k = 0; k < 500; k++) {
