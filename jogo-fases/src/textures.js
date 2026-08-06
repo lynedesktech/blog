@@ -8,6 +8,12 @@
 
 import * as THREE from '../vendor/three.module.js';
 
+// Arte gerada, servida pelo CDN (que devolve access-control-allow-origin: *,
+// senão o canvas ficaria contaminado e getImageData falharia).
+const ART = {
+  mask: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_203155_791a2a13-96b0-4b3c-a200-f7800349a0f8.svg',
+};
+
 const PAL = {
   void: '#07030f',
   cyan: '#00E5FF',
@@ -192,11 +198,13 @@ export function faceGlyphTexture(tone, female, dark) {
 // A estática magenta é linguagem visual de inimigo/perigo — usar no item
 // confundia as duas coisas.
 export function maskGlyphTexture(clean = false) {
-  const S = 128;
+  const S = 512;
   const c = canvas(S);
   const g = c.getContext('2d');
   g.clearRect(0, 0, S, S);
-  g.translate(S / 2, S / 2);
+  g.save();
+  g.scale(S / 128, S / 128);
+  g.translate(128 / 2, 128 / 2);
 
   // silhueta de máscara branca lisa
   g.fillStyle = PAL.bone;
@@ -228,10 +236,59 @@ export function maskGlyphTexture(clean = false) {
       g.stroke();
     }
   }
+  g.restore();
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+
+  // O desenho acima virou só a rede de segurança: é o que aparece enquanto a
+  // arte de verdade não chegou, e é o que fica se o CDN estiver fora do ar.
+  // Quando a arte carrega, ela substitui o canvas inteiro.
+  carregaArteDaMascara(c, g, t, clean);
   return t;
+}
+
+// A arte vem em SVG com fundo #07030F chapado — sprite precisa de transparência,
+// então o fundo sai por LUMINÂNCIA em vez de por cor exata: assim a borda
+// suavizada do vetor vira alfa gradual e não um recorte serrilhado.
+function carregaArteDaMascara(c, g, tex, clean) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';   // o CDN devolve access-control-allow-origin: *
+  img.onload = () => {
+    const S = c.width;
+    try {
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, S, S);
+      g.drawImage(img, 0, 0, S, S);
+
+      const d = g.getImageData(0, 0, S, S);
+      const p = d.data;
+      for (let i = 0; i < p.length; i += 4) {
+        const lum = (p[i] * 0.2126 + p[i + 1] * 0.7152 + p[i + 2] * 0.0722) / 255;
+        p[i + 3] = Math.round(255 * Math.min(1, Math.max(0, (lum - 0.10) / 0.20)));
+      }
+      g.putImageData(d, 0, 0);
+
+      if (!clean) {
+        // a estática magenta continua sendo linguagem de inimigo, não do item
+        g.globalCompositeOperation = 'source-atop';
+        g.strokeStyle = 'rgba(255,45,155,0.9)';
+        g.lineWidth = S / 64;
+        for (let i = 0; i < 9; i++) {
+          const y = S * (0.09 + i * 0.086);
+          g.beginPath();
+          g.moveTo(S * 0.10, y);
+          g.lineTo(S * 0.90, y + ((i * 7) % 5 - 2) * (S / 128));
+          g.stroke();
+        }
+        g.globalCompositeOperation = 'source-over';
+      }
+      tex.needsUpdate = true;
+    } catch (e) {
+      /* canvas contaminado ou getImageData bloqueado: fica o desenho de reserva */
+    }
+  };
+  img.src = ART.mask;
 }
 
 // ---------------------------------------------------------------- fx_dust

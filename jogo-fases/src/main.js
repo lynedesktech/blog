@@ -73,7 +73,10 @@ const ASSETS = {
   floor: CDN + 'b2921ab3-5b4b-44aa-b7ae-3c7287a022ba.jpg',
   panel: CDN + 'ddae4f29-0bbd-41ab-b47b-18d1e5c17bd0.jpg',
   sky: CDN + '796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg',
-  aya: CDN + '8aaddb26-1ca7-435b-92f8-8b6dea9e1fbd.jpg',
+  // AYA nova: personagem fictícia, na paleta do jogo (vácuo preto-violeta,
+  // luz ciano de um lado, contraluz dourado do outro). A anterior não
+  // conversava com o resto da cena.
+  aya: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_204404_58318017-1aec-4b39-8c99-94a4344ea1c8.png',
 };
 
 const _v1 = new THREE.Vector3();
