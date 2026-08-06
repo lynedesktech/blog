@@ -73,6 +73,7 @@ const ASSETS = {
   floor: CDN + 'b2921ab3-5b4b-44aa-b7ae-3c7287a022ba.jpg',
   panel: CDN + 'ddae4f29-0bbd-41ab-b47b-18d1e5c17bd0.jpg',
   sky: CDN + '796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg',
+  ayaVid: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_212107_31ec2646-f050-4da4-baec-602f160a2cf4.mp4',
   door: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_211921_99c1d9a0-c27e-437c-a361-a73e98a7b7de.png',
   // AYA nova: personagem fictícia, na paleta do jogo (vácuo preto-violeta,
   // luz ciano de um lado, contraluz dourado do outro). A anterior não
@@ -250,6 +251,33 @@ export class Game {
     });
   }
 
+  // AYA falando. O retrato parado dizia "tem alguém aqui"; a boca mexendo diz
+  // "essa pessoa está falando COM você". O vídeo entra como VideoTexture no
+  // mesmo plano; se falhar, fica o retrato que já estava lá.
+  _ayaFalante() {
+    const v = document.createElement('video');
+    v.crossOrigin = 'anonymous';   // preciso, senão a textura contamina o canvas
+    v.playsInline = true;
+    v.muted = true;
+    v.loop = false;                // a primeira passada tem voz; depois só a boca
+    v.preload = 'auto';
+    v.src = ASSETS.ayaVid;
+    v.addEventListener('canplay', () => {
+      const t = new THREE.VideoTexture(v);
+      t.colorSpace = THREE.SRGBColorSpace;
+      this.ayaMat.map = t;
+      this.ayaMat.needsUpdate = true;
+    }, { once: true });
+    // terminou a fala: volta a rodar em silêncio, para ela não repetir a frase
+    // em loop eterno enquanto você joga
+    v.addEventListener('ended', () => {
+      v.muted = true;
+      v.loop = true;
+      v.play().catch(() => {});
+    });
+    this.ayaVideo = v;
+  }
+
   _panel(w, h, cw, ch, order) {
     const canvas = document.createElement('canvas');
     canvas.width = cw; canvas.height = ch;
@@ -279,6 +307,7 @@ export class Game {
     });
     new THREE.TextureLoader().load(ASSETS.aya,
       (t) => { t.colorSpace = THREE.SRGBColorSpace; this.ayaMat.map = t; this.ayaMat.needsUpdate = true; });
+    this._ayaFalante();
     this.ayaGroup = new THREE.Group();
     this.ayaGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), this.ayaMat));
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -1014,12 +1043,18 @@ export class Game {
     // a trilha entra aqui porque start() vem de um clique — sem gesto do
     // usuário o navegador barra qualquer áudio
     this.sfx.musicStart(TRILHAS.corredor);
+    // start() vem de um clique, então aqui o navegador deixa tocar com som
+    if (this.ayaVideo) {
+      this.ayaVideo.muted = false;
+      this.ayaVideo.currentTime = 0;
+      this.ayaVideo.play().catch(() => { this.ayaVideo.muted = true; this.ayaVideo.play().catch(() => {}); });
+    }
     this.totalDeaths = 0;
     this.s = null;
     this.loadPhase(phase);
   }
 
-  stop() { this.mode = 'idle'; this.sfx.droneStop(); this.sfx.musicStop(); }
+  stop() { this.mode = 'idle'; this.sfx.droneStop(); this.sfx.musicStop(); if (this.ayaVideo) this.ayaVideo.pause(); }
 
   _say(text, dur) { this.s.aya = text; this.s.ayaT = dur || 4.5; this._subDirty = true; }
   _sayOnce(key, dur) {
