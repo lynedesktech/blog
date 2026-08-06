@@ -74,7 +74,7 @@ const ASSETS = {
   panel: CDN + 'ddae4f29-0bbd-41ab-b47b-18d1e5c17bd0.jpg',
   sky: CDN + '796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg',
   ayaVid: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_212107_31ec2646-f050-4da4-baec-602f160a2cf4.mp4',
-  door: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_211921_99c1d9a0-c27e-437c-a361-a73e98a7b7de.png',
+  door: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_213418_bcd63cc3-9702-4a7e-a2f4-c9c782bf6e5c.png',
   // AYA nova: personagem fictícia, na paleta do jogo (vácuo preto-violeta,
   // luz ciano de um lado, contraluz dourado do outro). A anterior não
   // conversava com o resto da cena.
@@ -712,7 +712,7 @@ export class Game {
     gate.position.set(lv.gate.x, 0, lv.gate.z);
     const DW = def.w, DH = def.h, meia = DW / 2;
 
-    const painel = () => new THREE.MeshLambertMaterial({ map: this.surf.door, color: 0xb9c2d6 });
+    const painel = () => new THREE.MeshLambertMaterial({ map: this.surf.door, color: 0x98a0ad });
 
     // luz do outro lado: fica ATRÁS das folhas, então só se vê pelo que abriu
     this.gateGlow = new THREE.Mesh(
@@ -765,6 +765,51 @@ export class Game {
     this.gateGroup = gate;
     this.gateW = meia;
 
+    // --- PEDESTAL DO ROSTO: uma máscara de tamanho de gente, vazia, na frente
+    // da porta. Os pedaços que você recolhe SÃO do seu rosto, então montá-los
+    // aqui é remontar a sua cara para a máquina — e é isso que destranca o
+    // ferro. Antes bastava encostar num anel, o que não dizia nada.
+    const ped = new THREE.Group();
+    ped.position.set(0, 0, lv.gate.z + 4.5);
+
+    const plinto = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.85, 1.05, 1.0, 12),
+      new THREE.MeshLambertMaterial({ map: this.surf.door, color: 0x7c8492 })
+    );
+    plinto.position.y = 0.5;
+    ped.add(plinto);
+
+    // o rosto: começa apagado e vai acendendo conforme você junta os pedaços
+    this.faceMask = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.5, 1.5),
+      new THREE.MeshBasicMaterial({
+        map: this.tex.maskClean, transparent: true, opacity: 0.16,
+        color: 0x3a3350, depthWrite: false, side: THREE.DoubleSide,
+      })
+    );
+    this.faceMask.position.y = 1.85;
+    ped.add(this.faceMask);
+
+    this.faceHalo = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.4, 3.4),
+      new THREE.MeshBasicMaterial({
+        map: this.tex.ringG, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+      })
+    );
+    this.faceHalo.position.y = 1.85;
+    ped.add(this.faceHalo);
+
+    this.faceLabel = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: this._label(STR.ped_label, '#FFC93C', 44), transparent: true, depthWrite: false,
+    }));
+    this.faceLabel.scale.set(2.6, 0.6, 1);
+    this.faceLabel.position.y = 2.95;
+    ped.add(this.faceLabel);
+
+    this.levelRoot.add(ped);
+    this.facePed = ped;
+
     // --- chefe
     this.bossGroup = null;
     if (def.boss) {
@@ -807,6 +852,8 @@ export class Game {
       // enfeite e a cena de achar a mascara nunca acontecia.
       maskHave: false, maskOn: false, maskHeat: 0, maskLock: 0,
       masks: 0, encaixeT: null,   // inventário e animação do encaixe
+      deposto: false, depT: null, // rosto entregue no pedestal
+
 
       shotCd: 0, shotVis: 0, shots: [],
       gateOpen: false, done: false,
@@ -1328,6 +1375,35 @@ export class Game {
       }
     }
 
+    // ---- pedestal do rosto
+    if (this.faceMask && !s.deposto) {
+      const cheio = s.need ? Math.min(1, s.frags / s.need) : 0;
+      if (s.depT == null) {
+        // o rosto no pedestal acende na medida do que você já juntou
+        this.faceMask.material.opacity = 0.16 + cheio * 0.5;
+        this.faceMask.material.color.setHex(cheio >= 1 ? 0xFFC93C : 0x6a6390);
+        this.faceHalo.material.opacity = cheio >= 1 ? 0.25 + Math.sin(s.t * 3) * 0.10 : 0;
+        const pp = this.facePed.position;
+        if (cheio >= 1 && Math.hypot(pp.x - pl.pos.x, pp.z - pl.pos.z) < 2.6) {
+          s.depT = s.t;
+          this.sfx.lock();
+        }
+      } else {
+        const a = Math.min(1, (s.t - s.depT) / 1.6);
+        this.faceMask.material.opacity = 0.66 + a * 0.34;
+        this.faceMask.material.color.setHex(0xFFFFFF);
+        this.faceMask.scale.setScalar(1 + a * 0.25);
+        this.faceHalo.material.opacity = 0.25 + a * 0.65;
+        this.faceHalo.scale.setScalar(1 + a * 0.6);
+        if (a >= 1) {
+          s.depT = null;
+          s.deposto = true;
+          this.sfx.pulse();
+          this._sayOnce('face_done', 7);
+        }
+      }
+    }
+
     if (s.encaixeT != null) {
       const a = Math.min(1, (s.t - s.encaixeT) / 1.1);
       const u = this.maskPickup.userData;
@@ -1589,7 +1665,8 @@ export class Game {
 
   _gate() {
     const s = this.s, g = this.level.gate, pl = this.pl;
-    const ready = s.frags >= s.need && (!s.boss || s.boss.hp <= 0);
+    // não basta ter os pedaços: eles precisam estar montados no pedestal
+    const ready = s.deposto && (!s.boss || s.boss.hp <= 0);
     if (ready !== s.gateOpen) {
       s.gateOpen = ready;
       s.gateT = s.t;                       // marca o instante da destrava

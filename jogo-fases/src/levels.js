@@ -311,14 +311,19 @@ export function buildLevel(def, rng) {
     }
   }
 
-  // Reserva: sempre 2 pedaços a mais do que a fase cobra. Assim nem um caso raro
-  // de posição ruim, nem um pedaço que o jogador não achou, trava o portão.
+  // Quantidade EXATA: o mapa tem tantos pedaços quantos a fase cobra, nem um a
+  // mais. Já houve reserva de 2 aqui, de quando a posição não era validada e um
+  // pedaço podia nascer inalcançável — era proteção contra aquele bug. Com a
+  // validação acima (chão embaixo, fora de sólidos, fora do curso das prensas)
+  // a causa acabou, e a reserva só servia para deixar pedaço sobrando no mapa e
+  // tirar o sentido do contador do HUD.
   let guard = 0;
-  while (frags.length < def.need + 2 && guard++ < 60) {
+  while (frags.length < def.need && guard++ < 80) {
     const f = tryAnywhere();
     if (!f) break;
     frags.push(f);
   }
+  if (frags.length > def.need) frags.length = def.need;
 
   // ---------------------------------------------------------------------------
   // Máscaras soltas. São item de INVENTÁRIO: você acha pelo mapa, guarda, e
