@@ -128,7 +128,12 @@
     /* os controles ja estao na tela inicial e em COMO JOGAR; aqui so cobriam
        os proprios botoes de toque */
     body.touch #keys{display:none!important}
-    #aya2d{bottom:9.5rem;font-size:.84rem;padding:.5rem .8rem}
+    /* botoes em LINHA no rodape: alvo maior para o dedo e libera a faixa do
+       meio, onde a legenda da AYA precisa caber */
+    #touch{left:.5rem;right:.5rem;flex-direction:row;gap:.4rem;align-items:stretch}
+    #touch button{flex:1;min-width:0;padding:.85rem .3rem;font-size:.66rem}
+    #aya2d{left:.5rem;right:.5rem;transform:none;max-width:none;
+      bottom:6.2rem;font-size:.84rem;padding:.5rem .8rem}
     #toast{font-size:1.15rem;top:52%}
   }
 </style>
