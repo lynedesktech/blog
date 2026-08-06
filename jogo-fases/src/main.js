@@ -398,6 +398,21 @@ export class Game {
   // A COLISÃO continua nas caixas grandes de levels.js; aqui só se decide o que
   // o jogador vê. Sem isso, uma laje de 26 m mostraria a textura esticada uma
   // única vez. Tudo sai em InstancedMesh, então centenas de placas = 1 draw call.
+  // Textura de superfície da fase atual. Cai na antiga se a fase não declarar
+  // uma, e guarda em cache para não rebaixar a mesma imagem a cada troca.
+  _texFase(url, reserva) {
+    if (!url) return reserva;
+    this._texCache = this._texCache || {};
+    if (!this._texCache[url]) {
+      const t = new THREE.TextureLoader().load(url);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.anisotropy = 4;
+      this._texCache[url] = t;
+    }
+    return this._texCache[url];
+  }
+
   _surfaces(blocks, tex, pick, tile = 4.2, tint = 0xffffff) {
     if (!this.planeGeo) this.planeGeo = new THREE.PlaneGeometry(1, 1);
     const inst = [];
@@ -427,7 +442,15 @@ export class Game {
     inst.forEach((o, k) => {
       _e1.set(o.rot.x, o.rot.y, 0, 'YXZ');
       _q1.setFromEuler(_e1);
-      _m1.compose(o.p, _q1, _v2.set(o.su, o.sv, 1));
+      // Cada placa mostra a MESMA imagem, carimbada a cada 4,2 m corredor
+      // afora — era isso que lia como "a mesma sala repetida", não a emenda
+      // do tiling. Espelhar a placa em u e/ou v pela posição dá 4 orientações
+      // da mesma textura e quebra o padrão, de graça: nenhuma imagem nova,
+      // nenhum draw call a mais, ainda um InstancedMesh só.
+      const h = Math.abs(Math.round(o.p.x * 7.3 + o.p.y * 3.1 + o.p.z * 11.7));
+      const fu = (h & 1) ? -1 : 1;
+      const fv = (h & 2) ? -1 : 1;
+      _m1.compose(o.p, _q1, _v2.set(o.su * fu, o.sv * fv, 1));
       mesh.setMatrixAt(k, _m1);
     });
     mesh.instanceMatrix.needsUpdate = true;
@@ -440,14 +463,15 @@ export class Game {
     // As texturas são escurecidas (tint) de propósito: o cenário é fundo —
     // feixes, coletáveis e inimigos precisam ser o que mais brilha na cena.
     // pisos: face de cima
-    this._surfaces(lv.blocks, this.surf.floor, (b) => {
+    const pal = lv.def.pal || {};
+    this._surfaces(lv.blocks, this._texFase(pal.floorImg, this.surf.floor), (b) => {
       if (b.kind !== 'floor') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y + b.hy + E, b.z), { x: -Math.PI / 2, y: 0 }];
     }, 4.2, 0x8b90a2);
 
     // paredes: a face virada para dentro do corredor
-    this._surfaces(lv.blocks, this.surf.wall, (b) => {
+    this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall), (b) => {
       if (b.kind !== 'wall') return null;
       if (b.hx < b.hz) {           // parede fina em X -> encara o eixo X
         const s = b.x > 0 ? -1 : 1;
