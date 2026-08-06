@@ -18,7 +18,7 @@ jogo-fases/             "O Corredor Codificado" — three.js r169 + WebXR
   src/textures.js       texturas procedurais em canvas
   src/audio.js          áudio sintetizado em WebAudio
   vendor/               three.module.js e VRButton.js (three@0.169.0)
-api/joy.js              FALTANDO — ver abaixo
+api/joy.js              função serverless que conversa com a API da Anthropic
 ```
 
 ## De onde veio este repositório
