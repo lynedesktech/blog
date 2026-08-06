@@ -51,7 +51,7 @@ export const STR = {
   ped_label: 'ENCAIXE O ROSTO',
   obj_boss: 'Agache no feixe e atire quando a lente abrir',
   slot_label: 'ENCAIXE A MÁSCARA',
-  obj_mask: 'Parede-scanner à frente — vista a máscara (F) para o sistema te reconhecer',
+  obj_mask: 'Parede-scanner à frente — vista a máscara para o sistema te reconhecer',
 
   gate_locked: 'ROSTO INCOMPLETO',
   gate_open: 'RECONHECIDO',

@@ -114,6 +114,23 @@
   #keys.on{display:block}
   #dev{position:fixed;top:6px;left:8px;color:#0f0;font:12px monospace;z-index:30;display:none}
   .fine{font-size:.72rem;color:#6d7789;letter-spacing:.05em}
+
+  /* ---------- celular: o topo e' estreito e nao cabe painel largo + objetivo */
+  @media (max-width:820px){
+    #hint{top:.5rem;left:.5rem;right:.5rem;transform:none;max-width:none;
+      font-size:.74rem;padding:.45rem .7rem}
+    #hud2d{left:.5rem;right:.5rem;min-width:0;padding:.5rem .7rem;font-size:.72rem}
+    #hud2d .big{font-size:1.15rem}
+    #hud2d .lab{font-size:.58rem;letter-spacing:.12em}
+    #hud2d .row{margin:.1rem 0}
+    #maskbar{width:72px;height:.55rem}
+    #hud2d .hearts span{width:.7rem;height:.7rem}
+    /* os controles ja estao na tela inicial e em COMO JOGAR; aqui so cobriam
+       os proprios botoes de toque */
+    body.touch #keys{display:none!important}
+    #aya2d{bottom:9.5rem;font-size:.84rem;padding:.5rem .8rem}
+    #toast{font-size:1.15rem;top:52%}
+  }
 </style>
 </head>
 <body>
@@ -341,7 +358,7 @@ setInterval(() => {
   $('maskfill').style.transform = `scaleX(${s.maskHave ? Math.max(0, heat) : 0})`;
   $('maskfill').style.background = s.maskLock > 0 ? 'var(--mag)' : s.maskOn ? 'var(--bone)' : 'var(--cyan)';
   $('hv-mask').textContent = !s.maskHave ? '—' : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'F LIGA');
-  $('hv-phase').textContent = `${STR.hud_phase} ${s.phase + 1}/5 · ${s.objective}`;
+  $('hv-phase').textContent = `${STR.hud_phase} ${s.phase + 1}/5`;
 
   // fala da AYA como legenda fixa
   $('aya2d').classList.toggle('on', !!s.aya);
@@ -365,6 +382,16 @@ setInterval(() => {
     t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
     clearTimeout(tId); tId = setTimeout(() => t.classList.remove('on'), 950);
   }
+  // Em celular a caixa de OBJETIVO e o painel disputavam a mesma faixa do topo
+  // e o painel ficava ilegivel. Aqui o painel e' empurrado para logo abaixo da
+  // caixa, medindo a altura real dela (que muda com a quebra de linha).
+  if (window.innerWidth < 820) {
+    const r = $('hint').getBoundingClientRect();
+    $('hud2d').style.top = (r.height ? r.bottom + 8 : 14) + 'px';
+  } else {
+    $('hud2d').style.top = '';
+  }
+
   lastFrags = s.frags;
 }, 120);
 
