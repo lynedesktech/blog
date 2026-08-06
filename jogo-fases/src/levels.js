@@ -123,20 +123,9 @@ export function buildLevel(def, rng) {
     decor.push({ x: 0, y: H, z: cz, w: W, d: len });
   };
 
-  // Altura baixa e fixa: na altura do peito em toda situação — dentro do túnel
-  // baixo, sobre plataforma e no meio do pulo. Antes subiam até 2,3 m e podiam
-  // nascer DENTRO do bloco do teto baixo, incoletáveis.
-  const dropFrags = (n, z0, len) => {
-    for (let i = 0; i < n; i++) {
-      const t = (i + 1) / (n + 1);
-      frags.push({
-        x: (rng() - 0.5) * (W - 3),
-        y: 1.0 + rng() * 0.4,
-        z: z0 - len * t,
-        taken: false,
-      });
-    }
-  };
+  // Os pedidos de pedaço são anotados aqui e só viram posição DEPOIS que toda a
+  // geometria existe — senão não há contra o que validar.
+  const fragReqs = [];
 
   for (const s of def.segs) {
     const len = s.len;
@@ -244,13 +233,83 @@ export function buildLevel(def, rng) {
         slab(0, cz, W, len);
     }
 
-    if (s.frags) dropFrags(s.frags, z0, len);
+    if (s.frags) fragReqs.push({ n: s.frags, z0, len });
     z = z1;
   }
 
   // fecha o fundo e a entrada
   wall(0, H / 2, z - 0.4, W + 1.6, H, 0.8);
   wall(0, H / 2, 0.4, W + 1.6, H, 0.8);
+
+  // ---------------------------------------------------------------------------
+  // Pedaços do rosto: posição VALIDADA contra a geometria já construída.
+  //
+  // Antes o x era sorteado dentro da largura do corredor sem olhar o que havia
+  // embaixo nem em volta. Dava pedaço boiando sobre o vazio de um GAP ou de um
+  // PLAT, dentro do curso de uma prensa e dentro dos pilares da ARENA. Como toda
+  // fase exige 100% dos pedaços, UM pedaço perdido travava a fase para sempre —
+  // e a fase 5 (need 6, sendo 4 na arena dos pilares) era a que mais caía nisso.
+  // ---------------------------------------------------------------------------
+  const CLEAR = 0.55;                       // folga em volta do pedaço
+  const zEnd = z;
+
+  // altura de peito: alcançável de pé e ainda abaixo do teto de 1,45 m do LOW
+  const fragY = () => 0.95 + rng() * 0.30;
+
+  const insideSolid = (x, y, z2) => blocks.some((b) =>
+    Math.abs(x - b.x) <= b.hx + CLEAR &&
+    Math.abs(y - b.y) <= b.hy + 0.05 &&
+    Math.abs(z2 - b.z) <= b.hz + CLEAR);
+
+  // tem chão de verdade embaixo? (as plataformas móveis do PLAT não contam:
+  // elas andam, então um pedaço em cima do vazio continua sendo sorte)
+  const hasFloor = (x, z2) => blocks.some((b) =>
+    b.kind === 'floor' &&
+    Math.abs(x - b.x) <= b.hx - CLEAR &&
+    Math.abs(z2 - b.z) <= b.hz - CLEAR);
+
+  const inCrusher = (x, z2) => crushers.some((c) =>
+    Math.abs(x - c.x) <= c.hx + CLEAR && Math.abs(z2 - c.z) <= c.hz + CLEAR);
+
+  const okAt = (x, y, z2) => hasFloor(x, z2) && !insideSolid(x, y, z2) && !inCrusher(x, z2);
+
+  const tryIn = (z0, len) => {
+    for (let k = 0; k < 60; k++) {
+      const x = (rng() - 0.5) * (W - 3.2);
+      const z2 = z0 - len * (0.12 + rng() * 0.76);
+      const y = fragY();
+      if (okAt(x, y, z2)) return { x, y, z: z2, taken: false };
+    }
+    return null;
+  };
+
+  // último recurso: qualquer lugar válido da fase inteira, para que um trecho
+  // apertado (uma sala de prensas cheia) não engula o pedaço
+  const tryAnywhere = () => {
+    for (let k = 0; k < 500; k++) {
+      const x = (rng() - 0.5) * (W - 3.2);
+      const z2 = -1.5 - rng() * (Math.abs(zEnd) - 3);
+      const y = fragY();
+      if (okAt(x, y, z2)) return { x, y, z: z2, taken: false };
+    }
+    return null;
+  };
+
+  for (const r of fragReqs) {
+    for (let i = 0; i < r.n; i++) {
+      const f = tryIn(r.z0, r.len) || tryAnywhere();
+      if (f) frags.push(f);
+    }
+  }
+
+  // Reserva: sempre 2 pedaços a mais do que a fase cobra. Assim nem um caso raro
+  // de posição ruim, nem um pedaço que o jogador não achou, trava o portão.
+  let guard = 0;
+  while (frags.length < def.need + 2 && guard++ < 60) {
+    const f = tryAnywhere();
+    if (!f) break;
+    frags.push(f);
+  }
 
   // Trava de sanidade (§7.1): se a fase pedir mais pedaços do que existem no
   // mapa, o portão nunca abriria e nenhum teste apontaria o erro.

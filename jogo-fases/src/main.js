@@ -19,7 +19,7 @@ import { VRButton } from '../vendor/VRButton.js';
 import { STR } from './strings.js';
 import { LEVELS, buildLevel } from './levels.js';
 import * as TEX from './textures.js';
-import { Sfx } from './audio.js';
+import { Sfx, TRILHAS } from './audio.js';
 
 // ===========================================================================
 // MÉTRICAS DE AGÊNCIA — congeladas antes do conteúdo (§5.3).
@@ -39,6 +39,7 @@ const P = {
   MASK_COOL: 2.5,        // trava depois de superaquecer
 
   FRAG_R: 1.15,
+  MASK_PICK_R: 2.6,      // pedestal: generoso de proposito, e' item de enredo
   GATE_R: 2.0,
 
   LIVES: 3, INVULN: 1.3, KNOCK: 6,
@@ -572,7 +573,11 @@ export class Game {
     if (def.mask) {
       const g = new THREE.Group();
       // ao LADO do caminho, não no meio — de frente ela virava um paredão na tela
-      g.position.set(-def.w / 2 + 1.6, 1.35, -8);
+      // Encostado na parede ficava a 2,9 m do eixo do corredor (w=9), contra um
+      // raio de coleta de 1,9: quem andasse reto NUNCA encostava. Agora fica a
+      // 1,4 m do eixo — perto o bastante para o trajeto normal pegar, longe o
+      // bastante para não virar um paredão na frente da câmera.
+      g.position.set(-1.4, 1.35, -8);
       const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex.maskClean, transparent: true, depthWrite: false }));
       spr.scale.set(0.75, 0.75, 1);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -648,7 +653,10 @@ export class Game {
       frags: 0, need: def.need, deaths: this.s ? this.s.deaths : 0,
       dronesKilled: this.s ? this.s.dronesKilled : 0,
       lives: P.LIVES, invuln: 0,
-      maskHave: !!def.mask, maskOn: false, maskHeat: 0, maskLock: 0,
+      // false de proposito: nas fases com pedestal a mascara e' CONQUISTADA.
+      // Antes era `!!def.mask`, ou seja, ja vinha no bolso — o pedestal virava
+      // enfeite e a cena de achar a mascara nunca acontecia.
+      maskHave: false, maskOn: false, maskHeat: 0, maskLock: 0,
       shotCd: 0, shotVis: 0, shots: [],
       gateOpen: false, done: false,
       boss: def.boss ? { hp: P.BOSS_HP, t: 0, open: false, ang: 0 } : null,
@@ -864,12 +872,15 @@ export class Game {
   start(phase = 0) {
     this.mode = 'playing';
     this.sfx.init(); this.sfx.resume(); this.sfx.droneStart();
+    // a trilha entra aqui porque start() vem de um clique — sem gesto do
+    // usuário o navegador barra qualquer áudio
+    this.sfx.musicStart(TRILHAS.corredor);
     this.totalDeaths = 0;
     this.s = null;
     this.loadPhase(phase);
   }
 
-  stop() { this.mode = 'idle'; this.sfx.droneStop(); }
+  stop() { this.mode = 'idle'; this.sfx.droneStop(); this.sfx.musicStop(); }
 
   _say(text, dur) { this.s.aya = text; this.s.ayaT = dur || 4.5; this._subDirty = true; }
   _sayOnce(key, dur) {
@@ -1122,9 +1133,10 @@ export class Game {
 
     if (this.maskPickup && this.maskPickup.visible) {
       const p = this.maskPickup.position;
-      if (Math.hypot(p.x - _v1.x, p.y - _v1.y, p.z - _v1.z) < 1.9) {
+      if (Math.hypot(p.x - _v1.x, p.y - _v1.y, p.z - _v1.z) < P.MASK_PICK_R) {
         // apanhou: o item some da cena e vai para o rosto/HUD
         this.maskPickup.visible = false;
+        s.maskHave = true;
         this.sfx.purify();
         this._sayOnce('mask_found', 7);
       }
@@ -1185,7 +1197,19 @@ export class Game {
     for (const b of lv.beams) {
       if (Math.abs(pl.pos.z - b.z) < 7) this._sayOnce(b.kind === 'low' ? 'duck' : 'jump', 4);
     }
-    for (const sc of lv.scanners) if (Math.abs(pl.pos.z - sc.z) < 7) this._sayOnce('scan', 5);
+    for (const sc of lv.scanners) {
+      if (Math.abs(pl.pos.z - sc.z) >= 7) continue;
+      this._sayOnce('scan', 5);
+      // Rede de segurança: a parede-scanner é sólida para quem não está de
+      // máscara. Chegar aqui sem ela — por ter passado reto pelo pedestal —
+      // era beco sem saída, sem nada na tela explicando o porquê.
+      if (!s.maskHave) {
+        s.maskHave = true;
+        if (this.maskPickup) this.maskPickup.visible = false;
+        this.sfx.purify();
+        this._sayOnce('mask_found', 7);
+      }
+    }
   }
 
   _drones(dt) {
@@ -1355,8 +1379,32 @@ export class Game {
       s.done = true;
       this.sfx.win();
       if (s.phase + 1 >= LEVELS.length) this._winGame();
-      else { this._banner(STR.phase_done, `${STR.next_in} 3`); setTimeout(() => { if (this.mode === 'playing') this.loadPhase(s.phase + 1); }, 2600); }
+      else this._contagem(s);
     }
+  }
+
+  // Contagem regressiva de verdade, 3 → 2 → 1. Antes era a string fixa
+  // `${STR.next_in} 3`: o banner nascia escrito "3" e ficava assim os 2,6 s
+  // inteiros até a fase trocar, então parecia travado — porque estava.
+  // Cada passo cria um objeto de banner NOVO, que é o que faz o HUD 2D
+  // (que compara por identidade) redesenhar a cada segundo.
+  _contagem(s) {
+    let n = 3;
+    this._banner(STR.phase_done, `${STR.next_in} ${n}`);
+    const passo = () => {
+      // se o jogador morreu, reiniciou ou trocou de fase, este relógio é de
+      // uma partida que não existe mais
+      if (this.mode !== 'playing' || this.s !== s) return;
+      n--;
+      if (n > 0) {
+        this._banner(STR.phase_done, `${STR.next_in} ${n}`);
+        this._proxT = setTimeout(passo, 1000);
+      } else {
+        this.loadPhase(s.phase + 1);
+      }
+    };
+    clearTimeout(this._proxT);
+    this._proxT = setTimeout(passo, 1000);
   }
 
   _hit() {

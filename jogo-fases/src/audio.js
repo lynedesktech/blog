@@ -3,12 +3,63 @@
 // Traduzido para som: senóides limpas e frias para o sistema, tríades quentes de
 // triângulo para o ouro dos rostos, ruído filtrado sujo para a estática magenta.
 
+// Trilha de fundo. É a única coisa aqui que não é sintetizada: música com
+// forma (motivo que volta, tensão que sobe) não sai de três osciladores.
+// Fica em <audio> e não no grafo do WebAudio de propósito — assim toca sem
+// depender de CORS e sem baixar o arquivo inteiro antes de começar.
+export const TRILHAS = {
+  corredor: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_203156_675ced0c-fc38-4d9f-84cb-4d24f932a630.m4a',
+};
+
 export class Sfx {
   constructor() {
     this.ctx = null;
     this.master = null;
     this.enabled = true;
     this.droneNodes = null;
+    this.music = null;
+    this.musicVol = 0.34;   // atrás dos efeitos, nunca por cima
+  }
+
+  // ------------------------------------------------------------ trilha
+  // Precisa vir de um gesto do usuário, igual ao init() — navegador nenhum
+  // deixa tocar áudio sozinho.
+  musicStart(url) {
+    if (!url) return;
+    if (this.music && this.music.dataset.src === url) { this._musicPlay(); return; }
+    this.musicStop();
+    const a = new Audio();
+    a.src = url;
+    a.dataset.src = url;
+    a.loop = true;
+    a.preload = 'auto';
+    a.volume = 0;
+    a.crossOrigin = 'anonymous';
+    this.music = a;
+    this._musicPlay();
+  }
+
+  _musicPlay() {
+    const a = this.music;
+    if (!a) return;
+    const alvo = this.enabled ? this.musicVol : 0;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => { /* autoplay barrado: silêncio, não erro */ });
+    // fade-in curto para a faixa não entrar dando um tapa
+    const t0 = performance.now();
+    const sobe = () => {
+      if (this.music !== a) return;
+      const k = Math.min(1, (performance.now() - t0) / 1200);
+      a.volume = alvo * k;
+      if (k < 1) requestAnimationFrame(sobe);
+    };
+    requestAnimationFrame(sobe);
+  }
+
+  musicStop() {
+    if (!this.music) return;
+    try { this.music.pause(); } catch (e) { /* já parada */ }
+    this.music = null;
   }
 
   // Precisa de um gesto do usuário — chamado no clique de "jogar".
@@ -29,6 +80,8 @@ export class Sfx {
   setEnabled(on) {
     this.enabled = on;
     if (this.master) this.master.gain.value = on ? 0.5 : 0;
+    // o botão SOM da tela inicial também manda na trilha
+    if (this.music) this.music.volume = on ? this.musicVol : 0;
   }
 
   _env(node, t0, a, d, peak) {
