@@ -29,7 +29,7 @@ export const SEG = {
 export const LEVELS = [
   {
     name: 'CORREDOR',
-    pal: { fog: 0x07030f, fogD: 0.021, amb: 0x5566ff, ambI: 1.25, sky: 0x777d99, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_ea4ea2f4-c9c2-43f7-911d-c66f202ef4a6.png', accent: 0x00E5FF,
+    pal: { fog: 0x07030f, fogD: 0.013, amb: 0x5566ff, ambI: 1.70, sky: 0x777d99, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_ea4ea2f4-c9c2-43f7-911d-c66f202ef4a6.png', accent: 0x00E5FF,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_eee2f5d3-0f7a-4662-9c11-31ccf477f02a.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220835_6e8f7353-68ee-4125-8f43-e3259d27356e.png' },
     sub: 'Ande, pule e recolha os pedaços do seu rosto.',
@@ -45,10 +45,10 @@ export const LEVELS = [
   },
   {
     name: 'VARREDURA',
-    pal: { fog: 0x0a0616, fogD: 0.024, amb: 0x4a5fd0, ambI: 1.20, sky: 0x8a7fb5, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_3cc93d16-5892-48d1-9d05-7e9a43db08fa.png', accent: 0xFF2D9B,
+    pal: { fog: 0x0a0616, fogD: 0.010, amb: 0x4a5fd0, ambI: 1.65, sky: 0x8a7fb5, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_3cc93d16-5892-48d1-9d05-7e9a43db08fa.png', accent: 0xFF2D9B,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220837_80e58cbc-775c-4f8e-9a0e-57da4d340285.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220835_64542dc0-78a8-45d9-95c0-398be831e6ac.png' },
-    sub: 'Os feixes te apagam. A máscara te faz passar, mas de máscara você não coleta.',
+    sub: 'Os feixes te apagam. Ache a máscara branca: com ela no rosto eles te deixam passar.',
     time: 140, need: 7, w: 9, h: 5,
     mask: true,
     segs: [
@@ -63,7 +63,7 @@ export const LEVELS = [
   },
   {
     name: 'VIGILÂNCIA',
-    pal: { fog: 0x050d14, fogD: 0.019, amb: 0x36a8c8, ambI: 1.18, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF,
+    pal: { fog: 0x050d14, fogD: 0.012, amb: 0x36a8c8, ambI: 1.62, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_909f8b51-01ed-4d78-af58-3c5700ef83dd.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_91e1bf25-53be-4c79-93fb-02315a8a44df.png' },
     sub: 'Câmeras e drones. Sem máscara você é alvo; com máscara você é invisível.',
@@ -81,7 +81,7 @@ export const LEVELS = [
   },
   {
     name: 'PRESSÃO',
-    pal: { fog: 0x150a05, fogD: 0.028, amb: 0xff8a44, ambI: 1.10, sky: 0xb08a5e, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_1ed67f71-2ef2-4e0d-9498-09e2b9dbf80c.png', accent: 0xFFC93C,
+    pal: { fog: 0x150a05, fogD: 0.017, amb: 0xff8a44, ambI: 1.55, sky: 0xb08a5e, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_1ed67f71-2ef2-4e0d-9498-09e2b9dbf80c.png', accent: 0xFFC93C,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220927_bac1db1d-39e2-4a61-8c8b-d264fda48c63.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_127ac81e-306e-45c0-a15b-a54de55426f7.png' },
     sub: 'Plataformas, prensas e tempo curto. O modelo está prestes a ser lançado.',
@@ -100,7 +100,7 @@ export const LEVELS = [
   },
   {
     name: 'AUDITORIA',
-    pal: { fog: 0x0d0418, fogD: 0.015, amb: 0xa866ff, ambI: 1.35, sky: 0xa27fc4, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210812_d8e9aa60-491b-41d0-89b0-e1441ba35c88.png', accent: 0xFFC93C,
+    pal: { fog: 0x0d0418, fogD: 0.015, amb: 0xa866ff, ambI: 1.80, sky: 0xa27fc4, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210812_d8e9aa60-491b-41d0-89b0-e1441ba35c88.png', accent: 0xFFC93C,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_c4f6d865-f85b-4f15-83d5-1a288f4dd636.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_7abdec42-15ee-4e2a-a570-5c3411544e27.png' },
     sub: 'O olho central. Agache no feixe, atire quando a lente abrir.',
@@ -343,26 +343,30 @@ export function buildLevel(def, rng) {
   // encaixe no meio do caminho. Nasce sempre ANTES da primeira parede-
   // scanner: achar depois de já precisar não é achado, é castigo.
   // ---------------------------------------------------------------------------
-  // maskSlot é só a âncora de onde termina a janela de sorteio. Vive AQUI,
-  // junto com o mapa, e não no motor: antes o motor calculava uma posição por
-  // conta e este arquivo calculava outra, e nas fases sem parede-scanner as
-  // duas discordavam.
-  const maskSlot = def.mask
-    ? { x: -1.4, y: 1.35, z: scanners.length ? scanners[0].z + 7 : zEnd * 0.34 }
-    : null;
+  // A janela de sorteio é medida em DISTÂNCIA ANDADA a partir do spawn, não em
+  // coordenada z. O corredor cresce no sentido negativo, então contas feitas
+  // direto no z trocavam de sinal e davam o contrário do que diziam: a janela
+  // começava em z = -3, ou seja, 1 m depois do spawn (z = -2), com raio de
+  // coleta de 2,6 m. Na fase 2 a máscara caía a 2,1 m e o jogador já nascia
+  // em cima dela.
+  const zSpawn = -2;
+  const dir = Math.sign(zEnd - zSpawn) || -1;      // sentido da caminhada
+  const dTotal = Math.abs(zEnd - zSpawn);
+  // até onde a máscara ainda serve: 8 m antes da primeira parede-scanner, ou
+  // o primeiro terço do corredor quando a fase não tem uma
+  const dLimite = scanners.length ? Math.abs(scanners[0].z - zSpawn) - 8 : dTotal * 0.34;
+  // e nunca a menos de 14 m do spawn: você tem que ANDAR até ela
+  const dIni = Math.min(14, Math.max(5, dLimite - 8));
+  const dFim = Math.max(dIni + 5, dLimite);
 
   const maskItems = [];
   if (def.mask) {
-    // Nasce sempre ANTES da parede-scanner, com pelo menos 7 m de folga: você
-    // topa com ela no caminho, nunca tem que voltar andando para buscá-la.
-    const fim = maskSlot.z + 7;
-    const ini = -3;
     // UMA por fase. Com mais de uma, o item deixa de significar alguma coisa.
     // Quem passar reto tem a rede de segurança da parede-scanner.
     for (let i = 0; i < (def.masks || 1); i++) {
       for (let k = 0; k < 500; k++) {
         const x = (rng() - 0.5) * (W - 3.2);
-        const z2 = ini + rng() * (fim - ini);
+        const z2 = zSpawn + dir * (dIni + rng() * (dFim - dIni));
         const y = 1.05;
         if (okAt(x, y, z2)) { maskItems.push({ x, y, z: z2, taken: false }); break; }
       }
@@ -374,7 +378,7 @@ export function buildLevel(def, rng) {
   if (def.need > frags.length) def = { ...def, need: frags.length };
 
   return {
-    def, blocks, frags, maskItems, maskSlot, beams, cams, drones, movers, crushers, scanners, decor,
+    def, blocks, frags, maskItems, beams, cams, drones, movers, crushers, scanners, decor,
     end: z, gate: { x: 0, y: 1.6, z: z + 2.6 },
     spawn: { x: 0, y: 0.1, z: -2 },
   };

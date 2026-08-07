@@ -175,9 +175,12 @@ export class Game {
     };
     this._buildSky();
 
-    this.amb = new THREE.AmbientLight(0x5566ff, 0.75);
+    this.amb = new THREE.AmbientLight(0x5566ff, 0.75);   // por fase, sobrescrito por pal.ambI
     s.add(this.amb);
-    const key = new THREE.PointLight(0x00e5ff, 2.1, 34, 1.6);
+    // Alcance de 34 m com decaimento 1,6 deixava tudo além de uns 12 m no
+    // breu. Mais forte, mais longe e com queda mais lenta: a sala inteira
+    // aparece, não só o pedaço embaixo do pé.
+    const key = new THREE.PointLight(0x00e5ff, 3.4, 52, 1.15);
     key.position.set(0, 4, 0);
     this.rig.add(key);                 // luz acompanha o jogador
     this.playerLight = key;
@@ -1380,13 +1383,15 @@ export class Game {
     const s = this.s, lv = this.level, pl = this.pl;
     _v1.set(pl.pos.x, pl.pos.y + pl.h * 0.6, pl.pos.z);
 
-    // pedaços: SÓ sem máscara. É aqui que a escolha dói.
+    // Pedaços do rosto: dá para recolher de máscara também. Antes a máscara
+    // bloqueava a coleta e o jogador ficava travado sem entender por quê,
+    // ainda mais agora que ela vai para o rosto assim que você a pega. O
+    // custo da máscara continua sendo o superaquecimento.
     for (let i = 0; i < lv.frags.length; i++) {
       const f = lv.frags[i];
       if (f.taken) continue;
       const d = Math.hypot(f.x - _v1.x, f.y - _v1.y, f.z - _v1.z);
       if (d > P.FRAG_R) continue;
-      if (s.maskOn) continue;
       f.taken = true;
       s.frags++;
       if (this.fragMeshes[i]) this.fragMeshes[i].visible = false;
@@ -1961,7 +1966,7 @@ export class Game {
 
     this.maskView.material.opacity = s && s.maskOn ? 0.90 : 0;
     this.hurt.material.opacity = s ? s.hurt * (this.opts.flash ? 0.5 : 0.2) : 0;
-    this.playerLight.intensity = s && s.maskOn ? 1.5 : 2.1;
+    this.playerLight.intensity = s && s.maskOn ? 2.6 : 3.4;
 
     // Painéis no mundo SÓ dentro do VR (lá não existe "tela"). No PC/celular o
     // HUD é interface fixa em DOM (index.html), que lê o estado em game.s.
