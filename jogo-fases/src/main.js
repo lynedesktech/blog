@@ -1,4 +1,4 @@
-// O CORREDOR CODIFICADO — motor.
+// O CORREDOR CODIFICADO: motor.
 //
 // Primeira pessoa, física de caixas (AABB), 5 fases.
 // A escolha central é a MÁSCARA BRANCA: com ela o sistema te enxerga (feixes,
@@ -22,7 +22,7 @@ import * as TEX from './textures.js';
 import { Sfx, TRILHAS } from './audio.js';
 
 // ===========================================================================
-// MÉTRICAS DE AGÊNCIA — congeladas antes do conteúdo (§5.3).
+// MÉTRICAS DE AGÊNCIA: congeladas antes do conteúdo (§5.3).
 // Toda medida de fase em levels.js é calibrada por estes números.
 // ===========================================================================
 const P = {
@@ -65,7 +65,7 @@ function mulberry32(a) {
   };
 }
 
-// Assets pesados servidos do CDN (imutável, com CORS aberto) — o deploy do
+// Assets pesados servidos do CDN (imutável, com CORS aberto): o deploy do
 // site leva só código; localmente funciona igual, desde que haja internet.
 const CDN = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/';
 const ASSETS = {
@@ -158,7 +158,7 @@ export class Game {
 
     // Texturas geradas por IA (costuradas pelo pipeline de tiling).
     // Cada placa de superfície mostra o tile UMA vez, então repeat fica em 1 e
-    // a emenda só aparece entre placas vizinhas — que é onde ela é invisível.
+    // a emenda só aparece entre placas vizinhas, que é onde ela é invisível.
     const load = (url) => {
       const t = new THREE.TextureLoader().load(url);
       t.colorSpace = THREE.SRGBColorSpace;
@@ -300,7 +300,7 @@ export class Game {
     this.banner = this._panel(2.2, 0.52, 1360, 320, 1000);
     this.banner.mesh.visible = false;
 
-    // AYA — personagem-guia (imagem gerada no Higgsfield). Mesclagem aditiva:
+    // AYA: personagem-guia (imagem gerada no Higgsfield). Mesclagem aditiva:
     // o fundo preto do retrato some sozinho e ela lê como holograma no ar.
     this.ayaMat = new THREE.MeshBasicMaterial({
       color: 0xffffff, transparent: true, opacity: 0,
@@ -446,7 +446,7 @@ export class Game {
       _e1.set(o.rot.x, o.rot.y, 0, 'YXZ');
       _q1.setFromEuler(_e1);
       // Cada placa mostra a MESMA imagem, carimbada a cada 4,2 m corredor
-      // afora — era isso que lia como "a mesma sala repetida", não a emenda
+      // afora: era isso que lia como "a mesma sala repetida", não a emenda
       // do tiling. Espelhar a placa em u e/ou v pela posição dá 4 orientações
       // da mesma textura e quebra o padrão, de graça: nenhuma imagem nova,
       // nenhum draw call a mais, ainda um InstancedMesh só.
@@ -463,7 +463,7 @@ export class Game {
   _buildSurfaces(lv) {
     const E = 0.02;   // desloca a placa para fora da caixa, evita z-fighting
 
-    // As texturas são escurecidas (tint) de propósito: o cenário é fundo —
+    // As texturas são escurecidas (tint) de propósito: o cenário é fundo,
     // feixes, coletáveis e inimigos precisam ser o que mais brilha na cena.
     // pisos: face de cima
     const pal = lv.def.pal || {};
@@ -495,7 +495,7 @@ export class Game {
         new THREE.Vector3(b.x, b.y - b.hy - E, b.z), { x: Math.PI / 2, y: 0 }];
     }, 3.0, 0x9aa0b4);
 
-    // TETO GERAL: fecha o corredor por cima — sem ele, o vazio aparecia acima
+    // TETO GERAL: fecha o corredor por cima, sem ele, o vazio aparecia acima
     // das paredes como buracos e formas soltas
     const H = lv.def.h;
     const tops = lv.decor.filter((d) => !d.edge)
@@ -525,7 +525,7 @@ export class Game {
     // --- feixes
     // Feixes. Antes eram tres cilindros opacos empilhados e um retangulo chapado
     // no chao: lia como cano de plastico rosa, nao como luz. Agora e' luz de
-    // verdade — tudo em AdditiveBlending, que soma com o que esta atras em vez
+    // verdade: tudo em AdditiveBlending, que soma com o que esta atras em vez
     // de tapar, com nucleo quente, duas camadas de brilho, poca de luz radial no
     // chao e emissores nas duas paredes.
     const cor = (def.pal && def.pal.accent) || COL.mag;
@@ -679,14 +679,14 @@ export class Game {
     });
 
     // --- pedestal da máscara (fases que a oferecem): item CLARO, com nome,
-    // halo dourado de coisa-boa — nada da estática magenta dos inimigos
+    // halo dourado de coisa-boa: nada da estática magenta dos inimigos
     this.maskPickup = null;
     if (def.mask) {
       const g = new THREE.Group();
-      // ao LADO do caminho, não no meio — de frente ela virava um paredão na tela
+      // ao LADO do caminho, não no meio: de frente ela virava um paredão na tela
       // Encostado na parede ficava a 2,9 m do eixo do corredor (w=9), contra um
       // raio de coleta de 1,9: quem andasse reto NUNCA encostava. Agora fica a
-      // 1,4 m do eixo — perto o bastante para o trajeto normal pegar, longe o
+      // 1,4 m do eixo: perto o bastante para o trajeto normal pegar, longe o
       // bastante para não virar um paredão na frente da câmera.
       //
       // E fica logo ANTES da primeira parede-scanner, não lá na entrada. Pegar o
@@ -794,7 +794,7 @@ export class Game {
 
     // --- PEDESTAL DO ROSTO: uma máscara de tamanho de gente, vazia, na frente
     // da porta. Os pedaços que você recolhe SÃO do seu rosto, então montá-los
-    // aqui é remontar a sua cara para a máquina — e é isso que destranca o
+    // aqui é remontar a sua cara para a máquina, e é isso que destranca o
     // ferro. Antes bastava encostar num anel, o que não dizia nada.
     const ped = new THREE.Group();
     ped.position.set(0, 0, lv.gate.z + 4.5);
@@ -875,7 +875,7 @@ export class Game {
       dronesKilled: this.s ? this.s.dronesKilled : 0,
       lives: P.LIVES, invuln: 0,
       // false de proposito: nas fases com pedestal a mascara e' CONQUISTADA.
-      // Antes era `!!def.mask`, ou seja, ja vinha no bolso — o pedestal virava
+      // Antes era `!!def.mask`, ou seja, ja vinha no bolso: o pedestal virava
       // enfeite e a cena de achar a mascara nunca acontecia.
       maskHave: false, maskOn: false, maskHeat: 0, maskLock: 0,
       masks: 0, encaixeT: null,   // inventário e animação do encaixe
@@ -1115,7 +1115,7 @@ export class Game {
   start(phase = 0) {
     this.mode = 'playing';
     this.sfx.init(); this.sfx.resume(); this.sfx.droneStart();
-    // a trilha entra aqui porque start() vem de um clique — sem gesto do
+    // a trilha entra aqui porque start() vem de um clique, sem gesto do
     // usuário o navegador barra qualquer áudio
     this.sfx.musicStart(TRILHAS.corredor);
     // start() vem de um clique, então aqui o navegador deixa tocar com som
@@ -1395,7 +1395,7 @@ export class Game {
     }
 
     // O pedestal deixou de DAR a máscara: ele RECEBE a que você achou. É aqui
-    // que a escolha vira gesto — você encaixa e ela vai para o seu rosto.
+    // que a escolha vira gesto: você encaixa e ela vai para o seu rosto.
     if (this.maskPickup && this.maskPickup.visible && !s.maskHave && s.encaixeT == null) {
       const p = this.maskPickup.position;
       if (Math.hypot(p.x - _v1.x, p.y - _v1.y, p.z - _v1.z) < P.MASK_PICK_R) {
@@ -1455,7 +1455,7 @@ export class Game {
   _hazards(dt) {
     const s = this.s, lv = this.level, pl = this.pl;
 
-    // Movimento dos feixes e das câmeras roda SEMPRE — com a máscara eles só
+    // Movimento dos feixes e das câmeras roda SEMPRE, com a máscara eles só
     // deixam de te ver, não congelam no lugar.
     for (let i = 0; i < lv.beams.length; i++) {
       const b = lv.beams[i];
@@ -1497,7 +1497,7 @@ export class Game {
         if (b.y >= pl.pos.y && b.y <= pl.pos.y + pl.h) this._hit();
       }
       // --- câmeras: dentro do alcance E dentro do cone (por produto escalar,
-      // sem malabarismo de atan2 — a versão angular apontava o cone pra parede)
+      // sem malabarismo de atan2: a versão angular apontava o cone pra parede)
       for (const c of lv.cams) {
         const vx = pl.pos.x - c.x, vz = pl.pos.z - c.z;
         const d = Math.hypot(vx, vz);
@@ -1532,7 +1532,7 @@ export class Game {
       if (Math.abs(dz) >= 7) continue;
       this._sayOnce('scan', 5);
       // Rede de segurança: a parede-scanner é sólida para quem não está de
-      // máscara. Chegar aqui sem ela — por ter passado reto pelo pedestal —
+      // máscara. Chegar aqui sem ela: por ter passado reto pelo pedestal,
       // era beco sem saída, sem nada na tela explicando o porquê.
       if (!s.maskHave) {
         s.maskHave = true;
@@ -1735,7 +1735,7 @@ export class Game {
 
   // Contagem regressiva de verdade, 3 → 2 → 1. Antes era a string fixa
   // `${STR.next_in} 3`: o banner nascia escrito "3" e ficava assim os 2,6 s
-  // inteiros até a fase trocar, então parecia travado — porque estava.
+  // inteiros até a fase trocar, então parecia travado, porque estava.
   // Cada passo cria um objeto de banner NOVO, que é o que faz o HUD 2D
   // (que compara por identidade) redesenhar a cada segundo.
   _contagem(s) {
@@ -1835,7 +1835,7 @@ export class Game {
     g.fillStyle = !s.maskHave ? '#3a3350' : s.maskLock > 0 ? '#FF2D9B' : s.maskOn ? '#F3EFE6' : '#00E5FF';
     g.fillRect(bx, 60, bw * (1 - heat), 30);
     g.fillStyle = '#8fa0b4'; g.font = '20px system-ui, sans-serif';
-    g.fillText(!s.maskHave ? (s.masks > 0 ? 'NA MOCHILA x' + s.masks : '—')
+    g.fillText(!s.maskHave ? (s.masks > 0 ? 'NA MOCHILA x' + s.masks : 'SEM')
       : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'GUARDADA'), W - 30, 112);
 
     // faixa do objetivo

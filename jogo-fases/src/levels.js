@@ -2,7 +2,7 @@
 //
 // As fases são descritas como uma SEQUÊNCIA DE TRECHOS, não como uma lista de
 // caixas soltas: assim o corredor sempre fecha, nunca sobra buraco de colisão e
-// dá pra reequilibrar uma fase mexendo em um número (§9.5 — balanço vive em dado).
+// dá pra reequilibrar uma fase mexendo em um número (§9.5: balanço vive em dado).
 //
 // Eixos: o jogador anda para -Z. x é a largura, y é a altura (0 = chão).
 
@@ -22,7 +22,7 @@ export const SEG = {
 
 // Paleta POR FASE. Antes fog, luz ambiente e tom do horizonte eram globais e
 // iguais nas cinco: com a mesma geometria de corredor, tudo lia como a mesma
-// sala repetida. A identidade de cada fase vem daqui — cor do ar, cor da luz,
+// sala repetida. A identidade de cada fase vem daqui: cor do ar, cor da luz,
 // densidade do fog (quanto se enxerga adiante) e o tom do fundo.
 // A bruma e a luz foram recalibradas depois de jogar: estava escuro demais
 // para ler o corredor, principalmente em tela de celular.
@@ -145,7 +145,7 @@ export function buildLevel(def, rng) {
   };
 
   // Os pedidos de pedaço são anotados aqui e só viram posição DEPOIS que toda a
-  // geometria existe — senão não há contra o que validar.
+  // geometria existe: senão não há contra o que validar.
   const fragReqs = [];
 
   for (const s of def.segs) {
@@ -166,7 +166,7 @@ export function buildLevel(def, rng) {
       }
       case SEG.LOW: {
         slab(0, cz, W, len);
-        // vão livre de 1,45 m contra corpo agachado de 1,06 m: folga real (§8) —
+        // vão livre de 1,45 m contra corpo agachado de 1,06 m: folga real (§8),
         // com 1,2 m o jogador agachado ainda batia e lia como parede invisível
         wall(0, 3.2, cz, W, 3.5, len, 'ceil');
         break;
@@ -268,7 +268,7 @@ export function buildLevel(def, rng) {
   // Antes o x era sorteado dentro da largura do corredor sem olhar o que havia
   // embaixo nem em volta. Dava pedaço boiando sobre o vazio de um GAP ou de um
   // PLAT, dentro do curso de uma prensa e dentro dos pilares da ARENA. Como toda
-  // fase exige 100% dos pedaços, UM pedaço perdido travava a fase para sempre —
+  // fase exige 100% dos pedaços, UM pedaço perdido travava a fase para sempre,
   // e a fase 5 (need 6, sendo 4 na arena dos pilares) era a que mais caía nisso.
   // ---------------------------------------------------------------------------
   const CLEAR = 0.55;                       // folga em volta do pedaço
@@ -325,7 +325,7 @@ export function buildLevel(def, rng) {
 
   // Quantidade EXATA: o mapa tem tantos pedaços quantos a fase cobra, nem um a
   // mais. Já houve reserva de 2 aqui, de quando a posição não era validada e um
-  // pedaço podia nascer inalcançável — era proteção contra aquele bug. Com a
+  // pedaço podia nascer inalcançável: era proteção contra aquele bug. Com a
   // validação acima (chão embaixo, fora de sólidos, fora do curso das prensas)
   // a causa acabou, e a reserva só servia para deixar pedaço sobrando no mapa e
   // tirar o sentido do contador do HUD.
@@ -340,7 +340,7 @@ export function buildLevel(def, rng) {
   // ---------------------------------------------------------------------------
   // Máscaras soltas. São item de INVENTÁRIO: você acha pelo mapa, guarda, e
   // encaixa no pedestal para vestir. Ficam sempre ANTES da primeira parede-
-  // scanner — achar depois de já precisar não é achado, é castigo.
+  // scanner: achar depois de já precisar não é achado, é castigo.
   // ---------------------------------------------------------------------------
   const maskItems = [];
   if (def.mask) {

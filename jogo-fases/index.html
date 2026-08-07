@@ -61,7 +61,7 @@
     letter-spacing:.1em!important;border-radius:2px!important;cursor:pointer!important;
     font-size:.92rem!important;text-transform:uppercase}
 
-  /* botões de tela — só em aparelho com toque, nunca em VR */
+  /* botões de tela: só em aparelho com toque, nunca em VR */
   #touch{position:fixed;right:.9rem;bottom:1.4rem;z-index:15;display:none;
     flex-direction:column;gap:.55rem;align-items:flex-end}
   body.touch #touch.on{display:flex}
@@ -290,7 +290,7 @@ for (const [id, act] of [['b-jump', 'jump'], ['b-mask', 'mask'], ['b-duck', 'duc
   el.addEventListener('click', fire);
 }
 
-// objetivo sempre visível no topo — é o "alguém te ajudando a jogar"
+// objetivo sempre visível no topo: é o "alguém te ajudando a jogar"
 game.onObjective = (txt) => {
   $('hint').innerHTML = '<b>' + STR.hud_obj + '</b>';
   $('hint').appendChild(document.createTextNode(txt));

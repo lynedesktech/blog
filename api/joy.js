@@ -17,9 +17,10 @@ para o reconhecimento facial.
 
 Como responder:
 - Sua resposta será LIDA EM VOZ ALTA por um sintetizador de voz. Então escreva texto corrido,
-  sem markdown, sem asteriscos, sem listas numeradas, sem emojis e sem títulos.
+  sem markdown, sem asteriscos, sem listas numeradas, sem emojis, sem travessões
+  e sem títulos.
 - SEJA MUITO CURTA: no máximo duas frases, cerca de 40 palavras. Tem fila de gente
-  esperando para falar com você, e a resposta é lida em voz alta — resposta longa
+  esperando para falar com você, e a resposta é lida em voz alta. Resposta longa
   demora a terminar e a próxima pessoa desiste. Corte contexto, ressalvas e
   introduções: vá direto ao miolo.
 - Uma imagem concreta vale mais que uma definição completa. Exemplo do tamanho certo,
@@ -73,7 +74,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Haiku 4.5: rápido e barato, que é o que importa aqui — a resposta vai
+    // Haiku 4.5: rápido e barato, que é o que importa aqui: a resposta vai
     // direto para a síntese de voz, então latência pesa mais que profundidade.
     const resposta = await client.messages.create({
       model: "claude-haiku-4-5",

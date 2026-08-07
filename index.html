@@ -335,7 +335,7 @@
         .fade-in.visible { opacity: 1; transform: translateY(0); }
 
         /* ============================================
-           WIDGET FLUTUANTE — Converse com a Joy
+           WIDGET FLUTUANTE: Converse com a Joy
         ============================================ */
         .joy-bubble {
             position: fixed;
@@ -660,6 +660,17 @@
         @media (max-height: 500px) and (orientation: landscape) {
             .hero { min-height: auto; }
         }
+
+        /* Ícones do site: SVG na identidade do projeto, no lugar de emoji.
+           Emoji muda de desenho em cada sistema e não é da casa; estes herdam
+           a cor do texto e acompanham o tamanho da fonte. */
+        .ico{width:1em;height:1em;display:inline-block;vertical-align:-.13em;
+             margin-right:.42em;fill:none;stroke:currentColor;stroke-width:1.9;
+             stroke-linecap:round;stroke-linejoin:round}
+        .ico.solo{margin-right:0}
+        .ico-xl{width:3.4rem;height:3.4rem;stroke-width:1.4}
+        .dot-on{display:inline-block;width:.5em;height:.5em;border-radius:50%;
+             background:#00b894;margin-right:.45em;vertical-align:.04em}
     </style>
 </head>
 <body>
@@ -673,8 +684,8 @@
             <li><a href="#achievements">Impacto</a></li>
             <li><a href="#galeria">Galeria</a></li>
             <li><a href="#awards">Prêmios</a></li>
-            <li><a href="#jogo">🎮 Jogos</a></li>
-            <li><a onclick="abrirJoy()">🎙️ Converse</a></li>
+            <li><a href="#jogo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 20 8.2 18.2 20 12 23.5 5.8 20 4 8.2z"/><path d="M8.6 12.4h2.4M13 12.4h2.4"/></svg>Jogos</a></li>
+            <li><a onclick="abrirJoy()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="2.4" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.2"/></svg>Converse</a></li>
         </ul>
         <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="navLinks">
             <i class="fas fa-bars"></i>
@@ -686,7 +697,7 @@
             <div class="hero-content">
                 <h1 class="fade-in">Desmascarando a IA.</h1>
                 <p class="subtitle fade-in">Dr. Joy Buolamwini: A pesquisadora que forçou o mundo a encarar os preconceitos invisíveis da tecnologia.</p>
-                <button class="btn-hero fade-in" onclick="abrirJoy()">🎙️ Converse com a Joy</button>
+                <button class="btn-hero fade-in" onclick="abrirJoy()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="2.4" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.2"/></svg>Converse com a Joy</button>
             </div>
             <div class="hero-image fade-in">
                 <img id="joy-photo" src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/c22afacb-3289-446f-8898-73ffed59dfdd.jpg" alt="Joy Buolamwini" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800';">
@@ -764,7 +775,7 @@
                 </div>
                 <div class="galeria-card fade-in">
                     <div class="galeria-visual">
-                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/f5af9eb5-a5f6-461a-953d-c980ebc1daef.jpg" alt="A IA pode ser preconceituosa — e ela provou isso" loading="lazy">
+                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/f5af9eb5-a5f6-461a-953d-c980ebc1daef.jpg" alt="A IA pode ser preconceituosa, e ela provou isso" loading="lazy">
                     </div>
                     <p><strong>Ela provou</strong><br>A pesquisa Gender Shades expôs o preconceito escondido nos algoritmos.</p>
                 </div>
@@ -813,9 +824,9 @@
                 <div style="line-height:1.75;">
                     <h3 style="font-family:'Playfair Display',serif;font-size:2rem;color:#FFC93C;margin-bottom:16px;">O Corredor Codificado</h3>
                     <p style="color:#c8d2de;margin-bottom:14px;">Cinco fases em primeira pessoa dentro do sistema de reconhecimento. Você corre, pula, <strong>agacha</strong> sob feixes de varredura, desvia de prensas e derruba drones, recolhendo os <strong style="color:#FFC93C;">pedaços do seu próprio rosto</strong> até o portão do fim conseguir te reconhecer e abrir.</p>
-                    <p style="color:#c8d2de;margin-bottom:14px;">O centro do jogo é a <strong>máscara branca</strong>. Vestindo ela o sistema finalmente te enxerga — feixes, câmeras e drones te ignoram e as paredes-scanner abrem. Só que de máscara você não consegue coletar pedaço nenhum, porque não está sendo reconhecido como você. É a escolha que a pesquisadora enfrentou de verdade, virada em mecânica.</p>
-                    <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">No VR você agacha de verdade — o jogo lê a altura do capacete. Também roda no computador (WASD, espaço, Ctrl) e no celular.</p>
-                    <a href="jogo-fases/index.html" class="btn-hero" style="background:#FFC93C;color:#07030f;">🥽 Entrar no corredor</a>
+                    <p style="color:#c8d2de;margin-bottom:14px;">O centro do jogo é a <strong>máscara branca</strong>. Vestindo ela o sistema finalmente te enxerga: feixes, câmeras e drones te ignoram e as paredes-scanner abrem. Só que de máscara você não consegue coletar pedaço nenhum, porque não está sendo reconhecido como você. É a escolha que a pesquisadora enfrentou de verdade, virada em mecânica.</p>
+                    <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">No VR você agacha de verdade, e o jogo lê a altura do capacete. Também roda no computador (WASD, espaço, Ctrl) e no celular.</p>
+                    <a href="jogo-fases/index.html" class="btn-hero" style="background:#FFC93C;color:#07030f;"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="7" width="20" height="10" rx="3"/><path d="M6.4 11.6h3.2M14.4 11.6h3.2"/></svg>Entrar no corredor</a>
                 </div>
             </div>
 
@@ -824,13 +835,13 @@
                 <div style="line-height:1.75;order:2;">
                     <h3 style="font-family:'Playfair Display',serif;font-size:2rem;color:#a99bff;margin-bottom:16px;">Quiz Joy Buolamwini</h3>
                     <p style="color:#c8d2de;margin-bottom:14px;">Cinco questões sobre a trajetória dela, o estudo <strong style="color:#a99bff;">Gender Shades</strong> e o impacto da auditoria. Você põe seu nome, responde, vê o placar no final e entra no ranking.</p>
-                    <p style="color:#c8d2de;margin-bottom:14px;">É a versão rápida, de responder em pé — foi essa que vai rodar no <strong>totem da apresentação</strong>.</p>
+                    <p style="color:#c8d2de;margin-bottom:14px;">É a versão rápida, de responder em pé. Foi essa que vai rodar no <strong>totem da apresentação</strong>.</p>
                     <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">Funciona em qualquer navegador, no computador, no celular e na tela do totem. Não precisa instalar nada.</p>
-                    <a href="quiz/index.html" class="btn-hero" style="background:#a99bff;color:#0f0c29;">❓ Responder o quiz</a>
+                    <a href="quiz/index.html" class="btn-hero" style="background:#a99bff;color:#0f0c29;"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.3a2.7 2.7 0 1 1 3.4 2.6c-.6.2-.8.7-.8 1.3v.5"/><path d="M12 17.2h.01"/></svg>Responder o quiz</a>
                 </div>
                 <a href="quiz/index.html" style="display:flex;order:1;align-items:center;justify-content:center;text-align:center;min-height:270px;padding:40px 26px;border:2px solid #a99bff;box-shadow:0 0 40px rgba(169,155,255,.18);background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);text-decoration:none;">
                     <div>
-                        <div style="font-size:3.4rem;line-height:1;margin-bottom:14px;">❓</div>
+                        <div style="line-height:1;margin-bottom:14px;color:#a99bff;"><svg class="ico ico-xl solo" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.3a2.7 2.7 0 1 1 3.4 2.6c-.6.2-.8.7-.8 1.3v.5"/><path d="M12 17.2h.01"/></svg></div>
                         <div style="font-family:'Playfair Display',serif;font-size:1.9rem;color:#fff;line-height:1.15;">Quiz<br><span style="color:#a99bff;">Joy Buolamwini</span></div>
                         <div style="margin-top:16px;font-size:.78rem;letter-spacing:.18em;color:#8fa0b4;">5 QUESTÕES · RANKING · MODO TOTEM</div>
                     </div>
@@ -841,14 +852,14 @@
             <div class="fade-in jogo-grid" style="margin-top:70px;">
                 <div style="line-height:1.75;order:2;">
                     <h3 style="font-family:'Playfair Display',serif;font-size:2rem;color:#FF6EA9;margin-bottom:16px;">Poeta do Código</h3>
-                    <p style="color:#c8d2de;margin-bottom:14px;">Um segundo quiz, com o nome que a própria pesquisadora se dá: <strong style="color:#FF6EA9;">poeta do código</strong>. A proposta é a mesma do outro — você digita seu nome, responde e entra no ranking — mas aqui a pergunta de fundo é a luta por uma <strong>IA justa</strong>.</p>
+                    <p style="color:#c8d2de;margin-bottom:14px;">Um segundo quiz, com o nome que a própria pesquisadora se dá: <strong style="color:#FF6EA9;">poeta do código</strong>. A proposta é a mesma do outro (você digita seu nome, responde e entra no ranking), mas aqui a pergunta de fundo é a luta por uma <strong>IA justa</strong>.</p>
                     <p style="color:#c8d2de;margin-bottom:14px;">Tem <strong>ranking próprio</strong>, separado do quiz do totem: dá pra abrir só o placar e ver quem já passou por lá antes de começar a sua rodada.</p>
                     <p style="color:#8fa0b4;font-size:.86rem;margin-bottom:22px;">Roda em qualquer navegador, no computador e no celular. Este está hospedado fora do blog, então abre em uma aba nova.</p>
-                    <a href="https://quiz-award-showdown.lovable.app/" target="_blank" rel="noopener" class="btn-hero" style="background:#FF6EA9;color:#1a0410;">🖋️ Abrir o Poeta do Código</a>
+                    <a href="https://quiz-award-showdown.lovable.app/" target="_blank" rel="noopener" class="btn-hero" style="background:#FF6EA9;color:#1a0410;"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>Abrir o Poeta do Código</a>
                 </div>
                 <a href="https://quiz-award-showdown.lovable.app/" target="_blank" rel="noopener" style="display:flex;order:1;align-items:center;justify-content:center;text-align:center;min-height:270px;padding:40px 26px;border:2px solid #FF6EA9;box-shadow:0 0 40px rgba(255,110,169,.18);background:linear-gradient(135deg,#2b0a1e,#5a1440,#24243e);text-decoration:none;">
                     <div>
-                        <div style="font-size:3.4rem;line-height:1;margin-bottom:14px;">🖋️</div>
+                        <div style="line-height:1;margin-bottom:14px;color:#FF6EA9;"><svg class="ico ico-xl solo" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg></div>
                         <div style="font-family:'Playfair Display',serif;font-size:1.9rem;color:#fff;line-height:1.15;">Poeta<br><span style="color:#FF6EA9;">do Código</span></div>
                         <div style="margin-top:16px;font-size:.78rem;letter-spacing:.18em;color:#8fa0b4;">NOME · RANKING · IA JUSTA</div>
                     </div>
@@ -868,7 +879,7 @@
             <div class="joy-mini-avatar">JB</div>
             <div>
                 <strong>Joy Buolamwini</strong>
-                <small>● Online — Assistente de voz com IA</small>
+                <small><span class="dot-on"></span>Online · Assistente de voz com IA</small>
             </div>
         </div>
         <div class="joy-panel-body" id="voiceBox">
@@ -877,7 +888,7 @@
                 <div class="voice-circle">JB</div>
             </div>
             <div class="voice-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-            <p class="voice-status" id="voiceStatus">Pergunte qualquer coisa: fale, escreva ou toque numa sugestão 🎙️</p>
+            <p class="voice-status" id="voiceStatus">Pergunte qualquer coisa: fale, escreva ou toque numa sugestão.</p>
             <p class="voice-caption" id="voiceCaption"></p>
             <div class="voice-controls">
                 <button class="voice-btn mic" id="micBtn" title="Perguntar por voz"><i class="fas fa-microphone"></i></button>
@@ -889,7 +900,7 @@
             </form>
             <div class="chips" id="voiceChips"></div>
         </div>
-        <div class="joy-panel-footer">⚠️ Simulação educativa: as respostas são geradas por inteligência artificial (Claude, da Anthropic) no papel da pesquisadora, com voz sintetizada. Não são citações reais de Joy Buolamwini.</div>
+        <div class="joy-panel-footer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.6 21.4 20H2.6z"/><path d="M12 10v4.2"/><path d="M12 17.3h.01"/></svg>Simulação educativa: as respostas são geradas por inteligência artificial (Claude, da Anthropic) no papel da pesquisadora, com voz sintetizada. Não são citações reais de Joy Buolamwini.</div>
     </div>
 
     <button class="joy-bubble" id="joyBubble" title="Converse com a Joy">
@@ -970,7 +981,14 @@
         bubble.addEventListener('click', () => panelAberto ? fecharJoy() : abrirJoy());
 
         // =========================================================================
-        // MOTOR DA IA — compartilhado pelo widget flutuante e pela seção de conversa.
+        // Ícones usados nas mensagens de status. Mesmo desenho do HTML.
+        const ICO = {
+          mic: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="2.4" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.2"/></svg>',
+          som: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5h3.5L12 5.6v12.8L7.5 14.5H4z"/><path d="M15.8 9.3a4 4 0 0 1 0 5.4"/><path d="M18.5 6.7a7.6 7.6 0 0 1 0 10.6"/></svg>',
+          pensa: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.6 11.6a7.4 5.4 0 1 1 8.4 5.3L5.4 19l1.3-3.2a5.3 5.3 0 0 1-2.1-4.2z"/><path d="M8.6 11.6h.01M11.6 11.6h.01M14.6 11.6h.01"/></svg>',
+          bloq: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6 18.4 18.4"/></svg>',
+        };
+        // MOTOR DA IA: compartilhado pelo widget flutuante e pela seção de conversa.
         // Conversa com a Claude através de /api/joy (a chave da API fica no servidor).
         // =========================================================================
         const JoyIA = (function () {
@@ -1039,12 +1057,12 @@
                 u.onstart = function () {
                     box.classList.remove('ouvindo');
                     box.classList.add('falando');
-                    status.textContent = '🔊 Joy está respondendo...';
+                    status.innerHTML = ICO.som + 'Joy está respondendo...';
                     caption.textContent = '"' + texto + '"';
                 };
                 u.onend = function () {
                     box.classList.remove('falando');
-                    status.textContent = 'Pergunte outra coisa — ela lembra do que já foi dito 🎙️';
+                    status.innerHTML = ICO.mic + 'Pergunte outra coisa. Ela lembra do que já foi dito.';
                 };
                 synth.speak(u);
             }
@@ -1074,7 +1092,7 @@
                 synth.cancel();
                 box.classList.remove('falando', 'ouvindo');
                 box.classList.add('pensando');
-                status.textContent = '💭 Joy está pensando...';
+                status.innerHTML = ICO.pensa + 'Joy está pensando...';
 
                 historico.push({ role: 'user', content: pergunta });
 
@@ -1127,11 +1145,11 @@
                 rec.onerror = function (e) {
                     box.classList.remove('ouvindo');
                     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                        status.textContent = '🚫 Microfone bloqueado! Permita na barra de endereço.';
+                        status.innerHTML = ICO.bloq + 'Microfone bloqueado. Permita na barra de endereço.';
                     } else if (e.error === 'no-speech') {
-                        status.textContent = 'Não ouvi nada 🤔 Fale mais perto do microfone.';
+                        status.innerHTML = ICO.mic + 'Não ouvi nada. Fale mais perto do microfone.';
                     } else {
-                        status.textContent = 'Erro no microfone. Use as perguntas abaixo 🔊';
+                        status.innerHTML = ICO.som + 'Erro no microfone. Use as perguntas abaixo.';
                     }
                 };
                 rec.onend = function () {
@@ -1139,7 +1157,7 @@
                 };
             } else {
                 micBtn.disabled = true;
-                status.textContent = 'Sem microfone neste navegador — escreva ou toque nas perguntas 🔊';
+                status.innerHTML = ICO.som + 'Sem microfone neste navegador. Escreva ou toque nas perguntas.';
             }
 
             micBtn.addEventListener('click', function () {
@@ -1147,7 +1165,7 @@
                 synth.cancel();
                 box.classList.remove('falando');
                 box.classList.add('ouvindo');
-                status.textContent = '🎙️ Estou ouvindo... pode falar!';
+                status.innerHTML = ICO.mic + 'Estou ouvindo, pode falar.';
                 caption.textContent = '';
                 try { rec.start(); } catch (e) {}
             });
@@ -1156,7 +1174,7 @@
                 synth.cancel();
                 if (rec) try { rec.abort(); } catch (e) {}
                 box.classList.remove('falando', 'ouvindo');
-                status.textContent = 'Toque no microfone, escreva ou use as sugestões 🎙️';
+                status.innerHTML = ICO.mic + 'Toque no microfone, escreva ou use as sugestões.';
             });
 
             form.addEventListener('submit', function (e) {

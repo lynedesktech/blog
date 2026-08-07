@@ -3,7 +3,7 @@
 // "afrofuturist neon wireframe holography, black-violet void, cyan data grid, gold kente shards, magenta glitch accents"
 //
 // Regra de tiling (textures.md): as texturas que repetem são costuradas por
-// construção — todo traço desenhado perto de uma borda é redesenhado deslocado
+// construção: todo traço desenhado perto de uma borda é redesenhado deslocado
 // de +-SIZE no eixo correspondente, então a razão de emenda é 1.0 por definição.
 
 import * as THREE from '../vendor/three.module.js';
@@ -195,7 +195,7 @@ export function faceGlyphTexture(tone, female, dark) {
 
 // ---------------------------------------------------------------- glyph_mask
 // clean=true: versão LIMPA para o item que o jogador veste (branco puro).
-// A estática magenta é linguagem visual de inimigo/perigo — usar no item
+// A estática magenta é linguagem visual de inimigo/perigo: usar no item
 // confundia as duas coisas.
 export function maskGlyphTexture(clean = false) {
   const S = 512;
@@ -248,7 +248,7 @@ export function maskGlyphTexture(clean = false) {
   return t;
 }
 
-// A arte vem em SVG com fundo #07030F chapado — sprite precisa de transparência,
+// A arte vem em SVG com fundo #07030F chapado: sprite precisa de transparência,
 // então o fundo sai por LUMINÂNCIA em vez de por cor exata: assim a borda
 // suavizada do vetor vira alfa gradual e não um recorte serrilhado.
 function carregaArteDaMascara(c, g, tex, clean) {
@@ -293,8 +293,8 @@ function carregaArteDaMascara(c, g, tex, clean) {
 
 // ---------------------------------------------------------------- glyph_maskview
 // O que você vê VESTINDO a máscara. Não é a máscara inteira colada na tela:
-// máscara de verdade se olha ATRAVÉS. Aqui é só a borda — osso opaco nas
-// beiradas, abertura limpa no meio — que é o que o olho lê como "estou com
+// máscara de verdade se olha ATRAVÉS. Aqui é só a borda: osso opaco nas
+// beiradas, abertura limpa no meio, que é o que o olho lê como "estou com
 // algo no rosto" sem esconder o jogo.
 export function maskViewTexture() {
   const W = 1024, H = 768;

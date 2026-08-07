@@ -5,7 +5,7 @@
 
 // Trilha de fundo. É a única coisa aqui que não é sintetizada: música com
 // forma (motivo que volta, tensão que sobe) não sai de três osciladores.
-// Fica em <audio> e não no grafo do WebAudio de propósito — assim toca sem
+// Fica em <audio> e não no grafo do WebAudio de propósito: assim toca sem
 // depender de CORS e sem baixar o arquivo inteiro antes de começar.
 export const TRILHAS = {
   corredor: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_203156_675ced0c-fc38-4d9f-84cb-4d24f932a630.m4a',
@@ -23,7 +23,7 @@ export class Sfx {
   }
 
   // ------------------------------------------------------------ trilha
-  // Precisa vir de um gesto do usuário, igual ao init() — navegador nenhum
+  // Precisa vir de um gesto do usuário, igual ao init(): navegador nenhum
   // deixa tocar áudio sozinho.
   musicStart(url) {
     if (!url) return;
@@ -63,7 +63,7 @@ export class Sfx {
     this.music = null;
   }
 
-  // Precisa de um gesto do usuário — chamado no clique de "jogar".
+  // Precisa de um gesto do usuário: chamado no clique de "jogar".
   init() {
     if (this.ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
