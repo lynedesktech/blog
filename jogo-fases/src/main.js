@@ -696,9 +696,10 @@ export class Game {
       // E fica logo ANTES da primeira parede-scanner, não lá na entrada. Pegar o
       // item a 8 m do começo e só descobrir para que serve 38 m depois não ensina
       // nada; pegar e dar de cara com a parede que só abre de máscara ensina.
-      const primeiroScan = lv.scanners.length ? lv.scanners[0].z : null;
-      const zPed = primeiroScan !== null ? primeiroScan + 7 : -8;
-      g.position.set(-1.4, 1.35, zPed);
+      // A posição vem do MAPA (lv.maskSlot), não de conta feita aqui. Antes
+      // este arquivo calculava uma coisa e o levels.js outra, e nas fases sem
+      // parede-scanner as duas discordavam.
+      g.position.set(lv.maskSlot.x, lv.maskSlot.y, lv.maskSlot.z);
       const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex.maskClean, transparent: true, depthWrite: false }));
       spr.scale.set(0.75, 0.75, 1);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({

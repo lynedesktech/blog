@@ -342,12 +342,23 @@ export function buildLevel(def, rng) {
   // encaixa no pedestal para vestir. Ficam sempre ANTES da primeira parede-
   // scanner: achar depois de já precisar não é achado, é castigo.
   // ---------------------------------------------------------------------------
+  // Onde a máscara branca é vestida. Isto vive AQUI, junto com o mapa, e não
+  // no motor. Antes o motor calculava a posição por conta e o mapa calculava
+  // outra para decidir onde largar a máscara: duas contas para a mesma coisa.
+  // Nas fases 3, 4 e 5, que não têm parede-scanner, o motor caía no valor de
+  // reserva z = -8 (colado na entrada) enquanto a máscara podia nascer no
+  // corredor inteiro, quase sempre DEPOIS. Você chegava no encaixe de mochila
+  // vazia e a máscara estava lá na frente.
+  const maskSlot = def.mask
+    ? { x: -1.4, y: 1.35, z: scanners.length ? scanners[0].z + 7 : zEnd * 0.34 }
+    : null;
+
   const maskItems = [];
   if (def.mask) {
-    // O pedestal fica em scanners[0].z + 7 (ver main.js). As soltas param 7 m
-    // ANTES dele: com uma nascendo a 1,5 m do encaixe, você pegava e encaixava
-    // no mesmo passo e a mecânica de procurar deixava de existir.
-    const fim = scanners.length ? scanners[0].z + 14 : zEnd + 4;
+    // A solta nasce sempre ANTES do lugar onde a máscara é vestida, com pelo
+    // menos 7 m de folga: você topa com ela no caminho, nunca tem que voltar
+    // andando para buscá-la.
+    const fim = maskSlot.z + 7;
     const ini = -3;
     // UMA por fase. Com duas soltas, mais a do pedestal de encaixe, mais o
     // pedestal do rosto, dava quatro coisas parecidas com máscara na mesma
@@ -368,7 +379,7 @@ export function buildLevel(def, rng) {
   if (def.need > frags.length) def = { ...def, need: frags.length };
 
   return {
-    def, blocks, frags, maskItems, beams, cams, drones, movers, crushers, scanners, decor,
+    def, blocks, frags, maskItems, maskSlot, beams, cams, drones, movers, crushers, scanners, decor,
     end: z, gate: { x: 0, y: 1.6, z: z + 2.6 },
     spawn: { x: 0, y: 0.1, z: -2 },
   };
