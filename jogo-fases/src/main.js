@@ -180,7 +180,7 @@ export class Game {
     // Alcance de 34 m com decaimento 1,6 deixava tudo além de uns 12 m no
     // breu. Mais forte, mais longe e com queda mais lenta: a sala inteira
     // aparece, não só o pedaço embaixo do pé.
-    const key = new THREE.PointLight(0x00e5ff, 3.4, 52, 1.15);
+    const key = new THREE.PointLight(0x00e5ff, 2.8, 44, 1.3);
     key.position.set(0, 4, 0);
     this.rig.add(key);                 // luz acompanha o jogador
     this.playerLight = key;
@@ -467,15 +467,20 @@ export class Game {
   _buildSurfaces(lv) {
     const E = 0.02;   // desloca a placa para fora da caixa, evita z-fighting
 
-    // As texturas são escurecidas (tint) de propósito: o cenário é fundo,
-    // feixes, coletáveis e inimigos precisam ser o que mais brilha na cena.
+    // Chão, parede e teto são MeshBasicMaterial, ou seja, material SEM
+    // iluminação: AmbientLight e a luz que acompanha o jogador não encostam
+    // neles (só a porta de ferro, que é Lambert). Quem decide o brilho das
+    // salas é este tint aqui e a densidade da bruma, e mais nada.
+    // O cenário continua sendo fundo: os feixes são aditivos e os coletáveis
+    // têm halo, então seguem brilhando mais que a parede. Mas estava escuro
+    // demais para ler o corredor, principalmente em tela de celular.
     // pisos: face de cima
     const pal = lv.def.pal || {};
     this._surfaces(lv.blocks, this._texFase(pal.floorImg, this.surf.floor), (b) => {
       if (b.kind !== 'floor') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y + b.hy + E, b.z), { x: -Math.PI / 2, y: 0 }];
-    }, 4.2, 0x8b90a2);
+    }, 4.2, 0xc2c8d8);
 
     // paredes: a face virada para dentro do corredor
     this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall), (b) => {
@@ -490,14 +495,14 @@ export class Game {
       return ['x', 'y', b.hx * 2, b.hy * 2,
         new THREE.Vector3(b.x, b.y, b.z + s * (b.hz + E)),
         { x: 0, y: s > 0 ? 0 : Math.PI }];
-    }, 4.2, 0x6d7288);
+    }, 4.2, 0xa9b0c6);
 
     // tetos baixos e pilares: face de baixo, com a textura de painel/aviso
     this._surfaces(lv.blocks, this.surf.panel, (b) => {
       if (b.kind !== 'ceil' && b.kind !== 'pillar') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y - b.hy - E, b.z), { x: Math.PI / 2, y: 0 }];
-    }, 3.0, 0x9aa0b4);
+    }, 3.0, 0xccd2e2);
 
     // TETO GERAL: fecha o corredor por cima, sem ele, o vazio aparecia acima
     // das paredes como buracos e formas soltas
@@ -1966,7 +1971,7 @@ export class Game {
 
     this.maskView.material.opacity = s && s.maskOn ? 0.90 : 0;
     this.hurt.material.opacity = s ? s.hurt * (this.opts.flash ? 0.5 : 0.2) : 0;
-    this.playerLight.intensity = s && s.maskOn ? 2.6 : 3.4;
+    this.playerLight.intensity = s && s.maskOn ? 2.1 : 2.8;
 
     // Painéis no mundo SÓ dentro do VR (lá não existe "tela"). No PC/celular o
     // HUD é interface fixa em DOM (index.html), que lê o estado em game.s.
