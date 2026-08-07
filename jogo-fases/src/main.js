@@ -682,55 +682,34 @@ export class Game {
       return g;
     });
 
-    // --- pedestal da máscara (fases que a oferecem): item CLARO, com nome,
-    // halo dourado de coisa-boa: nada da estática magenta dos inimigos
-    this.maskPickup = null;
-    if (def.mask) {
-      const g = new THREE.Group();
-      // ao LADO do caminho, não no meio: de frente ela virava um paredão na tela
-      // Encostado na parede ficava a 2,9 m do eixo do corredor (w=9), contra um
-      // raio de coleta de 1,9: quem andasse reto NUNCA encostava. Agora fica a
-      // 1,4 m do eixo: perto o bastante para o trajeto normal pegar, longe o
-      // bastante para não virar um paredão na frente da câmera.
-      //
-      // E fica logo ANTES da primeira parede-scanner, não lá na entrada. Pegar o
-      // item a 8 m do começo e só descobrir para que serve 38 m depois não ensina
-      // nada; pegar e dar de cara com a parede que só abre de máscara ensina.
-      // A posição vem do MAPA (lv.maskSlot), não de conta feita aqui. Antes
-      // este arquivo calculava uma coisa e o levels.js outra, e nas fases sem
-      // parede-scanner as duas discordavam.
-      g.position.set(lv.maskSlot.x, lv.maskSlot.y, lv.maskSlot.z);
-      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex.maskClean, transparent: true, depthWrite: false }));
-      spr.scale.set(0.75, 0.75, 1);
-      const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: this.tex.ringG, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.7,
-      }));
-      halo.scale.set(1.8, 1.8, 1);
-      const lb = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: this._label(STR.slot_label, '#FFC93C', 44), transparent: true, depthWrite: false,
-      }));
-      lb.scale.set(2.6, 0.6, 1);
-      lb.position.y = 0.85;
-      g.add(halo, spr, lb);
-      g.userData = { spr, halo, lb };
-      this.levelRoot.add(g);
-      this.maskPickup = g;
-    }
-
-    // --- máscaras SOLTAS pelo mapa (o que entra na mochila)
+    // --- A MÁSCARA BRANCA. Uma por fase, largada no corredor: você acha,
+    // encosta, e o poder de atravessar os feixes é seu. Sem pedestal, sem
+    // encaixe, sem mochila. Tinha um "ENCAIXE A MÁSCARA" no meio do caminho
+    // que era um segundo passo inventado por mim: quem achava a máscara ficava
+    // com ela parada no inventário até topar com o encaixe, e nas fases onde os
+    // dois não se encontravam o poder simplesmente nunca chegava.
+    //
+    // Item CLARO, com nome e halo dourado de coisa-boa: nada da estática
+    // magenta dos inimigos.
     this.maskItemMeshes = (lv.maskItems || []).map((mi) => {
       const g2 = new THREE.Group();
       g2.position.set(mi.x, mi.y, mi.z);
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({
         map: this.tex.maskClean, transparent: true, depthWrite: false,
       }));
-      sp.scale.set(0.55, 0.55, 1);
+      sp.scale.set(0.8, 0.8, 1);
       const ha = new THREE.Sprite(new THREE.SpriteMaterial({
         map: this.tex.ringG, transparent: true, blending: THREE.AdditiveBlending,
-        depthWrite: false, opacity: 0.55,
+        depthWrite: false, opacity: 0.7,
       }));
-      ha.scale.set(1.3, 1.3, 1);
-      g2.add(ha, sp);
+      ha.scale.set(1.9, 1.9, 1);
+      const lb = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: this._label(STR.mask_label, '#FFC93C', 44), transparent: true, depthWrite: false,
+      }));
+      lb.scale.set(2.4, 0.55, 1);
+      lb.position.y = 0.85;
+      g2.add(ha, sp, lb);
+      g2.userData = { sp, ha, lb };
       this.levelRoot.add(g2);
       return g2;
     });
@@ -879,11 +858,11 @@ export class Game {
       frags: 0, need: def.need, deaths: this.s ? this.s.deaths : 0,
       dronesKilled: this.s ? this.s.dronesKilled : 0,
       lives: P.LIVES, invuln: 0,
-      // false de proposito: nas fases com pedestal a mascara e' CONQUISTADA.
-      // Antes era `!!def.mask`, ou seja, ja vinha no bolso: o pedestal virava
-      // enfeite e a cena de achar a mascara nunca acontecia.
+      // false de proposito: a mascara branca e' ACHADA no corredor. Antes era
+      // `!!def.mask`, ou seja, ja vinha no bolso, e a cena de achar a mascara
+      // (que e' o assunto do jogo inteiro) nunca acontecia.
       maskHave: false, maskOn: false, maskHeat: 0, maskLock: 0,
-      masks: 0, encaixeT: null,   // inventário e animação do encaixe
+      pegouT: null,               // animação de quem acabou de pegar a máscara
       deposto: false, depT: null, // rosto entregue no pedestal
 
 
@@ -1386,27 +1365,21 @@ export class Game {
       if (s.frags >= s.need) { this._setObjective(STR.obj_gate); this._sayOnce('gate_ready', 5); }
     }
 
-    // máscaras soltas: vão para a mochila, não para o rosto
+    // A MÁSCARA BRANCA: achou, encostou, o poder é seu. O raio de coleta é o
+    // mesmo P.MASK_PICK_R do resto do jogo (2,6 m) e não 1,7: com 1,7 dava para
+    // passar raspando ao lado da máscara sem pegar, e ela é o item que decide
+    // se a fase tem saída ou não.
     const itens = lv.maskItems || [];
     for (let i = 0; i < itens.length; i++) {
       const mi = itens[i];
       if (mi.taken) continue;
-      if (Math.hypot(mi.x - _v1.x, mi.y - _v1.y, mi.z - _v1.z) > 1.7) continue;
+      if (Math.hypot(mi.x - _v1.x, mi.y - _v1.y, mi.z - _v1.z) > P.MASK_PICK_R) continue;
       mi.taken = true;
-      s.masks++;
-      if (this.maskItemMeshes[i]) this.maskItemMeshes[i].visible = false;
-      this.sfx.lock();
-      this._sayOnce('mask_item', 5);
-    }
-
-    // O pedestal deixou de DAR a máscara: ele RECEBE a que você achou. É aqui
-    // que a escolha vira gesto: você encaixa e ela vai para o seu rosto.
-    if (this.maskPickup && this.maskPickup.visible && !s.maskHave && s.encaixeT == null) {
-      const p = this.maskPickup.position;
-      if (Math.hypot(p.x - _v1.x, p.y - _v1.y, p.z - _v1.z) < P.MASK_PICK_R) {
-        if (s.masks > 0) { s.encaixeT = s.t; this.sfx.lock(); }
-        else this._sayOnce('slot_empty', 6);
-      }
+      s.maskHave = true;
+      s.maskOn = true;               // já vai para o rosto: é para isso que serve
+      s.pegouT = s.t;
+      this.sfx.purify();
+      this._sayOnce('mask_found', 8);
     }
 
     // ---- pedestal do rosto
@@ -1438,22 +1411,21 @@ export class Game {
       }
     }
 
-    if (s.encaixeT != null) {
-      const a = Math.min(1, (s.t - s.encaixeT) / 1.1);
-      const u = this.maskPickup.userData;
-      u.spr.scale.setScalar(0.75 * (1 + a * 0.7));
-      u.spr.material.opacity = 1 - a * 0.9;
-      u.halo.scale.setScalar(1.8 * (1 + a));
-      u.halo.material.opacity = 0.7 * (1 - a);
-      if (a >= 1) {
-        s.encaixeT = null;
-        s.masks--;
-        s.maskHave = true;
-        s.maskOn = true;                 // sai do encaixe já no rosto
-        this.maskPickup.visible = false;
-        this.sfx.purify();
-        this._sayOnce('mask_found', 8);
+    // a máscara pegada cresce e some no lugar em que estava: sem isso ela
+    // simplesmente pisca para fora da tela e o momento não acontece
+    if (s.pegouT != null) {
+      const a = Math.min(1, (s.t - s.pegouT) / 0.8);
+      for (let i = 0; i < this.maskItemMeshes.length; i++) {
+        const g2 = this.maskItemMeshes[i];
+        if (!g2 || !g2.visible || !itens[i] || !itens[i].taken) continue;
+        g2.userData.sp.scale.setScalar(0.8 * (1 + a * 0.9));
+        g2.userData.sp.material.opacity = 1 - a;
+        g2.userData.ha.scale.setScalar(1.9 * (1 + a));
+        g2.userData.ha.material.opacity = 0.7 * (1 - a);
+        g2.userData.lb.material.opacity = 1 - a;
+        if (a >= 1) g2.visible = false;
       }
+      if (a >= 1) s.pegouT = null;
     }
   }
 
@@ -1535,11 +1507,13 @@ export class Game {
       if (Math.abs(dz) >= 7) continue;
       this._sayOnce('scan', 5);
       // Rede de segurança: a parede-scanner é sólida para quem não está de
-      // máscara. Chegar aqui sem ela: por ter passado reto pelo pedestal,
-      // era beco sem saída, sem nada na tela explicando o porquê.
+      // máscara. Chegar aqui sem ela, por ter passado reto pela máscara larga-
+      // da atrás, era beco sem saída, sem nada na tela explicando o porquê.
       if (!s.maskHave) {
         s.maskHave = true;
-        if (this.maskPickup) this.maskPickup.visible = false;
+        s.maskOn = true;
+        for (const mi of (lv.maskItems || [])) mi.taken = true;
+        for (const g2 of this.maskItemMeshes) if (g2) g2.visible = false;
         this.sfx.purify();
         this._sayOnce('mask_found', 7);
       }
@@ -1838,7 +1812,7 @@ export class Game {
     g.fillStyle = !s.maskHave ? '#3a3350' : s.maskLock > 0 ? '#FF2D9B' : s.maskOn ? '#F3EFE6' : '#00E5FF';
     g.fillRect(bx, 60, bw * (1 - heat), 30);
     g.fillStyle = '#8fa0b4'; g.font = '20px system-ui, sans-serif';
-    g.fillText(!s.maskHave ? (s.masks > 0 ? 'NA MOCHILA x' + s.masks : 'SEM')
+    g.fillText(!s.maskHave ? 'SEM'
       : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'GUARDADA'), W - 30, 112);
 
     // faixa do objetivo
@@ -1922,7 +1896,12 @@ export class Game {
         m.position.y += Math.sin(t * 2 + m.position.z) * 0.0035;
       }
     }
-    if (this.maskPickup) this.maskPickup.rotation.y = Math.sin(t) * 0.5;
+    // a máscara larga no corredor balança de leve: parada ela some no cenário
+    if (this.maskItemMeshes) {
+      for (const g2 of this.maskItemMeshes) {
+        if (g2 && g2.visible) g2.position.y += Math.sin(t * 1.7) * 0.004;
+      }
+    }
     // a porta não gira (o anel girava); ela respira enquanto está travada,
     // para continuar chamando atenção do outro lado do corredor
     if (this.gateGlow && this.s && !this.s.gateOpen) {

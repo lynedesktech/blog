@@ -158,7 +158,6 @@
   <div class="row"><span class="lab" id="hl-face"></span><span class="big gold" id="hv-face">0/0</span></div>
   <div class="row"><span class="lab" id="hl-time"></span><span class="big" id="hv-time">–:––</span></div>
   <div class="row"><span class="lab" id="hl-lives"></span><span class="hearts" id="hv-lives"></span></div>
-  <div class="row"><span class="lab" id="hl-bag"></span><span class="big gold" id="hv-bag">0</span></div>
   <div class="row"><span class="lab" id="hl-mask"></span>
     <span style="display:flex;align-items:center;gap:.5rem"><span id="maskbar"><span id="maskfill"></span></span><span id="hv-mask" style="font-size:.62rem;color:#8fa0b4"></span></span></div>
   <div class="phase" id="hv-phase"></div>
@@ -339,7 +338,6 @@ $('hl-face').textContent = STR.hud_frag;
 $('hl-time').textContent = STR.hud_time;
 $('hl-lives').textContent = STR.hud_lives;
 $('hl-mask').textContent = STR.hud_mask;
-$('hl-bag').textContent = STR.hud_masks;
 $('aya2d-name').textContent = STR.aya_name;
 
 let lastFrags = -1, lastBannerT = null, tId = 0;
@@ -358,14 +356,10 @@ setInterval(() => {
   $('hv-time').className = 'big' + (s.left < 20 ? ' mag' : '');
   $('hv-lives').innerHTML = Array.from({ length: 3 }, (_, i) =>
     `<span class="${i < s.lives ? '' : 'off'}"></span>`).join('');
-  // inventário: quantas máscaras você achou e ainda não encaixou
-  $('hv-bag').textContent = s.masks;
-  $('hv-bag').className = 'big ' + (s.masks > 0 ? 'gold' : '');
-
   const heat = 1 - s.maskHeat / 5.5;
   $('maskfill').style.transform = `scaleX(${s.maskHave ? Math.max(0, heat) : 0})`;
   $('maskfill').style.background = s.maskLock > 0 ? 'var(--mag)' : s.maskOn ? 'var(--bone)' : 'var(--cyan)';
-  $('hv-mask').textContent = !s.maskHave ? 'SEM' : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'F LIGA');
+  $('hv-mask').textContent = !s.maskHave ? 'SEM' : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'E LIGA');
   $('hv-phase').textContent = `${STR.hud_phase} ${s.phase + 1}/5`;
 
   // fala da AYA como legenda fixa
