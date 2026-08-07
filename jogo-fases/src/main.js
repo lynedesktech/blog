@@ -407,17 +407,52 @@ export class Game {
   // única vez. Tudo sai em InstancedMesh, então centenas de placas = 1 draw call.
   // Textura de superfície da fase atual. Cai na antiga se a fase não declarar
   // uma, e guarda em cache para não rebaixar a mesma imagem a cada troca.
-  _texFase(url, reserva) {
+  // As imagens de parede e piso saíram quase pretas do gerador: medido dentro
+  // da cena, o piso tem brilho médio 6,7 de 255 e a parede 15,6. O tint do
+  // material é uma MULTIPLICAÇÃO, então só sabe escurecer: não existe valor
+  // de tint que salve uma textura preta. E as superfícies são
+  // MeshBasicMaterial, que não recebe luz nenhuma. Por isso mexer em
+  // AmbientLight não clareava as salas. O brilho é aplicado no pixel, uma
+  // única vez, na hora de carregar.
+  _texFase(url, reserva, ganho = 1) {
     if (!url) return reserva;
     this._texCache = this._texCache || {};
-    if (!this._texCache[url]) {
-      const t = new THREE.TextureLoader().load(url);
+    const chave = url + '|' + ganho;
+    if (!this._texCache[chave]) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 512;
+      const g2 = cv.getContext('2d');
+      g2.fillStyle = '#20232e';        // enquanto a imagem não chega
+      g2.fillRect(0, 0, 512, 512);
+      const t = new THREE.CanvasTexture(cv);
       t.colorSpace = THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = 4;
-      this._texCache[url] = t;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        g2.drawImage(img, 0, 0, 512, 512);
+        try {
+          const d = g2.getImageData(0, 0, 512, 512);
+          const px = d.data;
+          // ganho com joelho: multiplica, mas comprime perto do topo, para a
+          // textura clarear sem virar um chapado branco sem desenho
+          for (let i = 0; i < px.length; i += 4) {
+            for (let k = 0; k < 3; k++) {
+              const v = (px[i + k] / 255) * ganho;
+              px[i + k] = Math.round(255 * (v / (1 + v * 0.55)));
+            }
+          }
+          g2.putImageData(d, 0, 0);
+        } catch (e) {
+          // canvas sujo por CORS: fica a imagem crua, escura mas válida
+        }
+        t.needsUpdate = true;
+      };
+      img.src = url;
+      this._texCache[chave] = t;
     }
-    return this._texCache[url];
+    return this._texCache[chave];
   }
 
   _surfaces(blocks, tex, pick, tile = 4.2, tint = 0xffffff) {
@@ -476,14 +511,14 @@ export class Game {
     // demais para ler o corredor, principalmente em tela de celular.
     // pisos: face de cima
     const pal = lv.def.pal || {};
-    this._surfaces(lv.blocks, this._texFase(pal.floorImg, this.surf.floor), (b) => {
+    this._surfaces(lv.blocks, this._texFase(pal.floorImg, this.surf.floor, 7.5), (b) => {
       if (b.kind !== 'floor') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y + b.hy + E, b.z), { x: -Math.PI / 2, y: 0 }];
-    }, 4.2, 0xc2c8d8);
+    }, 4.2, 0xe8ecf5);
 
     // paredes: a face virada para dentro do corredor
-    this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall), (b) => {
+    this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall, 4.5), (b) => {
       if (b.kind !== 'wall') return null;
       if (b.hx < b.hz) {           // parede fina em X -> encara o eixo X
         const s = b.x > 0 ? -1 : 1;
@@ -495,7 +530,7 @@ export class Game {
       return ['x', 'y', b.hx * 2, b.hy * 2,
         new THREE.Vector3(b.x, b.y, b.z + s * (b.hz + E)),
         { x: 0, y: s > 0 ? 0 : Math.PI }];
-    }, 4.2, 0xa9b0c6);
+    }, 4.2, 0xdfe4f0);
 
     // tetos baixos e pilares: face de baixo, com a textura de painel/aviso
     this._surfaces(lv.blocks, this.surf.panel, (b) => {
