@@ -71,7 +71,7 @@ const CDN = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZD
 const ASSETS = {
   wall: CDN + 'b0e8c0f8-065e-4073-b662-299921b70594.jpg',
   floor: CDN + 'b2921ab3-5b4b-44aa-b7ae-3c7287a022ba.jpg',
-  panel: CDN + 'ddae4f29-0bbd-41ab-b47b-18d1e5c17bd0.jpg',
+  panel: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_7b9947ec-a91a-4a95-bbbc-1946d19710a4.png',
   sky: CDN + '796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg',
   ayaVid: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_212107_31ec2646-f050-4da4-baec-602f160a2cf4.mp4',
   door: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_213418_bcd63cc3-9702-4a7e-a2f4-c9c782bf6e5c.png',
@@ -433,6 +433,7 @@ export class Game {
       img.onload = () => {
         g2.drawImage(img, 0, 0, 512, 512);
         try {
+          if (ganho <= 1) { t.needsUpdate = true; return; }
           const d = g2.getImageData(0, 0, 512, 512);
           const px = d.data;
           // ganho com joelho: multiplica, mas comprime perto do topo, para a
@@ -511,14 +512,14 @@ export class Game {
     // demais para ler o corredor, principalmente em tela de celular.
     // pisos: face de cima
     const pal = lv.def.pal || {};
-    this._surfaces(lv.blocks, this._texFase(pal.floorImg, this.surf.floor, 7.5), (b) => {
+    this._surfaces(lv.blocks, this._texFase(pal.floorImg, this.surf.floor), (b) => {
       if (b.kind !== 'floor') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y + b.hy + E, b.z), { x: -Math.PI / 2, y: 0 }];
-    }, 4.2, 0xe8ecf5);
+    }, 4.2, 0xbfc5d4);
 
     // paredes: a face virada para dentro do corredor
-    this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall, 4.5), (b) => {
+    this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall), (b) => {
       if (b.kind !== 'wall') return null;
       if (b.hx < b.hz) {           // parede fina em X -> encara o eixo X
         const s = b.x > 0 ? -1 : 1;
@@ -530,7 +531,7 @@ export class Game {
       return ['x', 'y', b.hx * 2, b.hy * 2,
         new THREE.Vector3(b.x, b.y, b.z + s * (b.hz + E)),
         { x: 0, y: s > 0 ? 0 : Math.PI }];
-    }, 4.2, 0xdfe4f0);
+    }, 4.2, 0xb4bac9);
 
     // tetos baixos e pilares: face de baixo, com a textura de painel/aviso
     this._surfaces(lv.blocks, this.surf.panel, (b) => {
@@ -547,7 +548,7 @@ export class Game {
     this._surfaces(tops, this.surf.panel, (b) => (
       ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, H - E, b.z), { x: Math.PI / 2, y: 0 }]
-    ), 3.4, 0x3a3e52);
+    ), 3.4, 0x5a6076);
   }
 
   loadPhase(i) {

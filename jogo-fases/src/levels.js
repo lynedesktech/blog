@@ -30,8 +30,8 @@ export const LEVELS = [
   {
     name: 'CORREDOR',
     pal: { fog: 0x07030f, fogD: 0.013, amb: 0x5566ff, ambI: 1.70, sky: 0x777d99, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_ea4ea2f4-c9c2-43f7-911d-c66f202ef4a6.png', accent: 0x00E5FF,
-           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_eee2f5d3-0f7a-4662-9c11-31ccf477f02a.png',
-           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220835_6e8f7353-68ee-4125-8f43-e3259d27356e.png' },
+           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_8f4e385f-9502-43da-b4a5-1c4ff0284f04.png',
+           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142553_4c6d8deb-e9ed-4bbc-93c0-627976d1fbc2.png' },
     sub: 'Ande, pule e recolha os pedaços do seu rosto.',
     time: 150, need: 5, w: 9, h: 5,
     segs: [
@@ -46,8 +46,8 @@ export const LEVELS = [
   {
     name: 'VARREDURA',
     pal: { fog: 0x0a0616, fogD: 0.010, amb: 0x4a5fd0, ambI: 1.65, sky: 0x8a7fb5, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_3cc93d16-5892-48d1-9d05-7e9a43db08fa.png', accent: 0xFF2D9B,
-           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220837_80e58cbc-775c-4f8e-9a0e-57da4d340285.png',
-           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220835_64542dc0-78a8-45d9-95c0-398be831e6ac.png' },
+           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_88e5a500-f892-4ea9-bc63-af695fd99ee0.png',
+           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_ea10adf8-3799-424c-b0a9-5b32c951ebcf.png' },
     sub: 'Os feixes te apagam. Ache a máscara branca: com ela no rosto eles te deixam passar.',
     time: 140, need: 7, w: 9, h: 5,
     mask: true,
@@ -64,26 +64,31 @@ export const LEVELS = [
   {
     name: 'VIGILÂNCIA',
     pal: { fog: 0x050d14, fogD: 0.012, amb: 0x36a8c8, ambI: 1.62, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF,
-           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_909f8b51-01ed-4d78-af58-3c5700ef83dd.png',
-           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_91e1bf25-53be-4c79-93fb-02315a8a44df.png' },
-    sub: 'Câmeras e drones. Sem máscara você é alvo; com máscara você é invisível.',
-    time: 140, need: 9, w: 10, h: 5,
+           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_a2e2d481-a99f-468b-b915-73d4c4a73758.png',
+           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_a59d0178-491b-4b6e-8d9b-d9550575d551.png' },
+    sub: 'Câmeras e drones. Sem máscara você é alvo; de máscara eles nem te veem.',
+    // Esta é a fase que APRESENTA os drones e era a mais lotada de todas:
+    // cinco drones, e 8 dos 9 rostos caíam dentro do alcance de tiro deles,
+    // com zero margem (9 rostos para 9 pedidos: perder um travava a fase).
+    // Agora são três drones e sete rostos. O primeiro trecho de drone tem UM
+    // só, para você aprender a lidar com ele antes de encarar dois.
+    time: 150, need: 7, w: 10, h: 5,
     mask: true,
     segs: [
-      { t: SEG.PLAIN, len: 10, frags: 1 },
-      { t: SEG.CAMS, len: 16, n: 2, frags: 2 },
-      { t: SEG.DRONES, len: 16, n: 2, frags: 2 },
+      { t: SEG.PLAIN, len: 12, frags: 1 },
+      { t: SEG.CAMS, len: 16, n: 2, frags: 1 },
+      { t: SEG.DRONES, len: 16, n: 1, frags: 1 },
       { t: SEG.BEAM_LOW, len: 12, n: 2, frags: 1 },
       { t: SEG.CAMS, len: 14, n: 2, frags: 1 },
-      { t: SEG.DRONES, len: 16, n: 3, frags: 2 },
-      { t: SEG.PLAIN, len: 10 },
+      { t: SEG.DRONES, len: 18, n: 2, frags: 2 },
+      { t: SEG.PLAIN, len: 12 },
     ],
   },
   {
     name: 'PRESSÃO',
     pal: { fog: 0x150a05, fogD: 0.017, amb: 0xff8a44, ambI: 1.55, sky: 0xb08a5e, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_1ed67f71-2ef2-4e0d-9498-09e2b9dbf80c.png', accent: 0xFFC93C,
-           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220927_bac1db1d-39e2-4a61-8c8b-d264fda48c63.png',
-           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_127ac81e-306e-45c0-a15b-a54de55426f7.png' },
+           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_0e250324-c64f-46c3-80f3-ed5af0b33960.png',
+           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_426e553b-21f7-4e32-bb37-5f853494b14e.png' },
     sub: 'Plataformas, prensas e tempo curto. O modelo está prestes a ser lançado.',
     time: 130, need: 11, w: 10, h: 6,
     mask: true,
@@ -101,8 +106,8 @@ export const LEVELS = [
   {
     name: 'AUDITORIA',
     pal: { fog: 0x0d0418, fogD: 0.015, amb: 0xa866ff, ambI: 1.80, sky: 0xa27fc4, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210812_d8e9aa60-491b-41d0-89b0-e1441ba35c88.png', accent: 0xFFC93C,
-           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_c4f6d865-f85b-4f15-83d5-1a288f4dd636.png',
-           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_220836_7abdec42-15ee-4e2a-a570-5c3411544e27.png' },
+           wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_06d68081-fe4a-4deb-ad2c-66a72ffe2a57.png',
+           floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_f30f40b2-8a62-41ee-9ed5-6b6c780dbe68.png' },
     sub: 'O olho central. Agache no feixe, atire quando a lente abrir.',
     time: 180, need: 6, w: 26, h: 9,
     mask: true, boss: true,
