@@ -291,6 +291,50 @@ function carregaArteDaMascara(c, g, tex, clean) {
   img.src = ART.mask;
 }
 
+// ---------------------------------------------------------------- glyph_maskview
+// O que você vê VESTINDO a máscara. Não é a máscara inteira colada na tela:
+// máscara de verdade se olha ATRAVÉS. Aqui é só a borda — osso opaco nas
+// beiradas, abertura limpa no meio — que é o que o olho lê como "estou com
+// algo no rosto" sem esconder o jogo.
+export function maskViewTexture() {
+  const W = 1024, H = 768;
+  const c = canvas(W, H);
+  const g = c.getContext('2d');
+
+  g.fillStyle = PAL.bone;
+  g.fillRect(0, 0, W, H);
+
+  // abertura: elipse grande de borda macia
+  g.globalCompositeOperation = 'destination-out';
+  const gr = g.createRadialGradient(W / 2, H / 2, W * 0.20, W / 2, H / 2, W * 0.50);
+  gr.addColorStop(0.00, 'rgba(0,0,0,1)');
+  gr.addColorStop(0.62, 'rgba(0,0,0,1)');
+  gr.addColorStop(1.00, 'rgba(0,0,0,0)');
+  g.save();
+  g.translate(W / 2, H / 2);
+  g.scale(1, 0.82);
+  g.translate(-W / 2, -H / 2);
+  g.fillStyle = gr;
+  g.fillRect(0, 0, W, H);
+  g.restore();
+  g.globalCompositeOperation = 'source-over';
+
+  // fio de ouro na borda interna, para a abertura ter desenho e não parecer sujeira
+  g.strokeStyle = 'rgba(255,201,60,0.55)';
+  g.lineWidth = 5;
+  g.save();
+  g.translate(W / 2, H / 2);
+  g.scale(1, 0.82);
+  g.beginPath();
+  g.arc(0, 0, W * 0.315, 0, Math.PI * 2);
+  g.stroke();
+  g.restore();
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 // ---------------------------------------------------------------- fx_dust
 export function dotTexture(rgb = '0,229,255') {
   const S = 64;

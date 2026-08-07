@@ -148,6 +148,7 @@ export class Game {
       mask: TEX.maskGlyphTexture(),
       maskClean: TEX.maskGlyphTexture(true),
       dust: TEX.dotTexture('0,229,255'),
+      maskView: TEX.maskViewTexture(),
       beam: TEX.beamTexture(),
       ring: TEX.ringTexture('0,229,255'),
       ringM: TEX.ringTexture('255,45,155'),
@@ -175,7 +176,7 @@ export class Game {
 
     this.amb = new THREE.AmbientLight(0x5566ff, 0.75);
     s.add(this.amb);
-    const key = new THREE.PointLight(0x00e5ff, 1.2, 26, 2);
+    const key = new THREE.PointLight(0x00e5ff, 2.1, 34, 1.6);
     key.position.set(0, 4, 0);
     this.rig.add(key);                 // luz acompanha o jogador
     this.playerLight = key;
@@ -334,13 +335,15 @@ export class Game {
     this.camera.add(this.hurt);
 
     // máscara vestida: overlay em primeira pessoa
+    // Era a arte INTEIRA da máscara a 0,82 de opacidade tapando a tela. Agora
+    // é só a borda, com abertura limpa no meio: dá pra jogar de máscara.
     this.maskView = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.55, 1.15),
+      new THREE.PlaneGeometry(2.6, 1.95),
       new THREE.MeshBasicMaterial({
-        map: this.tex.maskClean, transparent: true, opacity: 0, depthTest: false, depthWrite: false,
+        map: this.tex.maskView, transparent: true, opacity: 0, depthTest: false, depthWrite: false,
       })
     );
-    this.maskView.position.set(0, -0.06, -0.62);
+    this.maskView.position.set(0, 0, -0.62);
     this.maskView.renderOrder = 1009;
     this.camera.add(this.maskView);
 
@@ -896,6 +899,7 @@ export class Game {
     this._setObjective(STR.obj_collect);
     this._banner(`${STR.phase_intro} ${i + 1}`, def.sub);
     this._say(i === 0 ? STR.aya.start : def.sub, 6);
+    if (def.boss) this._sayOnce('boss', 9);
     // a guia se posta ao lado da entrada de cada fase
     this.ayaGroup.position.set(-def.w / 2 + 1.4, 2.4, -6);
     // Identidade da fase: cor do ar, cor da luz e alcance da vista. É o que faz
@@ -1258,6 +1262,7 @@ export class Game {
       s.maskHeat += dt;
       if (s.maskHeat >= P.MASK_MAX) {
         s.maskHeat = P.MASK_MAX; s.maskOn = false; s.maskLock = P.MASK_COOL;
+        this._sayOnce('mask_hot', 5);
         this.sfx.corrupt();
         this._say(STR.aya.mask_hot, 4);
       }
@@ -1455,6 +1460,9 @@ export class Game {
     for (let i = 0; i < lv.beams.length; i++) {
       const b = lv.beams[i];
       b.cz = b.z + Math.sin(s.t * b.speed + b.phase) * b.range;
+      // A fala existia em strings.js e NADA a disparava: a AYA nunca ensinava
+      // a agachar nem a pular. Ensina no lugar certo, que e' chegando no feixe.
+      if (Math.abs(pl.pos.z - b.cz) < 9) this._sayOnce(b.kind === 'low' ? 'duck' : 'jump', 5);
       const bm = this.beamMeshes[i];
       if (bm) {
         bm.position.z = b.cz;
@@ -1939,9 +1947,9 @@ export class Game {
       this.ayaMat.opacity += (target + Math.sin(t * 2.1) * 0.05 - this.ayaMat.opacity) * Math.min(1, dt * 4);
     }
 
-    this.maskView.material.opacity = s && s.maskOn ? 0.82 : 0;
+    this.maskView.material.opacity = s && s.maskOn ? 0.90 : 0;
     this.hurt.material.opacity = s ? s.hurt * (this.opts.flash ? 0.5 : 0.2) : 0;
-    this.playerLight.intensity = s && s.maskOn ? 0.7 : 1.2;
+    this.playerLight.intensity = s && s.maskOn ? 1.5 : 2.1;
 
     // Painéis no mundo SÓ dentro do VR (lá não existe "tela"). No PC/celular o
     // HUD é interface fixa em DOM (index.html), que lê o estado em game.s.
