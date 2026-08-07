@@ -69,7 +69,7 @@
   #touch button.act{background:var(--gold);color:var(--void);border-color:var(--gold)}
 
   /* ---------- HUD fixo de tela (PC/celular; em VR o painel é dentro do mundo) */
-  #hud2d{position:fixed;top:.9rem;left:.9rem;z-index:13;display:none;min-width:230px;
+  #hud2d{position:fixed;top:.9rem;left:.9rem;z-index:13;display:none;min-width:230px;pointer-events:none;
     background:rgba(5,2,12,.82);border:1px solid rgba(0,229,255,.45);padding:.7rem .9rem;
     font-size:.8rem;letter-spacing:.04em;backdrop-filter:blur(2px)}
   #hud2d.on{display:block}
@@ -84,7 +84,7 @@
   #maskfill{position:absolute;inset:0;transform-origin:left;background:var(--cyan)}
   #hud2d .phase{margin-top:.4rem;padding-top:.35rem;border-top:1px solid rgba(255,201,60,.3);
     color:var(--gold);font-size:.66rem;letter-spacing:.14em}
-  #aya2d{position:fixed;left:50%;transform:translateX(-50%);bottom:4.2rem;z-index:13;display:none;
+  #aya2d{position:fixed;left:50%;transform:translateX(-50%);bottom:4.2rem;z-index:13;display:none;pointer-events:none;
     max-width:min(680px,92vw);background:rgba(5,2,12,.88);border:1px solid rgba(255,201,60,.55);
     padding:.65rem 1rem;font-size:.92rem;line-height:1.45}
   #aya2d.on{display:block}
