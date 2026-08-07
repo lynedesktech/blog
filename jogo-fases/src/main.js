@@ -551,8 +551,8 @@ export class Game {
   }
 
   loadPhase(i) {
-    // fase nova, mãos limpas: nada do que estava apertado antes continua valendo
-    this._releaseAll();
+    // fase nova: solta dedo e mouse, mas NÃO o teclado (ver _releaseTouch)
+    this._releaseTouch();
     this._clearLevel();
     const def = LEVELS[i];
     const lv = buildLevel(def, mulberry32(1000 + i * 77));
@@ -1104,12 +1104,25 @@ export class Game {
   // botões de tela (celular)
   press(what) { if (what === 'duck') this.duckBtn = !this.duckBtn; else this.tap[what] = true; }
 
-  // Zera TUDO que é entrada. Tem que rodar também ao trocar de fase e ao
+  // Solta só o que é DEDO e MOUSE. É isto que roda ao trocar de fase e ao
   // morrer: um dedo que estava na tela no instante da morte deixava
   // `touchMove` preso num identificador que nunca mais volta, e como o
   // touchstart só aceita um dedo novo quando `touchMove < 0`, o lado
-  // esquerdo da tela parava de responder para sempre. Quem morria não
-  // conseguia mais andar.
+  // esquerdo da tela parava de responder para sempre.
+  //
+  // O TECLADO fica de fora de propósito. Quem morre segurando o W continua
+  // com o W fisicamente apertado, e o keyup só vai chegar quando a pessoa
+  // soltar. Limpar `held` aqui, como eu estava fazendo, matava o W até a
+  // pessoa soltar e apertar de novo: virava "morri e travei" no PC.
+  _releaseTouch() {
+    this.mouseDown = false; this.dragging = false; this.duckBtn = false;
+    this.touchMove = -1; this.touchLook = -1;
+    this.stick.x = 0; this.stick.y = 0;
+    this.tap.jump = false; this.tap.mask = false;
+  }
+
+  // Zera tudo, teclado incluído. Só para blur e aba escondida, onde o keyup
+  // realmente nunca vai chegar.
   _releaseAll() {
     this.held.clear();
     this.mouseDown = false; this.dragging = false; this.duckBtn = false;
