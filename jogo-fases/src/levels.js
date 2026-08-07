@@ -338,32 +338,27 @@ export function buildLevel(def, rng) {
   if (frags.length > def.need) frags.length = def.need;
 
   // ---------------------------------------------------------------------------
-  // Máscaras soltas. São item de INVENTÁRIO: você acha pelo mapa, guarda, e
-  // encaixa no pedestal para vestir. Ficam sempre ANTES da primeira parede-
+  // A MÁSCARA BRANCA. Uma por fase, largada no corredor. Andar por cima dela
+  // já liga o poder de atravessar a parede-scanner: não tem inventário nem
+  // encaixe no meio do caminho. Nasce sempre ANTES da primeira parede-
   // scanner: achar depois de já precisar não é achado, é castigo.
   // ---------------------------------------------------------------------------
-  // Onde a máscara branca é vestida. Isto vive AQUI, junto com o mapa, e não
-  // no motor. Antes o motor calculava a posição por conta e o mapa calculava
-  // outra para decidir onde largar a máscara: duas contas para a mesma coisa.
-  // Nas fases 3, 4 e 5, que não têm parede-scanner, o motor caía no valor de
-  // reserva z = -8 (colado na entrada) enquanto a máscara podia nascer no
-  // corredor inteiro, quase sempre DEPOIS. Você chegava no encaixe de mochila
-  // vazia e a máscara estava lá na frente.
+  // maskSlot é só a âncora de onde termina a janela de sorteio. Vive AQUI,
+  // junto com o mapa, e não no motor: antes o motor calculava uma posição por
+  // conta e este arquivo calculava outra, e nas fases sem parede-scanner as
+  // duas discordavam.
   const maskSlot = def.mask
     ? { x: -1.4, y: 1.35, z: scanners.length ? scanners[0].z + 7 : zEnd * 0.34 }
     : null;
 
   const maskItems = [];
   if (def.mask) {
-    // A solta nasce sempre ANTES do lugar onde a máscara é vestida, com pelo
-    // menos 7 m de folga: você topa com ela no caminho, nunca tem que voltar
-    // andando para buscá-la.
+    // Nasce sempre ANTES da parede-scanner, com pelo menos 7 m de folga: você
+    // topa com ela no caminho, nunca tem que voltar andando para buscá-la.
     const fim = maskSlot.z + 7;
     const ini = -3;
-    // UMA por fase. Com duas soltas, mais a do pedestal de encaixe, mais o
-    // pedestal do rosto, dava quatro coisas parecidas com máscara na mesma
-    // fase, e o item deixava de significar alguma coisa. Quem passar reto tem
-    // a rede de segurança da parede-scanner.
+    // UMA por fase. Com mais de uma, o item deixa de significar alguma coisa.
+    // Quem passar reto tem a rede de segurança da parede-scanner.
     for (let i = 0; i < (def.masks || 1); i++) {
       for (let k = 0; k < 500; k++) {
         const x = (rng() - 0.5) * (W - 3.2);
