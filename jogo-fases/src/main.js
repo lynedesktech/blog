@@ -508,6 +508,8 @@ export class Game {
   }
 
   loadPhase(i) {
+    // fase nova, mãos limpas: nada do que estava apertado antes continua valendo
+    this._releaseAll();
     this._clearLevel();
     const def = LEVELS[i];
     const lv = buildLevel(def, mulberry32(1000 + i * 77));
@@ -973,7 +975,22 @@ export class Game {
       if (document.pointerLockElement !== el) this.mouseDown = false;
     });
 
+    // Um dedo que sai da tela sem gerar touchend (o iOS engole o evento quando
+    // um gesto do sistema entra no meio, e a morte reconstrói a fase bem nessa
+    // hora) deixava o identificador preso e o controle morto. Antes de aceitar
+    // um toque novo, confere quem ainda está de fato na tela.
+    const vivos = (e) => {
+      let m = false, l = false;
+      for (const t of e.touches) {
+        if (t.identifier === this.touchMove) m = true;
+        if (t.identifier === this.touchLook) l = true;
+      }
+      if (!m && this.touchMove >= 0) { this.touchMove = -1; this.stick.x = 0; this.stick.y = 0; }
+      if (!l && this.touchLook >= 0) { this.touchLook = -1; this.mouseDown = false; }
+    };
+
     el.addEventListener('touchstart', (e) => {
+      vivos(e);
       for (const t of e.changedTouches) {
         if (t.clientX < innerWidth / 2 && this.touchMove < 0) {
           this.touchMove = t.identifier; this.moveOx = t.clientX; this.moveOy = t.clientY;
@@ -997,15 +1014,21 @@ export class Game {
       }
       e.preventDefault();
     }, { passive: false });
-    const endTouch = (e) => {
+    const soltaDedos = (e) => {
       for (const t of e.changedTouches) {
         if (t.identifier === this.touchMove) { this.touchMove = -1; this.stick.x = 0; this.stick.y = 0; }
         if (t.identifier === this.touchLook) { this.touchLook = -1; this.mouseDown = false; }
       }
-      e.preventDefault();
     };
+    const endTouch = (e) => { soltaDedos(e); e.preventDefault(); };
     el.addEventListener('touchend', endTouch, { passive: false });
     el.addEventListener('touchcancel', endTouch, { passive: false });
+    // E também na janela, em modo passivo: se o dedo terminar em cima de um
+    // botão da HUD, o touchend não chega no canvas e o identificador ficava
+    // preso. Aqui NÃO se chama preventDefault, senão os botões das telas de
+    // menu deixariam de virar clique.
+    addEventListener('touchend', soltaDedos, { passive: true });
+    addEventListener('touchcancel', soltaDedos, { passive: true });
 
     this.controllers = [];
     for (let i = 0; i < 2; i++) {
@@ -1038,11 +1061,18 @@ export class Game {
   // botões de tela (celular)
   press(what) { if (what === 'duck') this.duckBtn = !this.duckBtn; else this.tap[what] = true; }
 
+  // Zera TUDO que é entrada. Tem que rodar também ao trocar de fase e ao
+  // morrer: um dedo que estava na tela no instante da morte deixava
+  // `touchMove` preso num identificador que nunca mais volta, e como o
+  // touchstart só aceita um dedo novo quando `touchMove < 0`, o lado
+  // esquerdo da tela parava de responder para sempre. Quem morria não
+  // conseguia mais andar.
   _releaseAll() {
     this.held.clear();
     this.mouseDown = false; this.dragging = false; this.duckBtn = false;
     this.touchMove = -1; this.touchLook = -1;
     this.stick.x = 0; this.stick.y = 0;
+    this.tap.jump = false; this.tap.mask = false;
   }
 
   _look(dx, dy) {

@@ -356,6 +356,10 @@ setInterval(() => {
   $('hv-time').className = 'big' + (s.left < 20 ? ' mag' : '');
   $('hv-lives').innerHTML = Array.from({ length: 3 }, (_, i) =>
     `<span class="${i < s.lives ? '' : 'off'}"></span>`).join('');
+  // o botao AGACHAR e liga/desliga: se o jogador morre agachado, o estado
+  // some no respawn mas a luz do botao ficava acesa mentindo
+  $('b-duck').classList.toggle('act', !!game.duckBtn);
+
   const heat = 1 - s.maskHeat / 5.5;
   $('maskfill').style.transform = `scaleX(${s.maskHave ? Math.max(0, heat) : 0})`;
   $('maskfill').style.background = s.maskLock > 0 ? 'var(--mag)' : s.maskOn ? 'var(--bone)' : 'var(--cyan)';
