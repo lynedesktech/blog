@@ -291,6 +291,53 @@ function carregaArteDaMascara(c, g, tex, clean) {
   img.src = ART.mask;
 }
 
+// ---------------------------------------------------------------- glyph_faceslot
+// O pedestal do FIM da fase, onde você monta o seu rosto. Antes ele usava a
+// textura da máscara branca, e aí o lugar de "remontar a sua cara" ficava
+// igual ao item de "parecer outra pessoa": as duas coisas opostas do jogo com
+// o mesmo desenho. Aqui é contorno de rosto em ouro, vazado, que é a cor dos
+// pedaços que você recolhe.
+export function faceSlotTexture() {
+  const S = 512;
+  const c = canvas(S);
+  const g = c.getContext('2d');
+  g.clearRect(0, 0, S, S);
+  g.translate(S / 2, S / 2);
+  g.scale(S / 128, S / 128);
+
+  const pts = [
+    [0, -46], [22, -37], [30, -9], [25, 16], [12, 37], [0, 42],
+    [-12, 37], [-25, 16], [-30, -9], [-22, -37],
+  ];
+  const traca = () => {
+    g.beginPath();
+    pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+    g.closePath();
+  };
+
+  g.fillStyle = 'rgba(255,201,60,0.10)';
+  traca(); g.fill();
+
+  g.strokeStyle = PAL.gold;
+  g.lineWidth = 2.6;
+  g.lineJoin = 'round';
+  traca(); g.stroke();
+
+  // marcas do rosto, em traço, sem virar máscara: olhos e boca abertos
+  g.lineWidth = 2.2;
+  g.beginPath(); g.moveTo(-17, -11); g.lineTo(-7, -11);
+                 g.moveTo(7, -11); g.lineTo(17, -11); g.stroke();
+  g.beginPath(); g.moveTo(-8, 20); g.lineTo(8, 20); g.stroke();
+
+  // vértices: cada canto do contorno é um "pedaço" que você traz
+  g.fillStyle = PAL.gold;
+  for (const [x, y] of pts) { g.beginPath(); g.arc(x, y, 2.4, 0, Math.PI * 2); g.fill(); }
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 // ---------------------------------------------------------------- glyph_maskview
 // O que você vê VESTINDO a máscara. Não é a máscara inteira colada na tela:
 // máscara de verdade se olha ATRAVÉS. Aqui é só a borda: osso opaco nas

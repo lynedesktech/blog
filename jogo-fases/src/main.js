@@ -149,6 +149,7 @@ export class Game {
       maskClean: TEX.maskGlyphTexture(true),
       dust: TEX.dotTexture('0,229,255'),
       maskView: TEX.maskViewTexture(),
+      faceSlot: TEX.faceSlotTexture(),
       beam: TEX.beamTexture(),
       ring: TEX.ringTexture('0,229,255'),
       ringM: TEX.ringTexture('255,45,155'),
@@ -533,31 +534,34 @@ export class Game {
       const g = new THREE.Group();
       g.position.set(0, b.y, b.z);
 
-      const tubo = (r, c, op, add) => {
+      // Quatro camadas aditivas com fog DESLIGADO lavavam a tela: aditivo soma
+      // brilho, e sem fog um feixe a 40 m rendia igual a um a 2 m. Agora são
+      // três, mais fracas, e só o filamento ignora a bruma.
+      const tubo = (r, c, op, semFog) => {
         const m = new THREE.Mesh(
           new THREE.CylinderGeometry(r, r, def.w, 10, 1, true),
           new THREE.MeshBasicMaterial({
             color: c, transparent: true, opacity: op, depthWrite: false,
-            blending: add ? THREE.AdditiveBlending : THREE.NormalBlending,
-            side: THREE.DoubleSide, fog: false,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide, fog: !semFog,
           })
         );
         m.rotation.z = Math.PI / 2;
         return m;
       };
 
-      const core = tubo(0.028, 0xffffff, 1.0, true);   // filamento branco
-      const mid = tubo(0.10, cor, 0.85, true);         // corpo do feixe
-      const halo = tubo(0.34, cor, 0.20, true);        // brilho que sangra
-      const bloom = tubo(0.75, cor, 0.07, true);       // brilho longe, quase ar
-      g.add(bloom, halo, mid, core);
+      const core = tubo(0.022, 0xffffff, 0.95, true);  // filamento branco
+      const mid = tubo(0.075, cor, 0.55, false);       // corpo do feixe
+      const halo = tubo(0.24, cor, 0.10, false);       // brilho que sangra
+      const bloom = halo;                              // sem camada extra
+      g.add(halo, mid, core);
 
       // poça de luz no chão: radial, não um retângulo de borda dura
       const poca = new THREE.Mesh(
         new THREE.PlaneGeometry(def.w, b.range * 2 + 3.0),
         new THREE.MeshBasicMaterial({
-          map: this.tex.dust, color: cor, transparent: true, opacity: 0.30,
-          blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+          map: this.tex.dust, color: cor, transparent: true, opacity: 0.13,
+          blending: THREE.AdditiveBlending, depthWrite: false, fog: true,
         })
       );
       poca.rotation.x = -Math.PI / 2;
@@ -810,7 +814,7 @@ export class Game {
     this.faceMask = new THREE.Mesh(
       new THREE.PlaneGeometry(1.5, 1.5),
       new THREE.MeshBasicMaterial({
-        map: this.tex.maskClean, transparent: true, opacity: 0.16,
+        map: this.tex.faceSlot, transparent: true, opacity: 0.16,
         color: 0x3a3350, depthWrite: false, side: THREE.DoubleSide,
       })
     );
@@ -1469,13 +1473,11 @@ export class Game {
         // pulso: luz viva respira. sem isso o feixe parece um adesivo colado.
         const u = bm.userData;
         const k = 0.82 + Math.sin(s.t * 5.5 + u.fase) * 0.18;
-        u.mid.material.opacity = 0.85 * k;
-        u.halo.material.opacity = 0.20 * k;
-        u.bloom.material.opacity = 0.07 * k;
+        u.mid.material.opacity = 0.55 * k;
+        u.halo.material.opacity = 0.10 * k;
         u.halo.scale.set(k, 1, k);
-        u.bloom.scale.set(k, 1, k);
         u.poca.position.z = b.cz;
-        u.poca.material.opacity = 0.30 * k;
+        u.poca.material.opacity = 0.13 * k;
       }
     }
     for (let i = 0; i < lv.cams.length; i++) {

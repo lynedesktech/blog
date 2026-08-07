@@ -349,7 +349,11 @@ export function buildLevel(def, rng) {
     // no mesmo passo e a mecânica de procurar deixava de existir.
     const fim = scanners.length ? scanners[0].z + 14 : zEnd + 4;
     const ini = -3;
-    for (let i = 0; i < (def.masks || 2); i++) {
+    // UMA por fase. Com duas soltas, mais a do pedestal de encaixe, mais o
+    // pedestal do rosto, dava quatro coisas parecidas com máscara na mesma
+    // fase, e o item deixava de significar alguma coisa. Quem passar reto tem
+    // a rede de segurança da parede-scanner.
+    for (let i = 0; i < (def.masks || 1); i++) {
       for (let k = 0; k < 500; k++) {
         const x = (rng() - 0.5) * (W - 3.2);
         const z2 = ini + rng() * (fim - ini);
