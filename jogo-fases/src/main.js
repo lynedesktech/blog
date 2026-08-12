@@ -1104,6 +1104,32 @@ export class Game {
     addEventListener('touchend', soltaDedos, { passive: true });
     addEventListener('touchcancel', soltaDedos, { passive: true });
 
+    // ---- vinheta de conforto (VR) -------------------------------------
+    // Locomocao por analogico e a causa numero um de enjoo em VR: os olhos
+    // veem movimento e o ouvido interno nao sente nada. A vinheta estreita a
+    // visao periferica enquanto voce anda, que e onde esse conflito mais
+    // pesa, e abre de novo quando voce para.
+    {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      const g2 = cv.getContext('2d');
+      const grad = g2.createRadialGradient(128, 128, 60, 128, 128, 128);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(0.55, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(0,0,0,1)');
+      g2.fillStyle = grad;
+      g2.fillRect(0, 0, 256, 256);
+      const tx = new THREE.CanvasTexture(cv);
+      this.vinheta = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.4, 1.4),
+        new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 0, depthTest: false, depthWrite: false, fog: false })
+      );
+      this.vinheta.position.z = -0.45;
+      this.vinheta.renderOrder = 999;
+      this.camera.add(this.vinheta);
+      this.scene.add(this.camera);
+    }
+
     this.controllers = [];
     for (let i = 0; i < 2; i++) {
       const c = this.renderer.xr.getController(i);
@@ -1429,7 +1455,10 @@ export class Game {
     _v3.copy(_v1).multiplyScalar(fwd).addScaledVector(_v2, str);
     if (_v3.lengthSq() > 1e-6) _v3.normalize();
 
-    const maxSpd = (pl.h < (P.STAND_H + P.CROUCH_H) / 2 ? P.CROUCH_SPEED : P.SPEED);
+    let maxSpd = (pl.h < (P.STAND_H + P.CROUCH_H) / 2 ? P.CROUCH_SPEED : P.SPEED);
+    // Em VR a mesma velocidade que e boa no monitor da enjoo: o corpo esta
+    // parado e os olhos veem 5,4 m/s, que e ritmo de corrida.
+    if (this.renderer.xr.isPresenting) maxSpd *= 0.62;
     const ctrl = pl.onGround ? 1 : P.AIR_CTRL;
     const wishX = _v3.x * maxSpd * mag, wishZ = _v3.z * maxSpd * mag;
     pl.vel.x += (wishX - pl.vel.x) * Math.min(1, P.ACCEL * ctrl * dt / maxSpd);
@@ -1879,9 +1908,14 @@ export class Game {
     this._sayOnce('hurt', 4);
     // empurrão para trás, para o jogador sair do perigo. Só em golpe que NÃO
     // mata: no golpe fatal isso jogava o corpo para cima e ele ficava boiando.
-    this.camera.getWorldDirection(_v1);
-    this.pl.vel.addScaledVector(_v1.setY(0).normalize(), -P.KNOCK);
-    this.pl.vel.y = Math.max(this.pl.vel.y, 3);
+    // Em VR o empurrao sai: mover a pessoa sem ela ter mandado e das piores
+    // coisas que existem para enjoo. No monitor ele fica, porque ajuda a sair
+    // do perigo e ali nao incomoda.
+    if (!this.renderer.xr.isPresenting) {
+      this.camera.getWorldDirection(_v1);
+      this.pl.vel.addScaledVector(_v1.setY(0).normalize(), -P.KNOCK);
+      this.pl.vel.y = Math.max(this.pl.vel.y, 3);
+    }
   }
 
   _death(timeout) {
@@ -2006,6 +2040,16 @@ export class Game {
       if (this.s && this.s.shake > 0 && this.opts.shake) {
         this.camera.rotation.z = Math.sin(t * 47) * 0.022 * this.s.shake;
       }
+    }
+
+    // vinheta acompanha a velocidade: fechada andando, aberta parado
+    if (this.vinheta) {
+      const emVR = this.renderer.xr.isPresenting;
+      const v = this.pl ? Math.hypot(this.pl.vel.x, this.pl.vel.z) : 0;
+      const alvo = emVR ? Math.min(0.72, Math.max(0, (v - 0.6) / 4.2) * 0.72) : 0;
+      const m = this.vinheta.material;
+      m.opacity += (alvo - m.opacity) * Math.min(1, dt * 6);
+      this.vinheta.visible = m.opacity > 0.01;
     }
 
     if (this.mode === 'playing' && this.level) {
