@@ -1156,8 +1156,12 @@ export class Game {
     this.xrTrigger = -1;
     this.activeCtrl = null;
 
+    if (this.renderer.xr.setFramebufferScaleFactor) this.renderer.xr.setFramebufferScaleFactor(0.92);
     this.renderer.xr.addEventListener('sessionstart', () => {
       this.reticle.visible = false;
+      // foveation maxima: borda do olho renderiza mais leve, quadro estavel.
+      // Taxa de quadros caindo e' a dor de cabeca que nenhuma vinheta cura.
+      if (this.renderer.xr.setFoveation) this.renderer.xr.setFoveation(1);
       this._calibraVR();
       if (this.mode === 'idle') this.start();
     });
@@ -1177,21 +1181,25 @@ export class Game {
   _calibraVR() {
     this.vrAltura = null;
     this.rig.scale.setScalar(1);
-    let maior = 0, quadros = 0;
-    const medir = () => {
-      if (!this.renderer.xr.isPresenting) return;
-      const y = this.camera.position.y;
-      if (y > 0.6 && y < 2.4) { maior = Math.max(maior, y); quadros++; }
-      if (quadros < 60) { requestAnimationFrame(medir); return; }
-      this.vrAltura = maior;
-      // escala do rig: quem e mais baixo e "esticado" ate o olho do jogo, e
-      // quem e mais alto e encolhido. Limitada, porque escala demais deforma
-      // a nocao de distancia e da enjoo.
-      const k = Math.max(0.78, Math.min(1.30, P.VR_OLHO / maior));
-      this.rig.scale.setScalar(k);
-      this._say(STR.aya.vr_pronto || '', 4);
-    };
-    requestAnimationFrame(medir);
+    // A amostragem acontece DENTRO do _frame (setAnimationLoop): dentro de
+    // sessao imersiva o requestAnimationFrame da janela nao dispara no Quest,
+    // entao a versao anterior nunca terminava de medir no aparelho de verdade.
+    this._vrCal = { maior: 0, quadros: 0 };
+  }
+
+  _vrCalibraPasso() {
+    const c = this._vrCal;
+    if (!c || !this.renderer.xr.isPresenting) return;
+    const y = this.camera.position.y;
+    if (y > 0.6 && y < 2.4) { c.maior = Math.max(c.maior, y); c.quadros++; }
+    if (c.quadros < 90) return;
+    this._vrCal = null;
+    this.vrAltura = c.maior;
+    // escala do rig: quem e mais baixo e "esticado" ate o olho do jogo, quem
+    // e mais alto e encolhido. Limitada: escala demais deforma distancia.
+    const k = Math.max(0.78, Math.min(1.30, P.VR_OLHO / c.maior));
+    this.rig.scale.setScalar(k);
+    this._say(STR.aya.vr_pronto || '', 4);
   }
 
   // limite de agachar: fracao da altura medida, e nao um numero fixo
@@ -1974,6 +1982,14 @@ export class Game {
     this.mode = 'over';
     this.sfx.droneStop(); this.sfx.win();
     this._say(STR.aya.win, 10);
+    // Em VR a tela de resultado e' DOM e nao existe dentro do oculos: quem
+    // zerava ficava preso num mundo parado, sem menu e sem saida. O banner
+    // (que E' desenhado no mundo) segura o resultado, e o gatilho recomeca.
+    if (this.renderer.xr.isPresenting) {
+      this._overT = performance.now();
+      this._banner(STR.win_title, STR.vr_reinicio || STR.win_body);
+      if (this.s) this.s.banner = { t: -1e9, title: STR.win_title, sub: '' };
+    }
     if (this.onEnd) this.onEnd({
       won: true, phase: LEVELS.length, frags: this.s.frags,
       deaths: this.s.deaths, drones: this.s.dronesKilled, time: Math.round(this.s.left),
@@ -2072,6 +2088,14 @@ export class Game {
     if (dt > 0.2) dt = 0.2;
 
     this._padTrig = this._pad();
+    this._vrCalibraPasso();
+    // fim de jogo dentro do oculos: gatilho recomeca (2 s de guarda para o
+    // tiro que matou o chefe nao reiniciar sem querer)
+    if (this.mode === 'over' && this.renderer.xr.isPresenting &&
+        this.xrTrigger >= 0 && performance.now() - (this._overT || 0) > 2000) {
+      this.xrTrigger = -1;
+      this.start(0);
+    }
 
     if (!this.renderer.xr.isPresenting) {
       const T = P.TURN_SPEED * dt;
@@ -2162,7 +2186,15 @@ export class Game {
       this.camera.getWorldPosition(_v1);
       this.camera.getWorldQuaternion(_q1);
       _v2.set(0, 0, -1).applyQuaternion(_q1);
-      const yaw = Math.atan2(-_v2.x, -_v2.z);
+      let yaw = Math.atan2(-_v2.x, -_v2.z);
+      // o painel SEGUE a cabeca em vez de vir grudado nela: HUD que gruda na
+      // nuca obriga o olho a reler a cada micro-movimento e cansa rapido
+      if (this._hudYaw === undefined) this._hudYaw = yaw;
+      let dy = yaw - this._hudYaw;
+      if (dy > Math.PI) dy -= 2 * Math.PI;
+      if (dy < -Math.PI) dy += 2 * Math.PI;
+      this._hudYaw += dy * Math.min(1, dt * 5);
+      yaw = this._hudYaw;
       for (const [pan, dist, hgt, tilt] of [
         [this.hud, 4.0, -1.42, -0.42], [this.sub, 4.0, -0.88, -0.26], [this.banner, 5.0, 0.65, -0.02],
       ]) {

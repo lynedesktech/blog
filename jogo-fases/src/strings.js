@@ -80,6 +80,7 @@ export const STR = {
   next_in: 'Próxima fase em',
 
   win_title: 'SISTEMA CORRIGIDO',
+  vr_reinicio: 'Você zerou. Aperte o gatilho para jogar de novo.',
   win_body: 'Você atravessou as cinco fases e obrigou o modelo a enxergar o seu rosto.',
   lose_title: 'APAGADO DO QUADRO',
   lose_body: 'O sistema te perdeu. Foi exatamente isso que aconteceu com milhões de pessoas nos modelos auditados em 2018.',
