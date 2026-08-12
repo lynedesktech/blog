@@ -575,7 +575,12 @@ export class Game {
     // verdade: tudo em AdditiveBlending, que soma com o que esta atras em vez
     // de tapar, com nucleo quente, duas camadas de brilho, poca de luz radial no
     // chao e emissores nas duas paredes.
-    const cor = (def.pal && def.pal.accent) || COL.mag;
+    // O feixe NÃO usa o accent da fase. Usava, e dava colisão de cor: na
+    // fase 3 o accent é ciano, igual às paredes e às fitas de luz dela, e o
+    // feixe sumia; nas fases 4 e 5 o accent é dourado, a mesma cor dos
+    // pedaços do rosto e do halo da máscara, ou seja, o que MATA tinha a cor
+    // do que se COLETA. Perigo tem uma cor só no jogo inteiro, e é o magenta.
+    const cor = COL.mag;
     this.beamMeshes = lv.beams.map((b) => {
       const g = new THREE.Group();
       g.position.set(0, b.y, b.z);
@@ -596,9 +601,9 @@ export class Game {
         return m;
       };
 
-      const core = tubo(0.022, 0xffffff, 0.95, true);  // filamento branco
-      const mid = tubo(0.075, cor, 0.55, false);       // corpo do feixe
-      const halo = tubo(0.24, cor, 0.10, false);       // brilho que sangra
+      const core = tubo(0.032, 0xffffff, 0.95, true);  // filamento branco
+      const mid = tubo(0.115, cor, 0.72, false);       // corpo do feixe
+      const halo = tubo(0.34, cor, 0.17, false);       // brilho que sangra
       const bloom = halo;                              // sem camada extra
       g.add(halo, mid, core);
 
@@ -912,6 +917,7 @@ export class Game {
       deposto: false, depT: null, // rosto entregue no pedestal
 
 
+      morto: false,
       shotCd: 0, shotVis: 0, shots: [],
       gateOpen: false, done: false,
       boss: def.boss ? { hp: P.BOSS_HP, t: 0, open: false, ang: 0 } : null,
@@ -1364,6 +1370,11 @@ export class Game {
 
   _player(dt) {
     const s = this.s, pl = this.pl;
+    // Morto: o corpo cai e para. Antes o `_player` continuava lendo o teclado
+    // e o analógico depois da morte, e o golpe fatal ainda dava um empurrão
+    // para cima: você era lançado e ficava andando solto pelos 2,4 s de
+    // "APAGADO DO QUADRO", como se nada tivesse acontecido.
+    const morto = !!s.morto;
 
     // --- agachar: no VR vale a altura REAL do capacete
     let wantDuck = this.held.has('duck') || this.duckBtn || this.duckPad;
@@ -1375,13 +1386,15 @@ export class Game {
 
     // --- direção do andar, projetada no chão
     let fwd = 0, str = 0;
-    if (this.held.has('fwd')) fwd += 1;
-    if (this.held.has('back')) fwd -= 1;
-    if (this.held.has('sright')) str += 1;
-    if (this.held.has('sleft')) str -= 1;
-    fwd += this.stick.y; str += this.stick.x;
-    if (this._padMove) { fwd += this._padMove.y; str += this._padMove.x; }
-    if (this.renderer.xr.isPresenting) { const v = this._xrSticks(dt); fwd += v.y; str += v.x; }
+    if (!morto) {
+      if (this.held.has('fwd')) fwd += 1;
+      if (this.held.has('back')) fwd -= 1;
+      if (this.held.has('sright')) str += 1;
+      if (this.held.has('sleft')) str -= 1;
+      fwd += this.stick.y; str += this.stick.x;
+      if (this._padMove) { fwd += this._padMove.y; str += this._padMove.x; }
+      if (this.renderer.xr.isPresenting) { const v = this._xrSticks(dt); fwd += v.y; str += v.x; }
+    }
 
     this.camera.getWorldDirection(_v1);
     _v1.y = 0;
@@ -1401,9 +1414,14 @@ export class Game {
       const f = Math.max(0, 1 - P.FRICTION * dt);
       pl.vel.x *= f; pl.vel.z *= f;
     }
+    // morto freia no ar também: o corpo cai onde foi atingido, não desliza
+    if (morto) {
+      const f = Math.max(0, 1 - 7 * dt);
+      pl.vel.x *= f; pl.vel.z *= f;
+    }
 
     // --- pulo com coyote time e buffer (§8: entrada perdoa quase-acertos)
-    if (this.tap.jump) { this.tap.jump = false; pl.jumpBuf = P.JUMP_BUF; }
+    if (this.tap.jump) { this.tap.jump = false; if (!morto) pl.jumpBuf = P.JUMP_BUF; }
     if (pl.jumpBuf > 0) pl.jumpBuf -= dt;
     if (pl.onGround) pl.coyote = P.COYOTE; else if (pl.coyote > 0) pl.coyote -= dt;
     if (pl.jumpBuf > 0 && pl.coyote > 0) {
@@ -1665,7 +1683,7 @@ export class Game {
 
   _shooting(dt) {
     const s = this.s;
-    const firing = this.mode === 'playing' && (this.mouseDown || this.xrTrigger >= 0 || this._padTrig);
+    const firing = this.mode === 'playing' && !s.morto && (this.mouseDown || this.xrTrigger >= 0 || this._padTrig);
     // o traço fica visível por um tempinho próprio: apagar no frame seguinte
     // deixava o tiro invisível na prática
     if (s.shotVis > 0) { s.shotVis -= dt; if (s.shotVis <= 0) this.shotLine.visible = false; }
@@ -1829,17 +1847,19 @@ export class Game {
     s.lives--; s.invuln = P.INVULN; s.hurt = 1;
     if (this.opts.shake) s.shake = 1;
     this.sfx.corrupt();
+    if (s.lives <= 0) { this._death(false); return; }
     this._sayOnce('hurt', 4);
-    // empurrão para trás, para o jogador sair do perigo
+    // empurrão para trás, para o jogador sair do perigo. Só em golpe que NÃO
+    // mata: no golpe fatal isso jogava o corpo para cima e ele ficava boiando.
     this.camera.getWorldDirection(_v1);
     this.pl.vel.addScaledVector(_v1.setY(0).normalize(), -P.KNOCK);
     this.pl.vel.y = Math.max(this.pl.vel.y, 3);
-    if (s.lives <= 0) this._death(false);
   }
 
   _death(timeout) {
     if (this.s.done) return;
     this.s.done = true;
+    this.s.morto = true;      // congela o corpo até a fase recarregar
     this.s.deaths++;
     this.sfx.fail();
     this._banner(STR.lose_title, STR.lose_body);
