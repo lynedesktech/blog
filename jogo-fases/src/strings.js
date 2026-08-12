@@ -33,6 +33,7 @@ export const STR = {
   ctrl_pad: 'Controle: analógico esquerdo anda · direito gira · A pula · RT atira · LB máscara',
 
   hud_frag: 'ROSTO',
+  hud_hunt: 'CAÇADA',
   hud_time: 'TEMPO',
   hud_lives: 'VIDAS',
   hud_mask: 'MÁSCARA',
@@ -46,6 +47,8 @@ export const STR = {
   btn_mask: 'MÁSCARA',
 
   obj_collect: 'Recolha os pedaços do seu rosto',
+  obj_hunt: 'Caçada: máscaras {m} · drones derrubados {d}',
+  hunt_locked: 'AINDA HÁ ALVOS',
   obj_gate: 'Rosto completo: encaixe os pedaços no pedestal',
   ped_label: 'ENCAIXE O ROSTO',
   obj_boss: 'Agache no feixe e atire quando a lente abrir',
@@ -70,6 +73,8 @@ export const STR = {
     scan: 'Parede-scanner. Essa só abre para quem o sistema reconhece. Máscara.',
     gate_ready: 'Rosto completo. Leva os pedaços até o pedestal e monta a tua cara na frente dele.',
     face_done: 'Pronto. É o teu rosto inteiro ali, montado peça por peça. Agora ele não tem como dizer que não te conhece. A porta abre.',
+    hunt: 'Aqui o jogo vira. Não recolha nada: desmonte a vigilância. Colete as máscaras espalhadas e derrube todos os drones, e a porta abre.',
+    hunt_done: 'Todos os drones no chão. Se ainda falta máscara, o placar no topo diz quantas.',
     hurt: 'Você foi apagado do quadro. Levanta.',
     boss: 'O olho central. Ele varre a sala com o feixe, então agache. Quando a lente abrir, atire.',
     win: 'Reconhecida. Foi um trabalho assim, pedaço por pedaço, que fez três gigantes corrigirem seus sistemas.',

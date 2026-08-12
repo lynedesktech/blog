@@ -362,8 +362,16 @@ setInterval(() => {
   if (!jogando) { $('aya2d').classList.remove('on'); $('banner2d').classList.remove('on'); lastFrags = -1; return; }
 
   // números grandes e sempre no mesmo lugar
-  $('hv-face').textContent = `${s.frags}/${s.need}`;
-  $('hv-face').className = 'big ' + (s.frags >= s.need ? 'cyan' : 'gold');
+  if (s.hunt) {
+    const dm = game.level.drones.filter(d => d.dead).length, dt2 = game.level.drones.length;
+    $('hl-face').textContent = STR.hud_hunt;
+    $('hv-face').textContent = `${s.masksGot}/${s.masksTotal} · ${dm}/${dt2}`;
+    $('hv-face').className = 'big ' + (s.masksGot >= s.masksTotal && dm >= dt2 ? 'cyan' : 'gold');
+  } else {
+    $('hl-face').textContent = STR.hud_frag;
+    $('hv-face').textContent = `${s.frags}/${s.need}`;
+    $('hv-face').className = 'big ' + (s.frags >= s.need ? 'cyan' : 'gold');
+  }
   const mm = Math.floor(s.left / 60), ss = String(Math.floor(s.left % 60)).padStart(2, '0');
   $('hv-time').textContent = `${mm}:${ss}`;
   $('hv-time').className = 'big' + (s.left < 20 ? ' mag' : '');

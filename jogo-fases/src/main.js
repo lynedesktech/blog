@@ -852,7 +852,7 @@ export class Game {
     gate.add(verga);
 
     this.gateLabel = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: this._label(STR.gate_locked, '#FF2D9B'), transparent: true, depthWrite: false,
+      map: this._label(def.hunt ? STR.hunt_locked : STR.gate_locked, '#FF2D9B'), transparent: true, depthWrite: false,
     }));
     this.gateLabel.scale.set(3.2, 0.8, 1);
     this.gateLabel.position.set(0, DH - 0.85, 0.4);
@@ -866,6 +866,8 @@ export class Game {
     // da porta. Os pedaços que você recolhe SÃO do seu rosto, então montá-los
     // aqui é remontar a sua cara para a máquina, e é isso que destranca o
     // ferro. Antes bastava encostar num anel, o que não dizia nada.
+    this.facePed = null; this.faceMask = null; this.faceHalo = null; this.faceLabel = null;
+    if (!def.hunt) {
     const ped = new THREE.Group();
     ped.position.set(0, 0, lv.gate.z + 4.5);
 
@@ -906,6 +908,7 @@ export class Game {
 
     this.levelRoot.add(ped);
     this.facePed = ped;
+    }
 
     // --- chefe
     this.bossGroup = null;
@@ -953,6 +956,7 @@ export class Game {
 
 
       morto: false,
+      hunt: !!def.hunt, masksGot: 0, masksTotal: (lv.maskItems || []).length,
       shotCd: 0, shotVis: 0, shots: [],
       gateOpen: false, done: false,
       boss: def.boss ? { hp: P.BOSS_HP, t: 0, open: false, ang: 0 } : null,
@@ -967,7 +971,8 @@ export class Game {
     this.rig.rotation.set(0, 0, 0);
     this.in.yaw = 0; this.in.pitch = 0;
 
-    this._setObjective(STR.obj_collect);
+    if (def.hunt) { this._huntObjective(); this._sayOnce('hunt', 7); }
+    else this._setObjective(STR.obj_collect);
     this._banner(`${STR.phase_intro} ${i + 1}`, def.sub);
     this._say(i === 0 ? STR.aya.start : def.sub, 6);
     if (def.boss) this._sayOnce('boss', 9);
@@ -1344,6 +1349,15 @@ export class Game {
     this._say(STR.aya[key] || '', dur);
   }
 
+  // objetivo vivo da cacada: mostra o placar de mascaras e drones
+  _huntObjective() {
+    const s = this.s, lv = this.level;
+    const mortos = lv.drones.filter((d) => d.dead).length;
+    this._setObjective(STR.obj_hunt
+      .replace('{m}', s.masksGot + '/' + s.masksTotal)
+      .replace('{d}', mortos + '/' + lv.drones.length));
+  }
+
   _setObjective(t) {
     if (!this.s || this.s.objective === t) return;
     this.s.objective = t;
@@ -1618,7 +1632,9 @@ export class Game {
       s.maskHave = true;
       s.maskOn = true;               // já vai para o rosto: é para isso que serve
       s.pegouT = s.t;
+      s.masksGot++;
       this.sfx.purify();
+      if (s.hunt) { this._huntObjective(); this.sfx.feed(s.masksGot); }
       this._sayOnce('mask_found', 8);
     }
 
@@ -1865,7 +1881,13 @@ export class Game {
     if (hit) {
       hit.d.hp--;
       this.sfx.purify();
-      if (hit.d.hp <= 0) { hit.d.dead = true; s.dronesKilled++; this.sfx.feed(s.dronesKilled); }
+      if (hit.d.hp <= 0) {
+        hit.d.dead = true; s.dronesKilled++; this.sfx.feed(s.dronesKilled);
+        if (s.hunt) {
+          this._huntObjective();
+          if (this.level.drones.every((d) => d.dead)) this._sayOnce('hunt_done', 6);
+        }
+      }
     }
 
     // traço do tiro
@@ -1919,11 +1941,13 @@ export class Game {
   _gate() {
     const s = this.s, g = this.level.gate, pl = this.pl;
     // não basta ter os pedaços: eles precisam estar montados no pedestal
-    const ready = s.deposto && (!s.boss || s.boss.hp <= 0);
+    const ready = s.hunt
+      ? (s.masksGot >= s.masksTotal && this.level.drones.every((d) => d.dead))
+      : (s.deposto && (!s.boss || s.boss.hp <= 0));
     if (ready !== s.gateOpen) {
       s.gateOpen = ready;
       s.gateT = s.t;                       // marca o instante da destrava
-      this.gateLabel.material.map = this._label(ready ? STR.gate_open : STR.gate_locked, ready ? '#00E5FF' : '#FF2D9B');
+      this.gateLabel.material.map = this._label(ready ? STR.gate_open : (s.hunt ? STR.hunt_locked : STR.gate_locked), ready ? '#00E5FF' : '#FF2D9B');
       this.gateLabel.material.needsUpdate = true;
       if (ready) this.sfx.pulse();         // o baque de destravar
     }
@@ -2042,7 +2066,9 @@ export class Game {
     g.fillText(STR.hud_frag, 30, 40);
     g.fillStyle = s.frags >= s.need ? '#00E5FF' : '#FFC93C';
     g.font = 'bold 60px system-ui, sans-serif';
-    g.fillText(`${s.frags}/${s.need}`, 30, 104);
+    g.fillText(s.hunt
+      ? `${s.masksGot}/${s.masksTotal} · ${this.level.drones.filter((d) => d.dead).length}/${this.level.drones.length}`
+      : `${s.frags}/${s.need}`, 30, 104);
 
     // tempo
     g.textAlign = 'center';

@@ -66,21 +66,20 @@ export const LEVELS = [
     pal: { fog: 0x050d14, fogD: 0.012, amb: 0x36a8c8, ambI: 1.62, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_a2e2d481-a99f-468b-b915-73d4c4a73758.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_a59d0178-491b-4b6e-8d9b-d9550575d551.png' },
-    sub: 'Câmeras e drones. Sem máscara você é alvo; de máscara eles nem te veem.',
-    // Esta é a fase que APRESENTA os drones e era a mais lotada de todas:
-    // cinco drones, e 8 dos 9 rostos caíam dentro do alcance de tiro deles,
-    // com zero margem (9 rostos para 9 pedidos: perder um travava a fase).
-    // Agora são três drones e sete rostos. O primeiro trecho de drone tem UM
-    // só, para você aprender a lidar com ele antes de encarar dois.
-    time: 150, need: 7, w: 10, h: 5,
-    mask: true,
+    sub: 'Caçada: colete as três máscaras e derrube todos os drones.',
+    // Fase de CAÇADA: aqui o objetivo NAO e juntar pedacos de rosto. A porta
+    // so abre quando todas as mascaras espalhadas forem coletadas e todos os
+    // drones forem derrubados. E a fase que inverte o papel: em vez de fugir
+    // da vigilancia, voce desmonta a vigilancia.
+    time: 150, need: 0, w: 10, h: 5,
+    mask: true, hunt: true, masks: 3,
     segs: [
-      { t: SEG.PLAIN, len: 12, frags: 1 },
-      { t: SEG.CAMS, len: 16, n: 2, frags: 1 },
-      { t: SEG.DRONES, len: 16, n: 1, frags: 1 },
-      { t: SEG.BEAM_LOW, len: 12, n: 2, frags: 1 },
-      { t: SEG.CAMS, len: 14, n: 2, frags: 1 },
-      { t: SEG.DRONES, len: 18, n: 2, frags: 2 },
+      { t: SEG.PLAIN, len: 12 },
+      { t: SEG.CAMS, len: 16, n: 2 },
+      { t: SEG.DRONES, len: 16, n: 2 },
+      { t: SEG.BEAM_LOW, len: 12, n: 2 },
+      { t: SEG.CAMS, len: 14, n: 2 },
+      { t: SEG.DRONES, len: 18, n: 3 },
       { t: SEG.PLAIN, len: 12 },
     ],
   },
@@ -361,8 +360,11 @@ export function buildLevel(def, rng) {
   // o primeiro terço do corredor quando a fase não tem uma
   const dLimite = scanners.length ? Math.abs(scanners[0].z - zSpawn) - 8 : dTotal * 0.34;
   // e nunca a menos de 14 m do spawn: você tem que ANDAR até ela
-  const dIni = Math.min(14, Math.max(5, dLimite - 8));
-  const dFim = Math.max(dIni + 5, dLimite);
+  let dIni = Math.min(14, Math.max(5, dLimite - 8));
+  let dFim = Math.max(dIni + 5, dLimite);
+  // Fase de cacada: as mascaras SAO o objetivo, entao se espalham pelo
+  // corredor inteiro em vez de se esconderem no primeiro terco.
+  if (def.hunt) { dIni = 8; dFim = Math.max(dIni + 8, dTotal - 6); }
 
   const maskItems = [];
   if (def.mask) {
