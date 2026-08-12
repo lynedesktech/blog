@@ -1577,11 +1577,15 @@ export class Game {
         // pulso: luz viva respira. sem isso o feixe parece um adesivo colado.
         const u = bm.userData;
         const k = 0.82 + Math.sin(s.t * 5.5 + u.fase) * 0.18;
-        u.mid.material.opacity = 0.55 * k;
-        u.halo.material.opacity = 0.10 * k;
+        // Estes numeros TEM que bater com os da criacao do feixe: aqui era
+        // 0,55 / 0,10 / 0,13, os valores antigos, e o pulso apagava a cada
+        // frame o corpo que o feixe tinha ganhado.
+        u.mid.material.opacity = 0.72 * k;
+        u.halo.material.opacity = 0.17 * k;
         u.halo.scale.set(k, 1, k);
         u.poca.position.z = b.cz;
-        u.poca.material.opacity = 0.13 * k;
+        u.poca.material.opacity = 0.18 * k;
+        if (u.risco) u.risco.material.opacity = 0.60 * k;
       }
     }
     for (let i = 0; i < lv.cams.length; i++) {

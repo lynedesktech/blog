@@ -179,14 +179,14 @@ export function buildLevel(def, rng) {
       case SEG.BEAM_LOW: {
         slab(0, cz, W, len);
         for (let i = 0; i < (s.n || 2); i++) {
-          beams.push({ z: z0 - (len * (i + 0.5)) / (s.n || 2), y: 1.30, kind: 'low', w: W, phase: rng() * 6.28, speed: 1.1 + rng() * 0.5, range: len / (s.n || 2) * 0.4 });
+          beams.push({ z: z0 - (len * (i + 0.5)) / (s.n || 2), y: 1.45, kind: 'low', w: W, phase: rng() * 6.28, speed: 1.1 + rng() * 0.5, range: len / (s.n || 2) * 0.4 });
         }
         break;
       }
       case SEG.BEAM_HIGH: {
         slab(0, cz, W, len);
         for (let i = 0; i < (s.n || 2); i++) {
-          beams.push({ z: z0 - (len * (i + 0.5)) / (s.n || 2), y: 0.42, kind: 'high', w: W, phase: rng() * 6.28, speed: 1.3 + rng() * 0.5, range: len / (s.n || 2) * 0.4 });
+          beams.push({ z: z0 - (len * (i + 0.5)) / (s.n || 2), y: 0.34, kind: 'high', w: W, phase: rng() * 6.28, speed: 1.3 + rng() * 0.5, range: len / (s.n || 2) * 0.4 });
         }
         break;
       }
