@@ -124,7 +124,16 @@ export class Game {
   }
 
   _resize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+    const asp = window.innerWidth / window.innerHeight;
+    this.camera.aspect = asp;
+    // O 75 da PerspectiveCamera e o campo de visao VERTICAL. Num celular em
+    // pe o aspect fica em torno de 0,46, e ai o campo HORIZONTAL desabava para
+    // uns 39 graus: o corredor sumia dos lados e o chao tomava a tela inteira.
+    // Aqui o alvo passa a ser o campo horizontal, com o vertical calculado a
+    // partir dele e limitado para nao distorcer.
+    const H_ALVO = 88 * Math.PI / 180;
+    const vert = 2 * Math.atan(Math.tan(H_ALVO / 2) / asp) * 180 / Math.PI;
+    this.camera.fov = Math.max(70, Math.min(95, vert));
     this.camera.updateProjectionMatrix();
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -516,7 +525,7 @@ export class Game {
       if (b.kind !== 'floor') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y + b.hy + E, b.z), { x: -Math.PI / 2, y: 0 }];
-    }, 4.2, 0xbfc5d4);
+    }, 2.6, 0xbfc5d4);
 
     // paredes: a face virada para dentro do corredor
     this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall), (b) => {
