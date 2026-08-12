@@ -1,0 +1,352 @@
+<title>Fala do Corredor Codificado</title>
+<style>
+  :root{--bg:#EEECF2;--surface:#FCFBFE;--surface-2:#E5E2EC;--ink:#16131F;--muted:#5A5468;
+    --faint:#8A8399;--rule:#D3CEDE;--cyan:#0C6072;--gold:#7E5F0A;--mag:#A81C63;--fala-bg:#FFFFFF;
+    --shadow:0 1px 2px rgba(22,19,31,.06),0 8px 24px -12px rgba(22,19,31,.18)}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#100D18;--surface:#191524;--surface-2:#221C31;--ink:#EDEAF2;--muted:#A49CB8;
+    --faint:#7C748F;--rule:#302943;--cyan:#4FD8EE;--gold:#F0BE4B;--mag:#FF74B4;--fala-bg:#1E1830;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7)}}
+  :root[data-theme="dark"]{--bg:#100D18;--surface:#191524;--surface-2:#221C31;--ink:#EDEAF2;
+    --muted:#A49CB8;--faint:#7C748F;--rule:#302943;--cyan:#4FD8EE;--gold:#F0BE4B;--mag:#FF74B4;
+    --fala-bg:#1E1830;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7)}
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);margin:0;padding:0 1.25rem 6rem;font-size:16px;
+    line-height:1.55;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:62rem;margin:0 auto}
+  header.topo{padding:3.5rem 0 2rem;border-bottom:2px solid var(--ink)}
+  .kicker{font-size:.7rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--cyan);margin:0 0 1rem}
+  h1{font-size:clamp(2rem,6.5vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.02;
+    text-wrap:balance;margin:0 0 1rem}
+  .dek{font-family:Georgia,"Iowan Old Style",serif;font-size:clamp(1.05rem,2.4vw,1.3rem);
+    color:var(--muted);max-width:44ch;margin:0}
+  .nota{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--mag);
+    padding:1.15rem 1.35rem;margin:2rem 0;border-radius:3px;box-shadow:var(--shadow)}
+  .nota h4{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--mag);margin:0 0 .6rem}
+  .nota p{margin:0 0 .6rem;font-size:.93rem;color:var(--muted)}
+  .nota p:last-child{margin-bottom:0}
+  .nota strong{color:var(--ink)}
+  section.roteiro{background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+    margin:2.25rem 0;box-shadow:var(--shadow);overflow:hidden}
+  .cabeca{padding:1.4rem 1.5rem 1.25rem;border-bottom:1px solid var(--rule);background:var(--surface-2)}
+  .cabeca .id{display:flex;flex-wrap:wrap;align-items:baseline;gap:.75rem;margin-bottom:.55rem}
+  .cabeca .num{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;font-weight:700;
+    color:var(--faint)}
+  .cabeca h2{font-size:clamp(1.3rem,3.4vw,1.7rem);font-weight:800;letter-spacing:-.02em;margin:0;
+    line-height:1.1}
+  .cabeca .dur{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;color:var(--cyan);
+    font-weight:600;margin-left:auto;white-space:nowrap}
+  .equipe{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.3rem}
+  .pessoa{font-size:.76rem;font-weight:600;background:var(--surface);color:var(--ink);
+    border:1px solid var(--rule);padding:.2rem .55rem;border-radius:100px}
+  .cabeca .onde{font-size:.85rem;color:var(--muted);margin:.8rem 0 0;
+    font-family:Georgia,"Iowan Old Style",serif;font-style:italic}
+  .corpo{padding:.5rem 1.5rem 1.75rem}
+  .deixa{display:grid;grid-template-columns:1fr;gap:.5rem;padding:1.5rem 0 .25rem;
+    border-top:1px solid var(--rule)}
+  .deixa:first-child{border-top:0}
+  @media (min-width:46rem){.deixa{grid-template-columns:9rem 1fr;gap:1.5rem}}
+  .rail{padding-top:.1rem}
+  .rail .rot{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold);display:block}
+  .rail .quem{font-size:.78rem;color:var(--muted);display:block;margin-top:.3rem}
+  .conteudo>*:first-child{margin-top:0}
+  .conteudo>*:last-child{margin-bottom:0}
+  .fala{font-family:Georgia,"Iowan Old Style",serif;font-size:1.06rem;line-height:1.6;
+    background:var(--fala-bg);border-left:3px solid var(--cyan);padding:.85rem 1.1rem;
+    margin:.75rem 0;border-radius:0 3px 3px 0}
+  .fala.perigo{border-left-color:var(--mag)}
+  .fala.ouro{border-left-color:var(--gold)}
+  .fala p{margin:0 0 .7rem}
+  .fala p:last-child{margin-bottom:0}
+  .acao{font-size:.88rem;color:var(--muted);margin:.7rem 0;padding-left:1.1rem;position:relative}
+  .acao::before{content:"";position:absolute;left:0;top:.62em;width:.5rem;height:1px;
+    background:var(--faint)}
+  .acao b{color:var(--ink);font-weight:600}
+  ul.lista{margin:.7rem 0;padding-left:1.15rem}
+  ul.lista li{margin-bottom:.45rem;font-size:.92rem}
+  ul.lista li::marker{color:var(--faint)}
+  .pergunta{margin:.9rem 0}
+  .pergunta .q{font-size:.92rem;font-weight:700;margin:0 0 .3rem}
+  .pergunta .a{font-family:Georgia,"Iowan Old Style",serif;font-size:.97rem;color:var(--muted);
+    margin:0;padding-left:.9rem;border-left:2px solid var(--rule)}
+  .tabela-wrap{overflow-x:auto;margin:.8rem 0}
+  table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:26rem}
+  th,td{text-align:left;padding:.5rem .8rem .5rem 0;border-bottom:1px solid var(--rule);
+    vertical-align:top}
+  th{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  td.k{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .slide{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.7rem;
+    font-weight:700;background:var(--cyan);color:var(--surface);padding:.1rem .45rem;
+    border-radius:3px;margin-right:.4rem;vertical-align:.08em}
+  footer.rodape{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--rule);
+    font-size:.82rem;color:var(--faint)}
+  footer.rodape p{margin:0 0 .5rem;max-width:62ch}
+</style>
+
+<div class="wrap">
+
+<header class="topo">
+  <p class="kicker">Palco e área do grupo</p>
+  <h1>Fala do Corredor Codificado</h1>
+  <p class="dek">Quem fala o quê, em qual slide, e o que as mãos fazem enquanto a boca fala.</p>
+</header>
+
+<div class="nota">
+  <h4>Os oito fatos que podem sair da boca de alguém</h4>
+  <p><strong>1.</strong> Joy Buolamwini, cientista da computação, MIT Media Lab, fundadora da Algorithmic Justice League, autora de <i>Unmasking AI</i>.
+  <strong>2.</strong> O software não detectava o rosto dela até ela vestir uma máscara branca.
+  <strong>3.</strong> Gender Shades, 2018, com Timnit Gebru: auditoria de IBM, Microsoft e Face++.
+  <strong>4.</strong> Acerto de 99,7% para homens de pele clara contra 65,3% para mulheres de pele escura.
+  <strong>5.</strong> Ela depôs no Congresso dos Estados Unidos.
+  <strong>6.</strong> As três empresas corrigiram os modelos depois da auditoria.
+  <strong>7.</strong> A guia AYA do jogo é personagem fictícia.
+  <strong>8.</strong> O chat do blog é simulação feita com IA, não é a pessoa real.</p>
+  <p>Perguntaram algo fora disso: <strong>"não sei de cabeça, mas está no blog"</strong>. Num projeto sobre dado honesto, inventar número em cima da hora é o único erro fatal.</p>
+</div>
+
+<div class="nota">
+  <h4>Endereço único, sem downloads</h4>
+  <p>Apresentação: <strong>blog-joy.vercel.app/apresentacao</strong> · Blog e jogo: <strong>blog-joy.vercel.app</strong>. O carimbo no canto da apresentação diz a versão; este roteiro é da <strong>v11</strong> (20 slides).</p>
+</div>
+
+<!-- ================================================== PALCO -->
+<section class="roteiro">
+  <div class="cabeca">
+    <div class="id"><span class="num">Palco</span><h2>Apresentação</h2><span class="dur">10 a 12 min</span></div>
+    <div class="equipe"><span class="pessoa">Davi</span><span class="pessoa">Nikolas</span><span class="pessoa">Gabriel Vieira</span><span class="pessoa">Gabriel Lima</span></div>
+    <p class="onde">Sem suspense na abertura: primeiro a equipe se apresenta, depois o assunto desenrola. O canto de baixo de cada slide diz de quem é a vez.</p>
+  </div>
+  <div class="corpo">
+
+    <div class="deixa">
+      <div class="rail"><span class="rot">Davi, bloco 1</span><span class="quem">slides 1 a 3 · 2 min</span></div>
+      <div class="conteudo">
+        <div class="fala">
+          <p><span class="slide">1</span>Bom dia. A gente é o grupo do Desmascarando a IA. Eu sou o Davi e abro o tema. O Nikolas traz os números da pesquisa. O Gabriel Vieira mostra o que a gente construiu. E o Gabriel Lima está no controle do jogo, ali na nossa área.</p>
+        </div>
+        <div class="acao">Cada um levanta a mão ou acena quando o nome é dito. Sem pressa: a plateia precisa gravar quem é quem.</div>
+        <div class="fala">
+          <p><span class="slide">2</span>O nosso trabalho é a documentação de uma pesquisa sobre viés algorítmico, e das três coisas que a gente construiu com ela: um blog, um jogo e uma versão em óculos de realidade virtual.</p>
+          <p><span class="slide">3</span>O registro que abre tudo é um fato: uma pesquisadora do MIT rodou um software de detecção de rosto que não achava o rosto dela. Quando ela vestiu uma máscara branca de plástico, o software detectou na hora. Esse fato tem nome, data e fonte, e é a base do resto.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="deixa">
+      <div class="rail"><span class="rot">Davi, bloco 2</span><span class="quem">slides 4 e 5 · 2 min</span></div>
+      <div class="conteudo">
+        <div class="acao"><b>O slide 4 só funciona com a plateia respondendo.</b> Leia as quatro perguntas devagar e espere as mãos.</div>
+        <div class="fala ouro">
+          <p><span class="slide">4</span>Levanta a mão quem já teve o celular deixando de reconhecer o rosto sem motivo. Quem já sumiu da foto de grupo. Quem já falou com assistente de voz que não entendeu o seu jeito de falar.</p>
+          <p>Isso que vocês levantaram a mão tem nome e tem número.</p>
+        </div>
+        <div class="fala">
+          <p><span class="slide">5</span>O nome é viés algorítmico. E registrem uma coisa: ninguém programa a máquina para errar com um grupo. O erro entra antes, e é isso que o Nikolas documenta agora.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="deixa">
+      <div class="rail"><span class="rot">Nikolas, bloco 1</span><span class="quem">slides 6 a 8 · 2 min</span></div>
+      <div class="conteudo">
+        <div class="fala">
+          <p><span class="slide">6</span>O mecanismo em três passos: alguém junta milhões de rostos da internet, e o que é fácil de achar já vem torto. A máquina treina no que recebeu, então fica ótima no rosto que viu dez milhões de vezes e péssima no que viu dez mil. E o sistema vai para a rua: aeroporto, escola, polícia.</p>
+        </div>
+        <div class="acao">Slide 7 é o gráfico. <b>Aponte a barra na tela</b> em vez de só falar o número.</div>
+        <div class="fala ouro">
+          <p><span class="slide">7</span>Os números, registrados em 2018 no estudo Gender Shades: os sistemas da IBM, da Microsoft e da Face++ acertavam 99,7% dos homens de pele clara e 65,3% das mulheres de pele escura.</p>
+          <p><span class="slide">8</span>De onde tiramos cada número: do estudo original, do livro dela e do depoimento no Congresso. O que não tinha fonte, ficou de fora do nosso trabalho.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="deixa">
+      <div class="rail"><span class="rot">Nikolas, bloco 2</span><span class="quem">slides 9 a 11 · 2 min</span></div>
+      <div class="conteudo">
+        <div class="acao">Dois slides de vídeo. <b>Fale pouco e deixe rodar.</b></div>
+        <div class="fala">
+          <p><span class="slide">9</span>Contexto: em 2023 a inteligência artificial gerava isto. Era piada na internet.</p>
+        </div>
+        <div class="acao">Oito segundos de silêncio. A sala vai rir; deixe rir.</div>
+        <div class="fala perigo">
+          <p><span class="slide">10</span>Isto é 2026. Três anos separam um vídeo do outro. Se ela engana os olhos assim, quem garante que está sendo justa com o nosso rosto?</p>
+        </div>
+        <div class="fala">
+          <p><span class="slide">11</span>E os efeitos documentados da pesquisa: as três empresas corrigiram os modelos, o caso chegou ao Congresso americano, e virou base de política pública. Agora o Gabriel mostra o que a gente construiu com tudo isso.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="deixa">
+      <div class="rail"><span class="rot">Gabriel Vieira, bloco 1</span><span class="quem">slides 12 a 14 · 2 min</span></div>
+      <div class="conteudo">
+        <div class="acao">Slide 12 é a fonte primária em vídeo. <b>Tire o mudo</b> e deixe trinta segundos sem falar por cima.</div>
+        <div class="fala">
+          <p><span class="slide">12</span>Antes do que a gente fez, a fonte primária: ela mesma, no TED.</p>
+          <p><span class="slide">13</span>Produção, parte um: o blog. Cada seção nasceu de uma fonte pública. O chat com voz segue instruções que a gente escreveu, e a primeira regra é admitir que é uma simulação.</p>
+          <p><span class="slide">14</span>Parte dois: o jogo. O caso da máscara branca virou regra: coletar a máscara dá o poder, vestir é escolha sua, no botão. Com ela o sistema te aceita, e você deixa de ser você.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="deixa">
+      <div class="rail"><span class="rot">Gabriel Vieira, bloco 2</span><span class="quem">slides 15 a 20 · 3 min</span></div>
+      <div class="conteudo">
+        <div class="fala">
+          <p><span class="slide">15</span>Parte três: os testes. A gente simulou 400 gerações de cada fase antes de publicar, mediu que o feixe ocupava 1% da tela e deu um risco no chão para ele, e mediu a folga do agachamento: 24 centímetros viravam sorte, 39 viraram regra. A lição do projeto inteiro: não confiar no que parece pronto, medir. Foi o que a pesquisadora fez com os sistemas das empresas.</p>
+          <p><span class="slide">16</span>Parte quatro: o óculos. Ele mede a sua altura no primeiro segundo e ajusta o mundo; agachar é com o corpo de verdade.</p>
+          <p><span class="slide">17</span>As três decisões documentadas: jogo em vez de vídeo, a máscara como centro, e avisar que o chat é IA.</p>
+        </div>
+        <div class="fala ouro">
+          <p><span class="slide">18</span><span class="slide">19</span>A citação registrada dela: se a gente não for vigilante, codifica o passado no futuro. As nossas conclusões estão no slide: a IA não é neutra, ela reflete quem constrói e com o que treina.</p>
+        </div>
+        <div class="fala">
+          <p><span class="slide">20</span>E está tudo funcionando aqui na nossa área: o blog, o jogo no totem com o Gabriel Lima, e o óculos. Quem quiser testar do celular, aponta a câmera nesse código. Obrigado.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================== DEMO NA AREA -->
+<section class="roteiro">
+  <div class="cabeca">
+    <div class="id"><span class="num">Nossa área</span><h2>Demonstração do jogo</h2><span class="dur">40 s ensaiados</span></div>
+    <div class="equipe"><span class="pessoa">Gabriel Lima, no controle</span></div>
+    <p class="onde">Endereço: blog-joy.vercel.app/jogo-fases/?fase=2 · A fase 2 tem mapa fixo: dá para decorar os metros.</p>
+  </div>
+  <div class="corpo">
+    <div class="deixa">
+      <div class="rail"><span class="rot">A sequência</span></div>
+      <div class="conteudo">
+        <div class="tabela-wrap">
+          <table>
+            <tr><th>Metro</th><th>O que aparece</th><th>O que você faz</th></tr>
+            <tr><td class="k">0</td><td>Início do corredor</td><td>Segure W e ande reto</td></tr>
+            <tr><td class="k">14</td><td>Feixe magenta na altura do peito</td><td><b>Agache</b> com Ctrl e passe por baixo</td></tr>
+            <tr><td class="k">15</td><td>Máscara branca no chão, à esquerda</td><td>Ande por cima: o poder é seu</td></tr>
+            <tr><td class="k">15</td><td>MÁSCARA: E LIGA no painel</td><td><b>Aperte E</b>: agora ela está no rosto</td></tr>
+            <tr><td class="k">21</td><td>Segundo feixe, igual ao primeiro</td><td><b>Atravesse em pé.</b> É a virada</td></tr>
+          </table>
+        </div>
+        <div class="acao">A máscara <b>não veste sozinha</b> ao coletar: o aperto do E na frente da plateia É o momento da demonstração, o gesto de escolher deixar de ser você. Não pule essa fala.</div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">Se pedirem a fase 3</span></div>
+      <div class="conteudo">
+        <div class="fala">
+          <p>A fase 3 é a caçada: primeiro derrube os cinco drones atirando com o clique, depois pegue a máscara branca que espera no fundo do corredor, e a porta abre. Morrer te devolve para a entrada, mas o que caiu continua no chão.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================== TOTEM -->
+<section class="roteiro">
+  <div class="cabeca">
+    <div class="id"><span class="num">Nossa área</span><h2>Totem, o jogo</h2><span class="dur">3 a 4 min por visitante</span></div>
+    <div class="equipe"><span class="pessoa">Julia</span><span class="pessoa">Ana Clara</span><span class="pessoa">Izabelly</span><span class="pessoa">Gabriel Lima</span></div>
+    <p class="onde">O visitante joga; vocês narram por cima. Ninguém aprende regra ouvindo, só jogando.</p>
+  </div>
+  <div class="corpo">
+    <div class="deixa">
+      <div class="rail"><span class="rot">Entrega antes de explicar</span></div>
+      <div class="conteudo">
+        <div class="acao">Controle na mão da pessoa <b>antes</b> de qualquer fala. Só o mínimo: <b>WASD anda, espaço pula, Ctrl agacha, E veste a máscara, clique atira.</b></div>
+        <div class="fala">
+          <p>Você está dentro de um sistema de reconhecimento facial que não te reconhece. Junte os pedaços do seu rosto, monte a sua cara no fim, e a porta abre.</p>
+        </div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">A máscara</span><span class="quem">o miolo</span></div>
+      <div class="conteudo">
+        <div class="acao">Espere a pessoa passar por cima da máscara branca. O painel mostra <b>E LIGA</b>. Fale nessa hora:</div>
+        <div class="fala ouro">
+          <p>O poder é seu, mas repare: ele não liga sozinho. Aperta o E. Pronto: agora os feixes te deixam passar, não porque você mudou, mas porque você parou de parecer você. Essa escolha, de vestir ou não, é o caso real da pesquisadora virado em botão.</p>
+        </div>
+        <div class="acao">Avise depois: <b>ela superaquece</b>, dá para atravessar um trecho, não a fase inteira.</div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">Fase 3, a caçada</span></div>
+      <div class="conteudo">
+        <div class="fala">
+          <p>Aqui o jogo vira: atire. Derrube os cinco drones com o clique, e a máscara branca te espera no fundo do corredor. Morrer te devolve para a entrada, mas o que você derrubou continua no chão.</p>
+        </div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">Se der problema</span></div>
+      <div class="conteudo">
+        <ul class="lista">
+          <li>Pessoa travada na fase 1: tudo bem, o objetivo é ela entender a máscara, não zerar. Abra com <code>?fase=2</code> no fim do endereço.</li>
+          <li>Fila: quatro minutos por pessoa, avisados antes de entregar o controle.</li>
+          <li>Caiu a internet: não recarregue; o jogo já carregado continua rodando.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================== BLOG -->
+<section class="roteiro">
+  <div class="cabeca">
+    <div class="id"><span class="num">Nossa área</span><h2>Blog</h2><span class="dur">2 a 3 min</span></div>
+    <div class="equipe"><span class="pessoa">Julia</span><span class="pessoa">Izabelly</span><span class="pessoa">Ana Clara</span></div>
+    <p class="onde">Quem chega pode não ter visto o palco: comece do zero. Endereço: blog-joy.vercel.app</p>
+  </div>
+  <div class="corpo">
+    <div class="deixa">
+      <div class="rail"><span class="rot">Abertura</span></div>
+      <div class="conteudo">
+        <div class="fala">
+          <p>Oi. Já ouviu falar de um software de reconhecimento facial que só enxergava o rosto de uma pesquisadora quando ela vestia uma máscara branca?</p>
+        </div>
+        <div class="acao">Pausa de um segundo. É a única isca que a gente tem.</div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">A prova</span><span class="quem">role a página junto</span></div>
+      <div class="conteudo">
+        <div class="acao">Role até <b>Gender Shades</b> e aponte o número na tela.</div>
+        <div class="fala ouro">
+          <p>Aconteceu com a Dra. Joy Buolamwini, no MIT. Ela foi medir: em 2018 testou IBM, Microsoft e Face++. Homens de pele clara, 99,7% de acerto. Mulheres de pele escura, 65,3%. A máquina aprende com os dados que a gente escolhe dar para ela.</p>
+        </div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">Interativo</span><span class="quem">o fecho</span></div>
+      <div class="conteudo">
+        <div class="acao">Abra o chat e digite você mesma: <b>a IA tem preconceito?</b> Deixe a voz responder.</div>
+        <div class="fala perigo">
+          <p>E eu preciso ser honesta: isso não é a Joy de verdade. É uma simulação feita com IA, baseada no que ela falou publicamente, e a gente avisa isso na tela. Seria irônico fazer um projeto sobre honestidade em IA e enganar você aqui.</p>
+        </div>
+        <div class="acao">Fala obrigatória, mesmo sem ninguém perguntar. É a coisa mais forte da estação.</div>
+      </div>
+    </div>
+    <div class="deixa">
+      <div class="rail"><span class="rot">Perguntas</span></div>
+      <div class="conteudo">
+        <div class="pergunta"><p class="q">Vocês fizeram do zero?</p>
+          <p class="a">O site sim. O chat conversa com um modelo de IA por trás, e as instruções dele quem escreveu foi a gente.</p></div>
+        <div class="pergunta"><p class="q">De onde vêm os números?</p>
+          <p class="a">Da pesquisa Gender Shades, de 2018. Fontes no rodapé: gendershades.org e ajl.org.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="rodape">
+  <p>Julia, Ana Clara e Izabelly cobrem totem e blog em rodízio: uma em cada, trocando a cada rodada. Gabriel Lima sai do totem durante o palco.</p>
+  <p>Este roteiro acompanha a apresentação v11. Se o carimbo na tela for outro, procure a versão nova deste arquivo.</p>
+</footer>
+
+</div>
