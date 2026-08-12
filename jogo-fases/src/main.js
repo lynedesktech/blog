@@ -1329,9 +1329,11 @@ export class Game {
       if (!this._xrA) { this.tap.jump = true; this._xrA = true; }
     } else this._xrA = false;
     if (this.opts.snapTurn) {
-      if (Math.abs(turn) > 0.7) {
-        if (!this._snapLatch) { this.rig.rotation.y -= Math.sign(turn) * P.SNAP_TURN; this._snapLatch = true; }
-      } else this._snapLatch = false;
+      // o latch guarda a DIRECAO: virar para o lado oposto destrava na hora,
+      // mesmo que algum eixo preso mantenha o modulo acima do limiar
+      const dir = Math.abs(turn) > 0.7 ? Math.sign(turn) : 0;
+      if (dir !== 0 && dir !== this._snapDir) this.rig.rotation.y -= dir * P.SNAP_TURN;
+      this._snapDir = dir;
     } else this.rig.rotation.y -= turn * P.TURN_SPEED * dt;
     return { x: mx, y: my };
   }
