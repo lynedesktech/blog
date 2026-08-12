@@ -1300,20 +1300,34 @@ export class Game {
   _xrSticks(dt) {
     const session = this.renderer.xr.getSession();
     if (!session) return { x: 0, y: 0 };
-    let mx = 0, my = 0, turn = 0;
+    let mx = 0, my = 0, turn = 0, aApertado = false;
     for (const src of session.inputSources) {
       const gp = src.gamepad;
       if (!gp || !gp.axes) continue;
       const ax = gp.axes;
       const x = ax.length > 2 ? ax[2] : (ax[0] || 0);
       const y = ax.length > 3 ? ax[3] : (ax[1] || 0);
-      const dz = (v) => (Math.abs(v) > 0.20 ? v : 0);
-      if (src.handedness === 'right') turn += dz(x);
-      else { mx += dz(x); my += -dz(y); }
-      if (gp.buttons && gp.buttons[4] && gp.buttons[4].pressed) {
-        if (!this._xrA) { this.tap.jump = true; this._xrA = true; }
-      } else this._xrA = false;
+      const dz = (v) => (Math.abs(v) > 0.30 ? v : 0);
+      // O MAIOR sinal vence, nada de somar. Somar era o bug do giro para um
+      // lado so: rastreamento de mao e eixo com drift tambem se apresentam
+      // como 'right', e um drift de +0,8 somado ao seu -1,0 dava -0,2, que
+      // nunca cruzava o limiar do snap. Para a esquerda girava, para a
+      // direita o drift anulava.
+      if (src.handedness === 'right') {
+        const v = dz(x);
+        if (Math.abs(v) > Math.abs(turn)) turn = v;
+      } else {
+        const vx = dz(x), vy = -dz(y);
+        if (Math.abs(vx) > Math.abs(mx)) mx = vx;
+        if (Math.abs(vy) > Math.abs(my)) my = vy;
+      }
+      if (gp.buttons && gp.buttons[4] && gp.buttons[4].pressed) aApertado = true;
     }
+    // latch do pulo fora do laco: dentro, o segundo controle sobrescrevia o
+    // estado do primeiro e comia o aperto do botao A
+    if (aApertado) {
+      if (!this._xrA) { this.tap.jump = true; this._xrA = true; }
+    } else this._xrA = false;
     if (this.opts.snapTurn) {
       if (Math.abs(turn) > 0.7) {
         if (!this._snapLatch) { this.rig.rotation.y -= Math.sign(turn) * P.SNAP_TURN; this._snapLatch = true; }
