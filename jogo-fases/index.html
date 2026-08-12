@@ -272,7 +272,14 @@ $('b-res-credits').onclick = () => show('s-credits');
 $('b-how-back').onclick  = () => show('s-title');
 $('b-cred-back').onclick = () => show(game.mode === 'over' ? 's-res' : 's-title');
 
-function play() { hideAll(); game.start(0); }
+// ?fase=2 comeca direto na fase pedida, de 1 a 5. Existe para a demonstracao
+// de palco e para o totem: chegar na mascara branca jogando a fase 1 inteira
+// leva uns dois minutos e meio, que uma apresentacao nao tem.
+const FASE_URL = (() => {
+  const n = parseInt(new URLSearchParams(location.search).get('fase'), 10);
+  return Number.isFinite(n) && n >= 1 && n <= 5 ? n - 1 : 0;
+})();
+function play() { hideAll(); game.start(FASE_URL); }
 $('b-flat').onclick = play;
 $('b-again').onclick = play;
 
