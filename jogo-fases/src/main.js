@@ -133,7 +133,7 @@ export class Game {
     // partir dele e limitado para nao distorcer.
     const H_ALVO = 88 * Math.PI / 180;
     const vert = 2 * Math.atan(Math.tan(H_ALVO / 2) / asp) * 180 / Math.PI;
-    this.camera.fov = Math.max(70, Math.min(95, vert));
+    this.camera.fov = Math.max(68, Math.min(78, vert));
     this.camera.updateProjectionMatrix();
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -525,7 +525,7 @@ export class Game {
       if (b.kind !== 'floor') return null;
       return ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, b.y + b.hy + E, b.z), { x: -Math.PI / 2, y: 0 }];
-    }, 2.6, 0xbfc5d4);
+    }, 2.6, 0x5f6675);
 
     // paredes: a face virada para dentro do corredor
     this._surfaces(lv.blocks, this._texFase(pal.wallImg, this.surf.wall), (b) => {
@@ -540,7 +540,7 @@ export class Game {
       return ['x', 'y', b.hx * 2, b.hy * 2,
         new THREE.Vector3(b.x, b.y, b.z + s * (b.hz + E)),
         { x: 0, y: s > 0 ? 0 : Math.PI }];
-    }, 4.2, 0xb4bac9);
+    }, 4.2, 0x7c8494);
 
     // tetos baixos e pilares: face de baixo, com a textura de painel/aviso
     this._surfaces(lv.blocks, this.surf.panel, (b) => {
@@ -557,7 +557,7 @@ export class Game {
     this._surfaces(tops, this.surf.panel, (b) => (
       ['x', 'z', b.hx * 2, b.hz * 2,
         new THREE.Vector3(b.x, H - E, b.z), { x: Math.PI / 2, y: 0 }]
-    ), 3.4, 0x5a6076);
+    ), 3.4, 0x3d4252);
   }
 
   loadPhase(i) {
