@@ -1832,6 +1832,14 @@ export class Game {
       sh.t += dt;
       sh.pos.addScaledVector(sh.vel, dt);
       if (sh.t > 3) { s.shots.splice(i, 1); continue; }
+      // parede segura tiro: e o que faz as meias-paredes serem COBERTURA
+      let naParede = false;
+      for (const b2 of lv.blocks) {
+        if (b2.kind === 'floor') continue;
+        if (Math.abs(sh.pos.x - b2.x) <= b2.hx && Math.abs(sh.pos.y - b2.y) <= b2.hy &&
+            Math.abs(sh.pos.z - b2.z) <= b2.hz) { naParede = true; break; }
+      }
+      if (naParede) { s.shots.splice(i, 1); continue; }
       if (!s.maskOn && sh.pos.distanceTo(_v1) < 0.6) { this._hit(); s.shots.splice(i, 1); }
     }
     this._syncShots();

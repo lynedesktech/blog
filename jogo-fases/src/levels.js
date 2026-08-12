@@ -10,8 +10,9 @@ export const SEG = {
   PLAIN: 'plain',   // corredor reto
   GAP: 'gap',       // vão para pular
   LOW: 'low',       // teto baixo: obriga a agachar
-  BEAM_LOW: 'beamL',// feixe na altura do peito: agacha
-  BEAM_HIGH: 'beamH', // feixe rente ao chão: pula
+  BEAM_LOW: 'beamL',// (aposentado) feixe na altura do peito
+  BEAM_HIGH: 'beamH', // (aposentado) feixe rente ao chao
+  WALLS: 'walls',   // meias-paredes alternadas: slalom e COBERTURA de tiro
   SCAN: 'scan',     // parede-scanner: só passa DE MÁSCARA
   CAMS: 'cams',     // câmeras com cone de visão
   DRONES: 'drones', // drones-vigia
@@ -48,15 +49,18 @@ export const LEVELS = [
     pal: { fog: 0x0a0616, fogD: 0.010, amb: 0x4a5fd0, ambI: 1.65, sky: 0x8a7fb5, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_3cc93d16-5892-48d1-9d05-7e9a43db08fa.png', accent: 0xFF2D9B,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_88e5a500-f892-4ea9-bc63-af695fd99ee0.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_ea10adf8-3799-424c-b0a9-5b32c951ebcf.png' },
-    sub: 'Os feixes te apagam. Ache a máscara branca: com ela no rosto eles te deixam passar.',
+    sub: 'A máscara branca está logo no início. A parede-scanner lá na frente só abre com ela no rosto.',
+    // Sem feixes: eles poluiam a visao e foram aposentados no jogo inteiro.
+    // O corredor agora e slalom de meias-paredes (que tambem sao cobertura),
+    // o primeiro drone aparece aqui, e o scanner e o exame final da mascara.
     time: 140, need: 7, w: 9, h: 5,
     mask: true,
     segs: [
       { t: SEG.PLAIN, len: 12, frags: 1 },
-      { t: SEG.BEAM_LOW, len: 14, n: 2, frags: 1 },
-      { t: SEG.BEAM_HIGH, len: 12, n: 2, frags: 1 },
+      { t: SEG.WALLS, len: 14, n: 3, frags: 2 },
+      { t: SEG.DRONES, len: 14, n: 1, frags: 1 },
       { t: SEG.SCAN, len: 10 },
-      { t: SEG.BEAM_LOW, len: 14, n: 3, frags: 2 },
+      { t: SEG.WALLS, len: 14, n: 3, frags: 1 },
       { t: SEG.GAP, len: 12, gap: 2.6, frags: 1 },
       { t: SEG.PLAIN, len: 12, frags: 1 },
     ],
@@ -66,7 +70,7 @@ export const LEVELS = [
     pal: { fog: 0x050d14, fogD: 0.012, amb: 0x36a8c8, ambI: 1.62, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_a2e2d481-a99f-468b-b915-73d4c4a73758.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_a59d0178-491b-4b6e-8d9b-d9550575d551.png' },
-    sub: 'Derrube todos os drones. Depois pegue a máscara branca no fundo e saia.',
+    sub: 'Pegue a máscara no início e derrube os cinco drones. Use as paredes de cobertura.',
     // Fase de CACADA, redesenhada: primeiro ATIRA, depois COLETA. Sem
     // cameras: os cones translucidos poluiam a fase inteira e nao eram o
     // assunto. Cinco drones espalhados sao os alvos; derrubou todos, a UNICA
@@ -75,11 +79,11 @@ export const LEVELS = [
     time: 150, need: 0, w: 10, h: 5,
     mask: true, hunt: true, masks: 1,
     segs: [
-      { t: SEG.PLAIN, len: 12 },
+      { t: SEG.PLAIN, len: 10 },
       { t: SEG.DRONES, len: 18, n: 2 },
-      { t: SEG.BEAM_LOW, len: 12, n: 2 },
+      { t: SEG.WALLS, len: 14, n: 3 },
       { t: SEG.DRONES, len: 20, n: 3 },
-      { t: SEG.PLAIN, len: 14 },
+      { t: SEG.PLAIN, len: 12 },
     ],
   },
   {
@@ -99,9 +103,10 @@ export const LEVELS = [
       { t: SEG.PLAIN, len: 10, frags: 1 },
       { t: SEG.PLAT, len: 18, n: 3, frags: 2 },
       { t: SEG.CRUSH, len: 14, n: 3, frags: 2 },
-      { t: SEG.BEAM_LOW, len: 12, n: 3, frags: 1 },
+      { t: SEG.WALLS, len: 12, n: 3, frags: 1 },
       { t: SEG.PLAT, len: 16, n: 3, frags: 2 },
-      { t: SEG.PLAIN, len: 12 },
+      { t: SEG.DRONES, len: 14, n: 2 },
+      { t: SEG.PLAIN, len: 10 },
     ],
   },
   {
@@ -197,6 +202,20 @@ export function buildLevel(def, rng) {
       case SEG.SCAN: {
         slab(0, cz, W, len);
         scanners.push({ z: cz, w: W, h: H });
+        break;
+      }
+      case SEG.WALLS: {
+        slab(0, cz, W, len);
+        // Meias-paredes alternadas: cobrem 62% da largura, deixando passagem
+        // no lado oposto. Sao duas coisas ao mesmo tempo: slalom para o
+        // caminho nao ser reto, e COBERTURA, porque tiro de drone morre nelas.
+        const nw = s.n || 3;
+        for (let i = 0; i < nw; i++) {
+          const zw = z0 - (len * (i + 0.7)) / (nw + 0.4);
+          const lado = i % 2 ? 1 : -1;
+          const wlen = W * 0.62;
+          wall(lado * (hw - wlen / 2), 1.3, zw, wlen, 2.6, 0.55);
+        }
         break;
       }
       case SEG.CAMS: {
@@ -364,12 +383,12 @@ export function buildLevel(def, rng) {
   // até onde a máscara ainda serve: 8 m antes da primeira parede-scanner, ou
   // o primeiro terço do corredor quando a fase não tem uma
   const dLimite = scanners.length ? Math.abs(scanners[0].z - zSpawn) - 8 : dTotal * 0.34;
-  // e nunca a menos de 14 m do spawn: você tem que ANDAR até ela
-  let dIni = Math.min(14, Math.max(5, dLimite - 8));
-  let dFim = Math.max(dIni + 5, dLimite);
-  // Cacada: a mascara e a RECOMPENSA do fim, nasce no ultimo trecho do
-  // corredor. Primeiro os drones, depois ela.
-  if (def.hunt) { dIni = Math.max(10, dTotal - 24); dFim = Math.max(dIni + 6, dTotal - 6); }
+  // A máscara fica LOGO NO INÍCIO: entre 6 e 16 m do spawn. Perto o bastante
+  // para o poder existir desde cedo, longe o bastante para não nascer no colo
+  // (raio de coleta 2,6 m).
+  const dIni = 6;
+  const dFim = Math.max(dIni + 4, Math.min(16, dLimite));
+
 
   const maskItems = [];
   if (def.mask) {
