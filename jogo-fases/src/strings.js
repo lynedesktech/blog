@@ -47,7 +47,7 @@ export const STR = {
   btn_mask: 'MÁSCARA',
 
   obj_collect: 'Recolha os pedaços do seu rosto',
-  obj_hunt: 'Caçada: máscaras {m} · drones derrubados {d}',
+  obj_hunt: 'Derrube os drones ({d}). Depois pegue a máscara no fundo ({m})',
   hunt_locked: 'AINDA HÁ ALVOS',
   hunt_retry: 'Você voltou para a entrada. O que você já derrubou continua no chão: a caçada não recomeça.',
   obj_gate: 'Rosto completo: encaixe os pedaços no pedestal',
@@ -63,7 +63,7 @@ export const STR = {
   aya: {
     start: 'Cada pedaço desses é um dado do seu rosto que o sistema não tem. Junte tudo e ele é obrigado a te reconhecer.',
     first_frag: 'Um pedaço. O portão do fim só abre com o rosto completo.',
-    mask_found: 'A máscara branca é sua e já está no seu rosto. Agora a parede te deixa passar, não porque você mudou, mas porque parou de parecer você. Foi literalmente assim que a pesquisadora descobriu a falha. Use o botão MÁSCARA, ou a tecla E, para tirar e botar.',
+    mask_found: 'A máscara branca é sua. Aperte E, ou o botão MÁSCARA, para vestir: com ela no rosto o sistema te deixa passar, não porque você mudou, mas porque parou de parecer você. Foi assim que a pesquisadora descobriu a falha.',
     mask_on: 'Agora ele te vê. Repare no que isso quer dizer: ele te aceita justamente quando você não está sendo você.',
     vr_pronto: 'Pronto, calibrei na sua altura. O relógio no seu pulso esquerdo mostra tudo: levanta o braço para ver.',
     mask_hot: 'A máscara superaqueceu. Tire e espere esfriar.',
@@ -74,8 +74,8 @@ export const STR = {
     scan: 'Parede-scanner. Essa só abre para quem o sistema reconhece. Máscara.',
     gate_ready: 'Rosto completo. Leva os pedaços até o pedestal e monta a tua cara na frente dele.',
     face_done: 'Pronto. É o teu rosto inteiro ali, montado peça por peça. Agora ele não tem como dizer que não te conhece. A porta abre.',
-    hunt: 'Aqui o jogo vira. Não recolha nada: desmonte a vigilância. Colete as máscaras espalhadas e derrube todos os drones, e a porta abre.',
-    hunt_done: 'Todos os drones no chão. Se ainda falta máscara, o placar no topo diz quantas.',
+    hunt: 'Aqui o jogo vira: atire. Derrube os cinco drones, e a máscara branca te espera no fundo do corredor. Com os dois feitos, a porta abre.',
+    hunt_done: 'Todos os drones no chão. Agora vai até o fundo e pega a máscara branca.',
     hurt: 'Você foi apagado do quadro. Levanta.',
     boss: 'O olho central. Ele varre a sala com o feixe, então agache. Quando a lente abrir, atire.',
     win: 'Reconhecida. Foi um trabalho assim, pedaço por pedaço, que fez três gigantes corrigirem seus sistemas.',

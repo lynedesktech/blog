@@ -1645,8 +1645,7 @@ export class Game {
       if (mi.taken) continue;
       if (Math.hypot(mi.x - _v1.x, mi.y - _v1.y, mi.z - _v1.z) > P.MASK_PICK_R) continue;
       mi.taken = true;
-      s.maskHave = true;
-      s.maskOn = true;               // já vai para o rosto: é para isso que serve
+      s.maskHave = true;             // o PODER e seu; vestir e decisao sua, no botao
       s.pegouT = s.t;
       s.masksGot++;
       this.sfx.purify();
@@ -1797,7 +1796,6 @@ export class Game {
       // da atrás, era beco sem saída, sem nada na tela explicando o porquê.
       if (!s.maskHave) {
         s.maskHave = true;
-        s.maskOn = true;
         for (const mi of (lv.maskItems || [])) mi.taken = true;
         for (const g2 of this.maskItemMeshes) if (g2) g2.visible = false;
         this.sfx.purify();

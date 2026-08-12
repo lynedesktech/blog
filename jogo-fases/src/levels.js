@@ -66,21 +66,20 @@ export const LEVELS = [
     pal: { fog: 0x050d14, fogD: 0.012, amb: 0x36a8c8, ambI: 1.62, sky: 0x6f93a8, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_a8a7e415-54ac-45c9-9091-3244793966a9.png', accent: 0x00E5FF,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_a2e2d481-a99f-468b-b915-73d4c4a73758.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_a59d0178-491b-4b6e-8d9b-d9550575d551.png' },
-    sub: 'Caçada: colete as três máscaras e derrube todos os drones.',
-    // Fase de CAÇADA: aqui o objetivo NAO e juntar pedacos de rosto. A porta
-    // so abre quando todas as mascaras espalhadas forem coletadas e todos os
-    // drones forem derrubados. E a fase que inverte o papel: em vez de fugir
-    // da vigilancia, voce desmonta a vigilancia.
+    sub: 'Derrube todos os drones. Depois pegue a máscara branca no fundo e saia.',
+    // Fase de CACADA, redesenhada: primeiro ATIRA, depois COLETA. Sem
+    // cameras: os cones translucidos poluiam a fase inteira e nao eram o
+    // assunto. Cinco drones espalhados sao os alvos; derrubou todos, a UNICA
+    // mascara branca espera no fundo do corredor, e a porta abre com as duas
+    // coisas feitas.
     time: 150, need: 0, w: 10, h: 5,
-    mask: true, hunt: true, masks: 3,
+    mask: true, hunt: true, masks: 1,
     segs: [
       { t: SEG.PLAIN, len: 12 },
-      { t: SEG.CAMS, len: 16, n: 2 },
-      { t: SEG.DRONES, len: 16, n: 2 },
+      { t: SEG.DRONES, len: 18, n: 2 },
       { t: SEG.BEAM_LOW, len: 12, n: 2 },
-      { t: SEG.CAMS, len: 14, n: 2 },
-      { t: SEG.DRONES, len: 18, n: 3 },
-      { t: SEG.PLAIN, len: 12 },
+      { t: SEG.DRONES, len: 20, n: 3 },
+      { t: SEG.PLAIN, len: 14 },
     ],
   },
   {
@@ -88,18 +87,21 @@ export const LEVELS = [
     pal: { fog: 0x150a05, fogD: 0.017, amb: 0xff8a44, ambI: 1.55, sky: 0xb08a5e, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_1ed67f71-2ef2-4e0d-9498-09e2b9dbf80c.png', accent: 0xFFC93C,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_0e250324-c64f-46c3-80f3-ed5af0b33960.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_426e553b-21f7-4e32-bb37-5f853494b14e.png' },
-    sub: 'Plataformas, prensas e tempo curto. O modelo está prestes a ser lançado.',
-    time: 130, need: 11, w: 10, h: 6,
+    sub: 'Plataformas, prensas e pouco tempo. O modelo está prestes a ser lançado.',
+    // Refatorada: precisava de 11 pedacos em 130 s atravessando DOIS trechos
+    // de plataforma, um de prensa, drones, feixes E cameras. Sobrou o que da
+    // identidade (plataforma e prensa), precisa de 8 em 160 s, e as cameras
+    // sairam daqui tambem: os cones poluiam e a recarga de 3 s ja as tinha
+    // deixado inofensivas na pratica.
+    time: 160, need: 8, w: 10, h: 6,
     mask: true,
     segs: [
       { t: SEG.PLAIN, len: 10, frags: 1 },
       { t: SEG.PLAT, len: 18, n: 3, frags: 2 },
       { t: SEG.CRUSH, len: 14, n: 3, frags: 2 },
-      { t: SEG.DRONES, len: 16, n: 3, frags: 2 },
       { t: SEG.BEAM_LOW, len: 12, n: 3, frags: 1 },
       { t: SEG.PLAT, len: 16, n: 3, frags: 2 },
-      { t: SEG.CAMS, len: 14, n: 3, frags: 1 },
-      { t: SEG.PLAIN, len: 10 },
+      { t: SEG.PLAIN, len: 12 },
     ],
   },
   {
@@ -108,7 +110,10 @@ export const LEVELS = [
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_06d68081-fe4a-4deb-ad2c-66a72ffe2a57.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_f30f40b2-8a62-41ee-9ed5-6b6c780dbe68.png' },
     sub: 'O olho central. Agache no feixe, atire quando a lente abrir.',
-    time: 180, need: 6, w: 26, h: 9,
+    // Refatorada: precisava de 6 pedacos ANTES do chefe, e a arena virava
+    // busca de item com um chefe atirando. O assunto da fase e o chefe:
+    // 4 pedacos bastam para destravar o confronto.
+    time: 180, need: 4, w: 26, h: 9,
     mask: true, boss: true,
     segs: [
       { t: SEG.PLAIN, len: 12, frags: 2 },
@@ -362,9 +367,9 @@ export function buildLevel(def, rng) {
   // e nunca a menos de 14 m do spawn: você tem que ANDAR até ela
   let dIni = Math.min(14, Math.max(5, dLimite - 8));
   let dFim = Math.max(dIni + 5, dLimite);
-  // Fase de cacada: as mascaras SAO o objetivo, entao se espalham pelo
-  // corredor inteiro em vez de se esconderem no primeiro terco.
-  if (def.hunt) { dIni = 8; dFim = Math.max(dIni + 8, dTotal - 6); }
+  // Cacada: a mascara e a RECOMPENSA do fim, nasce no ultimo trecho do
+  // corredor. Primeiro os drones, depois ela.
+  if (def.hunt) { dIni = Math.max(10, dTotal - 24); dFim = Math.max(dIni + 6, dTotal - 6); }
 
   const maskItems = [];
   if (def.mask) {
