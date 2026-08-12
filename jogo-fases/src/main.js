@@ -312,6 +312,16 @@ export class Game {
     this.sub = this._panel(2.0, 0.34, 1280, 218, 999);
     this.sub.mesh.material.opacity = 0;
     this.banner = this._panel(2.2, 0.52, 1360, 320, 1000);
+    // relogio de pulso (VR): o MESMO canvas do HUD, preso ao controle
+    // esquerdo. Levantou o braco, viu tempo, rostos, vidas e mascara.
+    this.wrist = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.30, 0.063),
+      new THREE.MeshBasicMaterial({ map: this.hud.tex, transparent: true, depthWrite: false, depthTest: false })
+    );
+    this.wrist.renderOrder = 1002;
+    this.wrist.position.set(0, 0.05, 0.10);
+    this.wrist.rotation.x = -0.95;
+    this.wrist.visible = false;
     this.banner.mesh.visible = false;
 
     // AYA: personagem-guia (imagem gerada no Higgsfield). Mesclagem aditiva:
@@ -1149,7 +1159,25 @@ export class Game {
       c.addEventListener('selectstart', () => { this.xrTrigger = i; this.activeCtrl = i; });
       c.addEventListener('selectend', () => { if (this.xrTrigger === i) this.xrTrigger = -1; });
       c.addEventListener('squeezestart', () => { this.tap.mask = true; });
-      c.addEventListener('connected', () => { if (this.activeCtrl == null) this.activeCtrl = i; });
+      // etiqueta flutuando sobre o controle: sem ela ninguem descobre que o
+      // grip veste a mascara e o gatilho atira
+      const et = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: this._label(i === 0 ? STR.vr_ctrl_l : STR.vr_ctrl_r, '#00E5FF', 30),
+        transparent: true, depthWrite: false, depthTest: false, opacity: 0.95,
+      }));
+      et.scale.set(0.34, 0.085, 1);
+      et.position.set(0, 0.09, 0);
+      c.add(et);
+      c.userData.etiqueta = et;
+      c.addEventListener('connected', (e) => {
+        if (this.activeCtrl == null) this.activeCtrl = i;
+        const hand = e.data && e.data.handedness;
+        c.userData.hand = hand;
+        if (hand && c.userData.etiqueta) {
+          c.userData.etiqueta.material.map =
+            this._label(hand === 'left' ? STR.vr_ctrl_l : STR.vr_ctrl_r, '#00E5FF', 30);
+        }
+      });
       this.rig.add(c);
       this.controllers.push(c);
     }
@@ -1180,6 +1208,7 @@ export class Game {
   // relativo para todo mundo.
   _calibraVR() {
     this.vrAltura = null;
+    this.vrYOff = 0;
     this.rig.scale.setScalar(1);
     // A amostragem acontece DENTRO do _frame (setAnimationLoop): dentro de
     // sessao imersiva o requestAnimationFrame da janela nao dispara no Quest,
@@ -1195,10 +1224,11 @@ export class Game {
     if (c.quadros < 90) return;
     this._vrCal = null;
     this.vrAltura = c.maior;
-    // escala do rig: quem e mais baixo e "esticado" ate o olho do jogo, quem
-    // e mais alto e encolhido. Limitada: escala demais deforma distancia.
-    const k = Math.max(0.78, Math.min(1.30, P.VR_OLHO / c.maior));
-    this.rig.scale.setScalar(k);
+    // DESLOCAMENTO, nao escala. A versao anterior escalava o rig, e escala
+    // multiplica o movimento fisico da cabeca: quem tem 1,40 m mexia 10 cm e
+    // o mundo via 11,7. Era essa a imprecisao no rastreamento. Subir ou
+    // descer o "chao" leva o olho a altura de projeto mantendo o 1:1.
+    this.vrYOff = Math.max(-0.45, Math.min(0.45, P.VR_OLHO - c.maior));
     this._say(STR.aya.vr_pronto || '', 4);
   }
 
@@ -1549,7 +1579,8 @@ export class Game {
     if (pl.pos.y < -12) this._death(false);
 
     // o rig segue os pés do jogador; a câmera fica na altura do olho
-    this.rig.position.set(pl.pos.x, pl.pos.y, pl.pos.z);
+    this.rig.position.set(pl.pos.x,
+      pl.pos.y + (this.renderer.xr.isPresenting ? (this.vrYOff || 0) : 0), pl.pos.z);
     if (!this.renderer.xr.isPresenting) this.camera.position.set(0, pl.h - P.EYE_OFF, 0);
   }
 
@@ -2195,13 +2226,27 @@ export class Game {
       if (dy < -Math.PI) dy += 2 * Math.PI;
       this._hudYaw += dy * Math.min(1, dt * 5);
       yaw = this._hudYaw;
+      // o status agora mora no pulso; flutuando ficam so legenda e banner
       for (const [pan, dist, hgt, tilt] of [
-        [this.hud, 4.0, -1.42, -0.42], [this.sub, 4.0, -0.88, -0.26], [this.banner, 5.0, 0.65, -0.02],
+        [this.sub, 4.0, -0.88, -0.26], [this.banner, 5.0, 0.65, -0.02],
       ]) {
         pan.mesh.position.set(_v1.x - Math.sin(yaw) * dist, _v1.y + hgt, _v1.z - Math.cos(yaw) * dist);
         pan.mesh.rotation.set(tilt, yaw, 0, 'YXZ');
       }
-      this.hud.mesh.visible = true;
+      this.hud.mesh.visible = false;
+      if (this.wrist && !this.wrist.visible) {
+        const alvo = this.controllers.find((c) => c.userData.hand === 'left') || this.controllers[0];
+        if (alvo) { alvo.add(this.wrist); this.wrist.visible = true; }
+      }
+      // etiquetas dos controles: 40 s na cara, depois somem sozinhas
+      this._vrT = (this._vrT || 0) + dt;
+      const opEt = this._vrT < 40 ? 0.95 : Math.max(0, 0.95 - (this._vrT - 40) * 0.5);
+      for (const c of this.controllers) {
+        if (c.userData.etiqueta) {
+          c.userData.etiqueta.material.opacity = opEt;
+          c.userData.etiqueta.visible = opEt > 0.02;
+        }
+      }
       this.sub.mesh.visible = true;
       this.sub.mesh.material.opacity = s && s.aya ? 0.98 : 0;
       this.banner.mesh.visible = !!(s && s.banner);
@@ -2212,6 +2257,8 @@ export class Game {
       this.hud.mesh.visible = false;
       this.sub.mesh.visible = false;
       this.banner.mesh.visible = false;
+      if (this.wrist) this.wrist.visible = false;
+      this._vrT = 0;
     }
   }
 }

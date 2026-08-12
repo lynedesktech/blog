@@ -61,7 +61,7 @@ export const STR = {
     first_frag: 'Um pedaço. O portão do fim só abre com o rosto completo.',
     mask_found: 'A máscara branca é sua e já está no seu rosto. Agora a parede te deixa passar, não porque você mudou, mas porque parou de parecer você. Foi literalmente assim que a pesquisadora descobriu a falha. Use o botão MÁSCARA, ou a tecla E, para tirar e botar.',
     mask_on: 'Agora ele te vê. Repare no que isso quer dizer: ele te aceita justamente quando você não está sendo você.',
-    vr_pronto: 'Altura calibrada. O corredor foi ajustado para o seu tamanho: agache de verdade que o feixe passa por cima.',
+    vr_pronto: 'Pronto, calibrei na sua altura. O relógio no seu pulso esquerdo mostra tudo: levanta o braço para ver.',
     mask_hot: 'A máscara superaqueceu. Tire e espere esfriar.',
     duck: 'Agache. O feixe passa na altura do peito.',
     jump: 'Esse passa rente ao chão. Pula.',
@@ -80,6 +80,8 @@ export const STR = {
   next_in: 'Próxima fase em',
 
   win_title: 'SISTEMA CORRIGIDO',
+  vr_ctrl_l: 'ANALÓGICO anda · GRIP máscara',
+  vr_ctrl_r: 'GATILHO atira · A pula · ANALÓGICO gira',
   vr_reinicio: 'Você zerou. Aperte o gatilho para jogar de novo.',
   win_body: 'Você atravessou as cinco fases e obrigou o modelo a enxergar o seu rosto.',
   lose_title: 'APAGADO DO QUADRO',
