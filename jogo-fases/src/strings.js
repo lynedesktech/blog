@@ -49,6 +49,7 @@ export const STR = {
   obj_collect: 'Recolha os pedaços do seu rosto',
   obj_hunt: 'Caçada: máscaras {m} · drones derrubados {d}',
   hunt_locked: 'AINDA HÁ ALVOS',
+  hunt_retry: 'Você voltou para a entrada. O que você já derrubou continua no chão: a caçada não recomeça.',
   obj_gate: 'Rosto completo: encaixe os pedaços no pedestal',
   ped_label: 'ENCAIXE O ROSTO',
   obj_boss: 'Agache no feixe e atire quando a lente abrir',

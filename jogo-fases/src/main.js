@@ -1757,7 +1757,17 @@ export class Game {
         if (cosang > Math.cos(c.cone)) {
           c.alarm += dt;
           this._sayOnce('cam', 5);
-          if (c.alarm > 1) { c.alarm = 0; this._hit(); }
+          if (c.alarm > 1) {
+            // Alarme disparado. Antes: c.alarm = 0 e dano na hora, o que com
+            // invulnerabilidade de 1,3 s virava um liquidificador: a camera
+            // rebatia a cada 1,3 s e comia as tres vidas em 8 s de fase,
+            // medido com um bot andando em linha reta. Agora a camera que
+            // acertou entra em recarga de 3 s. E na CACADA ela nao machuca:
+            // vigia e cenario, monstro e o drone.
+            c.alarm = -3;
+            if (s.hunt) this.sfx.corrupt();
+            else this._hit();
+          }
         } else c.alarm = Math.max(0, c.alarm - dt);
       }
     }
@@ -2040,6 +2050,21 @@ export class Game {
 
   _death(timeout) {
     if (this.s.done) return;
+    // Na cacada, morrer pelas vidas NAO zera o progresso: recomecar os cinco
+    // drones e as tres mascaras do zero a cada tres erros transformava a fase
+    // em raiva. Voce volta a entrada, as vidas voltam, e o que ja caiu
+    // continua caido. So o tempo esgotado reseta tudo.
+    if (this.s.hunt && !timeout) {
+      this.s.deaths++;
+      this.sfx.fail();
+      this._banner(STR.lose_title, STR.hunt_retry || STR.lose_body);
+      const lv = this.level;
+      this.pl.pos.set(lv.spawn.x, lv.spawn.y, lv.spawn.z);
+      this.pl.vel.set(0, 0, 0);
+      this.s.lives = P.LIVES;
+      this.s.invuln = 2.5;
+      return;
+    }
     this.s.done = true;
     this.s.morto = true;      // congela o corpo até a fase recarregar
     this.s.deaths++;
