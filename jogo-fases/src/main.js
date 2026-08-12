@@ -607,11 +607,26 @@ export class Game {
       const bloom = halo;                              // sem camada extra
       g.add(halo, mid, core);
 
+      // RISCO NO CHÃO, embaixo do feixe e andando junto com ele. O corpo do
+      // feixe ocupa cerca de 1% da tela, medido: um fio a 20 m de distância
+      // dentro da bruma. O chão ocupa metade da tela. Então quem avisa onde
+      // a linha que mata está AGORA é o chão, não o fio.
+      const risco = new THREE.Mesh(
+        new THREE.PlaneGeometry(def.w, 1.1),
+        new THREE.MeshBasicMaterial({
+          map: this.tex.dust, color: cor, transparent: true, opacity: 0.60,
+          blending: THREE.AdditiveBlending, depthWrite: false, fog: true,
+        })
+      );
+      risco.rotation.x = -Math.PI / 2;
+      risco.position.y = -b.y + 0.05;   // o grupo está na altura do feixe
+      g.add(risco);
+
       // poça de luz no chão: radial, não um retângulo de borda dura
       const poca = new THREE.Mesh(
         new THREE.PlaneGeometry(def.w, b.range * 2 + 3.0),
         new THREE.MeshBasicMaterial({
-          map: this.tex.dust, color: cor, transparent: true, opacity: 0.13,
+          map: this.tex.dust, color: cor, transparent: true, opacity: 0.18,
           blending: THREE.AdditiveBlending, depthWrite: false, fog: true,
         })
       );
@@ -630,7 +645,7 @@ export class Game {
         g.add(em);
       }
 
-      g.userData = { core, mid, halo, bloom, poca, fase: Math.random() * 6.28 };
+      g.userData = { core, mid, halo, bloom, poca, risco, fase: Math.random() * 6.28 };
       this.levelRoot.add(g);
       return g;
     });
