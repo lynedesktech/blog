@@ -1126,8 +1126,12 @@ export class Game {
       );
       this.vinheta.position.z = -0.45;
       this.vinheta.renderOrder = 999;
+      // A vinheta e filha da CAMERA e so isso. Eu tinha escrito
+      // `this.scene.add(this.camera)` aqui, e isso arrancava a camera do rig
+      // (linha 153: this.rig.add(this.camera)). O rig e o que a locomocao move
+      // e onde os controles vivem, entao tirar a camera dele quebrava de uma
+      // vez a cabeca, o andar e os menus dentro do VR.
       this.camera.add(this.vinheta);
-      this.scene.add(this.camera);
     }
 
     this.controllers = [];
