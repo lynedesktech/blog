@@ -20,14 +20,14 @@ export const STR = {
   how_body: [
     'Cada fase é um corredor do sistema de reconhecimento. Espalhados por ele estão PEDAÇOS DO SEU ROSTO. Junte o tanto que o portão do fim pede e ele te reconhece e abre.',
     'Ande com WASD, PULE com espaço e AGACHE com Ctrl (no VR: agache de verdade, o jogo lê a altura do seu capacete).',
-    'A MÁSCARA BRANCA aparece logo no início e é sua escolha o tempo todo. Com ela no rosto os drones não te veem e as paredes-scanner abrem.',
+    'A MÁSCARA BRANCA aparece logo no início e é sua escolha o tempo todo. Com ela no rosto os feixes deixam passar, os drones não te veem e as paredes-scanner abrem.',
     'Só que a máscara SUPERAQUECE: ela aguenta poucos segundos ligada e depois precisa esfriar. Dá para atravessar um trecho, não a fase inteira.',
     'Da fase 3 em diante aparecem drones. Atire neles segurando o clique. Sem máscara você é alvo; de máscara você é invisível para eles.',
     'Tempo acabou ou vidas acabaram: o modelo é lançado do jeito que está e você recomeça a fase.',
   ],
 
   ctrl_title: 'CONTROLES',
-  ctrl_vr: 'VR: analógico esquerdo anda · direito gira · gatilho atira · grip veste a máscara · agache de verdade nos tetos baixos',
+  ctrl_vr: 'VR: analógico esquerdo anda · direito gira · gatilho atira · grip veste a máscara · agache de verdade sob feixes e tetos baixos',
   ctrl_desk: 'PC: WASD anda · ESPAÇO pula · CTRL agacha · clique atira · F veste a máscara',
   ctrl_touch: 'Celular: metade esquerda anda · metade direita olha · botões PULO, AGACHAR e MÁSCARA',
   ctrl_pad: 'Controle: analógico esquerdo anda · direito gira · A pula · RT atira · LB máscara',
@@ -63,7 +63,7 @@ export const STR = {
   aya: {
     start: 'Cada pedaço desses é um dado do seu rosto que o sistema não tem. Junte tudo e ele é obrigado a te reconhecer.',
     first_frag: 'Um pedaço. O portão do fim só abre com o rosto completo.',
-    mask_found: 'A máscara branca é sua. Aperte E, ou o botão MÁSCARA, para vestir: com ela no rosto os drones não te veem e o scanner abre, não porque você mudou, mas porque parou de parecer você. Foi assim que a pesquisadora descobriu a falha.',
+    mask_found: 'A máscara branca é sua. Aperte E, ou o botão MÁSCARA, para vestir: com ela no rosto os feixes deixam passar e os drones não te veem, não porque você mudou, mas porque parou de parecer você. Foi assim que a pesquisadora descobriu a falha.',
     mask_on: 'Agora ele te vê. Repare no que isso quer dizer: ele te aceita justamente quando você não está sendo você.',
     vr_pronto: 'Pronto, calibrei na sua altura. O relógio no seu pulso esquerdo mostra tudo: levanta o braço para ver.',
     mask_hot: 'A máscara superaqueceu. Tire e espere esfriar.',

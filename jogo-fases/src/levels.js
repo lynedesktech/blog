@@ -49,20 +49,21 @@ export const LEVELS = [
     pal: { fog: 0x0a0616, fogD: 0.010, amb: 0x4a5fd0, ambI: 1.65, sky: 0x8a7fb5, skyImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_210533_3cc93d16-5892-48d1-9d05-7e9a43db08fa.png', accent: 0xFF2D9B,
            wallImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142637_88e5a500-f892-4ea9-bc63-af695fd99ee0.png',
            floorImg: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_ea10adf8-3799-424c-b0a9-5b32c951ebcf.png' },
-    sub: 'A máscara branca está logo no início. A parede-scanner lá na frente só abre com ela no rosto.',
-    // Sem feixes: eles poluiam a visao e foram aposentados no jogo inteiro.
-    // O corredor agora e slalom de meias-paredes (que tambem sao cobertura),
-    // o primeiro drone aparece aqui, e o scanner e o exame final da mascara.
+    sub: 'Máscara logo no início. Os feixes te barram sem ela; de máscara, você atravessa em pé.',
+    // Os LASERS moram AQUI, e so aqui: esta e a fase que ensina a escolha da
+    // mascara (agacha sem, atravessa em pe com), e os feixes sao o exame.
+    // Nas outras fases eles foram aposentados por poluirem a visao; nesta,
+    // com o corpo magenta e o risco no chao, eles SAO a fase.
     time: 140, need: 7, w: 9, h: 5,
     mask: true,
     segs: [
       { t: SEG.PLAIN, len: 12, frags: 1 },
+      { t: SEG.BEAM_LOW, len: 14, n: 2, frags: 1 },
+      { t: SEG.BEAM_HIGH, len: 12, n: 2, frags: 1 },
+      { t: SEG.SCAN, len: 10 },
       { t: SEG.WALLS, len: 14, n: 3, frags: 2 },
       { t: SEG.DRONES, len: 14, n: 1, frags: 1 },
-      { t: SEG.SCAN, len: 10 },
-      { t: SEG.WALLS, len: 14, n: 3, frags: 1 },
       { t: SEG.GAP, len: 12, gap: 2.6, frags: 1 },
-      { t: SEG.PLAIN, len: 12, frags: 1 },
     ],
   },
   {
@@ -387,7 +388,8 @@ export function buildLevel(def, rng) {
   // para o poder existir desde cedo, longe o bastante para não nascer no colo
   // (raio de coleta 2,6 m).
   const dIni = 6;
-  const dFim = Math.max(dIni + 4, Math.min(16, dLimite));
+  // ate 12 m: garante a mascara ANTES do primeiro feixe da fase 2
+  const dFim = Math.max(dIni + 4, Math.min(12, dLimite));
 
 
   const maskItems = [];
