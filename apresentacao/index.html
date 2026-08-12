@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joy Buolamwini | Apresentação — Justiça Algorítmica</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@300;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#6c5ce7; --secondary:#a29bfe; --accent:#ff7675;
+  --cyan:#00e5ff; --bg:#07080d; --card:#12141d; --light:#f1f2f6; --muted:#b9bfcf;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--light);overflow:hidden}
+#net{position:fixed;inset:0;z-index:0;opacity:.6}
+
+.hudframe{position:fixed;z-index:998;pointer-events:none;width:44px;height:44px;
+  border:2px solid rgba(0,229,255,.35)}
+.hf1{top:14px;left:14px;border-right:none;border-bottom:none}
+.hf2{top:14px;right:14px;border-left:none;border-bottom:none}
+.hf3{bottom:14px;left:14px;border-right:none;border-top:none}
+.hf4{bottom:14px;right:14px;border-left:none;border-top:none}
+#sysname{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:998;
+  font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:4px;
+  color:rgba(185,191,207,.5);pointer-events:none}
+
+#progress{position:fixed;top:0;left:0;height:4px;width:0%;z-index:999;
+  background:linear-gradient(90deg,var(--primary),var(--cyan),var(--accent));
+  box-shadow:0 0 14px var(--cyan);transition:width .5s ease}
+#counter{position:fixed;bottom:22px;right:28px;z-index:999;font-family:'Share Tech Mono',monospace;
+  font-size:.85rem;letter-spacing:2px;color:var(--cyan);background:rgba(0,229,255,.06);
+  padding:8px 16px;border-radius:6px;border:1px solid rgba(0,229,255,.3);transition:.5s}
+#hint{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:999;
+  color:var(--muted);font-size:.78rem;letter-spacing:2px;animation:pulse 2s infinite;
+  font-family:'Share Tech Mono',monospace}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+#deck{height:100vh;width:100vw;perspective:1500px;position:relative;z-index:1}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:78px 8% 64px;opacity:0;pointer-events:none;
+  transform-style:preserve-3d;transform:translateY(70vh) rotateX(-38deg) scale(.82);
+  transition:transform 1s cubic-bezier(.2,.8,.2,1),opacity .8s ease}
+.slide.active{opacity:1;pointer-events:auto;transform:none;z-index:2}
+.slide.prev{opacity:0;transform:translateY(-70vh) rotateX(38deg) scale(.82)}
+
+.slide::after{content:attr(data-num);position:absolute;right:2%;bottom:-4%;z-index:-1;
+  font-family:'Share Tech Mono',monospace;font-weight:700;
+  font-size:clamp(10rem,28vw,24rem);color:rgba(255,255,255,.03);
+  pointer-events:none;line-height:1}
+
+.item{opacity:0;transform:translateY(50px) rotateX(20deg);
+  transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.slide.active .item{opacity:1;transform:none}
+.slide.active .d1{transition-delay:.25s}.slide.active .d2{transition-delay:.45s}
+.slide.active .d3{transition-delay:.65s}.slide.active .d4{transition-delay:.85s}
+.slide.active .d5{transition-delay:1.05s}
+
+.grid-floor{position:absolute;bottom:0;left:-20%;width:140%;height:42vh;z-index:-1;
+  background:linear-gradient(transparent 0%,rgba(108,92,231,.12) 100%),
+  repeating-linear-gradient(90deg,rgba(0,229,255,.14) 0 1px,transparent 1px 70px),
+  repeating-linear-gradient(0deg,rgba(108,92,231,.18) 0 1px,transparent 1px 48px);
+  transform:perspective(500px) rotateX(62deg);transform-origin:bottom;
+  mask-image:linear-gradient(transparent,#000 40%)}
+
+h1{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,7vw,5.4rem);line-height:1.05;
+  text-align:center;background:linear-gradient(120deg,#fff 25%,var(--secondary) 60%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.glitch{animation:glitch 4s infinite}
+@keyframes glitch{0%,93%,100%{text-shadow:none;transform:none}
+  94%{text-shadow:-3px 0 var(--accent),3px 0 var(--cyan);transform:translateX(2px)}
+  96%{text-shadow:3px 0 var(--accent),-3px 0 var(--cyan);transform:translateX(-2px)}
+  98%{text-shadow:-2px 0 var(--cyan),2px 0 var(--primary);transform:none}}
+h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
+  margin-bottom:14px;text-align:center}
+.kicker{text-transform:uppercase;letter-spacing:6px;color:var(--cyan);font-size:.82rem;
+  font-weight:600;margin-bottom:14px;text-align:center;font-family:'Share Tech Mono',monospace}
+.sub{color:var(--muted);font-size:1.08rem;max-width:740px;text-align:center;margin:0 auto 26px}
+.tleft{text-align:left !important}
+
+.scanbox{position:relative;width:min(310px,74vw);border-radius:14px;overflow:hidden;
+  box-shadow:0 0 45px rgba(108,92,231,.55),0 0 90px rgba(0,229,255,.2)}
+.scanbox img{width:100%;display:block}
+.scanbox::before{content:"";position:absolute;inset:0;z-index:2;
+  background:linear-gradient(transparent 96%,rgba(0,229,255,.35) 100%);
+  background-size:100% 8px;pointer-events:none;mix-blend-mode:screen}
+.scanline{position:absolute;left:0;width:100%;height:3px;z-index:3;background:var(--cyan);
+  box-shadow:0 0 18px var(--cyan),0 0 40px var(--cyan);animation:scan 3.2s ease-in-out infinite}
+@keyframes scan{0%,100%{top:4%}50%{top:94%}}
+.corner{position:absolute;width:32px;height:32px;z-index:4;border:3px solid var(--cyan);
+  filter:drop-shadow(0 0 6px var(--cyan))}
+.c1{top:10px;left:10px;border-right:none;border-bottom:none}
+.c2{top:10px;right:10px;border-left:none;border-bottom:none}
+.c3{bottom:10px;left:10px;border-right:none;border-top:none}
+.c4{bottom:10px;right:10px;border-left:none;border-top:none}
+.hud-tag{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:5;
+  font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:2px;color:var(--cyan);
+  background:rgba(7,8,13,.75);border:1px solid rgba(0,229,255,.4);padding:5px 14px;
+  border-radius:4px;white-space:nowrap;animation:blinktag 1.6s infinite}
+@keyframes blinktag{0%,100%{opacity:1}50%{opacity:.45}}
+.credit{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:#5b6070;
+  margin-top:10px;text-align:center;letter-spacing:1px}
+
+.row{display:flex;gap:56px;align-items:center;justify-content:center;
+  max-width:1120px;width:100%}
+.col{flex:1;min-width:0}
+.col.media{flex:0 0 auto;display:flex;flex-direction:column;align-items:center}
+.col.text{display:flex;flex-direction:column;justify-content:center}
+.col.text p{margin-bottom:14px}
+.col.text p:last-child{margin-bottom:0}
+
+.box{position:relative;background:linear-gradient(145deg,#151826,#0d0f17);padding:32px;
+  border-radius:18px;border:1px solid rgba(108,92,231,.35);box-shadow:0 25px 60px rgba(0,0,0,.55)}
+.box::before,.box::after{content:"";position:absolute;width:22px;height:22px;
+  border:2px solid var(--cyan);opacity:.7}
+.box::before{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:18px 0 0 0}
+.box::after{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 18px 0}
+.box h3{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--secondary);margin-bottom:10px}
+.box p{color:var(--muted);font-size:.96rem}
+.quote{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1.4rem,3vw,2.2rem);
+  max-width:900px;text-align:center;line-height:1.5}
+.quote span{color:var(--accent);text-shadow:0 0 25px rgba(255,118,117,.6)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;
+  max-width:1120px;width:100%}
+.icon{font-size:2rem;margin-bottom:14px;color:var(--cyan);filter:drop-shadow(0 0 10px rgba(0,229,255,.7))}
+.tag{display:inline-block;padding:6px 18px;background:var(--accent);color:#fff;border-radius:4px;
+  font-size:.72rem;letter-spacing:3px;margin-bottom:14px;text-transform:uppercase;
+  font-family:'Share Tech Mono',monospace;align-self:flex-start}
+.term{font-family:'Share Tech Mono',monospace;color:var(--cyan);font-size:.85rem;
+  background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.25);
+  padding:13px 22px;border-radius:8px;margin-top:22px;letter-spacing:1px}
+.term b{color:#fff}
+
+/* ===== VÍDEOS EM LOOP DE FUNDO ===== */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:30px;max-width:1060px;width:100%;margin-top:8px}
+.vcard{display:flex;flex-direction:column;gap:12px}
+.vlabel{font-family:'Share Tech Mono',monospace;font-size:.78rem;letter-spacing:2px;
+  padding:7px 16px;border-radius:4px;align-self:center}
+.vold{color:#ff4d5e;border:1px solid #ff4d5e;background:rgba(255,77,94,.08)}
+.vnew{color:var(--cyan);border:1px solid var(--cyan);background:rgba(0,229,255,.08)}
+.vid{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+  border:1px solid rgba(108,92,231,.4);box-shadow:0 20px 55px rgba(0,0,0,.6);
+  background:#000}
+.vid iframe{position:absolute;top:50%;left:50%;width:130%;height:130%;
+  transform:translate(-50%,-50%);border:0;pointer-events:none}
+.vmute{position:absolute;top:10px;right:12px;z-index:5;
+  font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:1px;
+  color:rgba(241,242,246,.7);background:rgba(7,8,13,.7);
+  border:1px solid rgba(255,255,255,.15);padding:4px 10px;border-radius:4px}
+.vlink{font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:1px;
+  color:var(--muted);text-decoration:none;text-align:center;transition:.3s}
+.vlink:hover{color:var(--cyan)}
+
+.journey{max-width:1050px;width:100%;position:relative;margin-top:20px}
+.jline{position:absolute;top:34px;left:6%;width:88%;height:3px;background:rgba(255,255,255,.08);z-index:0}
+.jline::after{content:"";position:absolute;inset:0;width:0;
+  background:linear-gradient(90deg,var(--cyan),var(--primary),var(--accent));
+  box-shadow:0 0 14px var(--cyan)}
+.slide.active .jline::after{animation:drawline 2.4s .5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes drawline{to{width:100%}}
+.jsteps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative;z-index:1}
+.jstep{text-align:center}
+.jdot{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:1.5rem;color:#fff;
+  background:linear-gradient(145deg,#1a1e2c,#0d0f17);border:2px solid var(--cyan);
+  box-shadow:0 0 22px rgba(0,229,255,.4)}
+.jstep h4{font-size:.95rem;margin-bottom:4px}
+.jstep p{font-size:.78rem;color:var(--muted)}
+.jstep .jy{font-family:'Share Tech Mono',monospace;color:var(--cyan);font-size:.75rem}
+
+.maskdemo{position:relative;width:min(290px,70vw)}
+.maskdemo svg{width:100%;display:block;filter:drop-shadow(0 0 25px rgba(108,92,231,.4))}
+.facebox{fill:none;stroke-width:3;stroke-dasharray:14 8;animation:boxstate 7s infinite}
+@keyframes boxstate{
+  0%,42%{stroke:#ff4d5e;filter:drop-shadow(0 0 8px #ff4d5e)}
+  50%,92%{stroke:var(--cyan);stroke-dasharray:0;filter:drop-shadow(0 0 8px var(--cyan))}
+  100%{stroke:#ff4d5e}}
+.whitemask{opacity:0;animation:maskon 7s infinite}
+@keyframes maskon{0%,44%{opacity:0}50%,92%{opacity:1}100%{opacity:0}}
+.lblno,.lblok{position:absolute;left:50%;transform:translateX(-50%);bottom:-14px;
+  font-family:'Share Tech Mono',monospace;font-size:.8rem;letter-spacing:2px;
+  padding:6px 16px;border-radius:4px;white-space:nowrap}
+.lblno{color:#ff4d5e;border:1px solid #ff4d5e;background:rgba(255,77,94,.08);animation:lblno 7s infinite}
+.lblok{color:var(--cyan);border:1px solid var(--cyan);background:rgba(0,229,255,.08);animation:lblok 7s infinite}
+@keyframes lblno{0%,42%{opacity:1}45%,100%{opacity:0}}
+@keyframes lblok{0%,47%{opacity:0}50%,92%{opacity:1}95%,100%{opacity:0}}
+
+.chart{max-width:820px;width:100%;display:flex;flex-direction:column;gap:18px;margin-top:8px}
+.crow{display:grid;grid-template-columns:200px 1fr 70px;gap:16px;align-items:center}
+.clabel{font-size:.88rem;color:var(--muted);text-align:right}
+.ctrack{height:26px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.08)}
+.cfill{height:100%;width:0;border-radius:6px;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+.cok{background:linear-gradient(90deg,#00b8d4,var(--cyan));box-shadow:0 0 16px rgba(0,229,255,.5)}
+.cbad{background:linear-gradient(90deg,#c0392b,var(--accent));box-shadow:0 0 16px rgba(255,118,117,.5)}
+.cnum{font-family:'Share Tech Mono',monospace;font-size:1.05rem;color:#fff}
+.slide.active .cfill{width:var(--w)}
+
+.tl{max-width:840px;width:100%;display:flex;flex-direction:column;gap:15px}
+.tl-item{display:flex;gap:26px;align-items:center;background:var(--card);
+  padding:18px 28px;border-radius:12px;border-left:3px solid var(--cyan);
+  box-shadow:inset 0 0 25px rgba(108,92,231,.08)}
+.tl-date{font-size:1.2rem;font-weight:700;color:var(--cyan);min-width:80px;
+  font-family:'Share Tech Mono',monospace}
+
+.binwrap{position:absolute;inset:0;overflow:hidden;z-index:-1;opacity:.16;pointer-events:none}
+.bin{position:absolute;top:-120%;font-family:'Share Tech Mono',monospace;color:var(--cyan);
+  font-size:.85rem;line-height:1.5;white-space:pre;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(260vh)}}
+
+@media (max-width:820px){
+  .row{flex-direction:column;gap:28px}
+  .slide{padding:70px 5% 60px}
+  .jsteps{grid-template-columns:repeat(2,1fr);gap:26px}
+  .jline{display:none}
+  .crow{grid-template-columns:1fr;gap:6px}
+  .clabel{text-align:left}
+  .tl-item{flex-direction:column;text-align:center;gap:6px}
+  .vgrid{grid-template-columns:1fr}
+  .slide::after{font-size:9rem}
+}
+
+/* carimbo de versao: para saber de olho qual arquivo esta aberto */
+#versao{position:fixed;right:10px;top:10px;z-index:80;font-size:.58rem;
+  letter-spacing:2px;color:#7c748f;font-family:ui-monospace,monospace;
+  background:rgba(7,8,13,.7);padding:3px 8px;border-radius:3px;pointer-events:none}
+
+/* ===================== CELULAR =====================
+   O deck foi feito para computador e a tipografia de auditorio o quebrava no
+   celular: o texto transbordava a tela e o gesto de arrastar competia com a
+   rolagem do navegador. Aqui o tamanho volta ao normal, o slide rola se
+   precisar, e a troca de slide deixa de depender de gesto. */
+@media (max-width:820px){
+  .slide{padding:16px 5% 96px;justify-content:flex-start;overflow-y:auto;
+    -webkit-overflow-scrolling:touch}
+  .slide h1{font-size:clamp(2rem,10vw,3rem)!important}
+  .slide h2{font-size:clamp(1.4rem,6.5vw,2.1rem)!important;max-width:none}
+  .slide .kicker{font-size:.68rem!important;letter-spacing:2px}
+  .slide .sub{font-size:.95rem!important;max-width:none}
+  .slide h3,.slide h4{font-size:1rem!important}
+  .slide .box p,.slide .col.text p,.pcard p,.peca p,.eitem p{font-size:.9rem!important}
+  .slide .quote{font-size:1.2rem!important;max-width:none}
+  .clabel{font-size:.82rem!important}
+  .cnum{font-size:1.1rem!important}
+  .ctrack{height:14px!important}
+  .row{flex-direction:column;gap:22px}
+  .vgrid,.pilha,.pecas{grid-template-columns:1fr!important;gap:14px}
+  .qrbox{gap:18px}
+  .qr canvas{width:150px;height:150px}
+  .quemfala{left:10px;bottom:64px;font-size:.62rem}
+  #counter,#progress{bottom:auto}
+}
+/* ---- setas de verdade ----
+   Ficavam no rodape, que e onde o Safari do iPhone poe a propria barra: os
+   botoes existiam e ficavam escondidos atras dela. Agora vao para as laterais,
+   no meio da altura, onde nenhuma barra do navegador alcanca. */
+#nav{position:fixed;inset:0;z-index:70;display:none;pointer-events:none}
+#nav button{position:absolute;top:50%;transform:translateY(-50%);
+  width:56px;height:76px;font-size:1.5rem;font-weight:800;font-family:inherit;
+  color:var(--cyan);background:rgba(18,20,29,.9);border:1px solid var(--cyan);
+  border-radius:8px;cursor:pointer;pointer-events:auto;
+  -webkit-tap-highlight-color:transparent;line-height:1;padding:0}
+#nav #nav-ant{left:8px} #nav #nav-prox{right:8px}
+#nav button:disabled{opacity:.25}
+#nav button:active{background:var(--cyan);color:#07080d}
+#nav .qual{position:absolute;left:50%;transform:translateX(-50%);top:12px;
+  color:var(--muted);font-size:.72rem;letter-spacing:2px;
+  font-variant-numeric:tabular-nums;background:rgba(7,8,13,.8);
+  padding:4px 10px;border-radius:3px;pointer-events:none}
+@media (max-width:820px),(hover:none){#nav{display:block}}
+/* zonas de toque: cursor:pointer e obrigatorio, sem ele o Safari do iPhone
+   nao gera click em div nenhum */
+#zonas{position:fixed;inset:0;z-index:65;display:none}
+@media (max-width:820px),(hover:none){body.zonas #zonas{display:block}}
+#zonas div{position:absolute;top:0;bottom:0;width:50%;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+#zonas .z-ant{left:0} #zonas .z-prox{right:0}
+/* ===================== APRESENTACAO ESCOLAR, SALA CHEIA =====================
+   O deck era legivel de perto, na tela do computador. Numa sala com muita
+   gente, quem esta no fundo le menos da metade. Tudo sobe de tamanho, o texto
+   corrido encurta e o contraste aumenta. */
+.slide{padding:70px 6% 80px}
+.slide h1{font-size:clamp(3rem,9vw,7rem)!important;line-height:.95}
+.slide h2{font-size:clamp(2.2rem,6vw,4.4rem)!important;line-height:1.03;
+  letter-spacing:-.02em;max-width:16ch;text-wrap:balance;text-align:center}
+.slide .kicker{font-size:clamp(.85rem,1.5vw,1.15rem)!important;letter-spacing:4px}
+.slide .sub{font-size:clamp(1.15rem,2.2vw,1.7rem)!important;max-width:24ch;
+  color:#e8ebf5}
+.slide h3,.slide h4{font-size:clamp(1.1rem,2vw,1.55rem)!important}
+.slide .box p,.slide .col.text p,.pcard p,.peca p,.eitem p{
+  font-size:clamp(1.05rem,1.9vw,1.45rem)!important;color:#dfe3ee}
+.slide .quote{font-size:clamp(1.6rem,3.6vw,3rem)!important;max-width:22ch;line-height:1.25}
+.clabel{font-size:clamp(1rem,1.8vw,1.4rem)!important}
+.cnum{font-size:clamp(1.4rem,2.8vw,2.4rem)!important;font-weight:900}
+.ctrack{height:26px!important}
+.tl-item span{font-size:clamp(1rem,1.8vw,1.35rem)!important}
+.term{font-size:clamp(1rem,1.8vw,1.4rem)!important}
+/* o rodape de quem fala cresce junto, para o proprio grupo enxergar do palco */
+/* Os canvas de fundo ficavam POR CIMA e engoliam o clique: com eles assim,
+   nenhum botao de slide interativo funcionava no projetor. */
+#net,#binrain{pointer-events:none}
+/* A classe .item, que o deck usa para animar a entrada, carrega
+   pointer-events:none. Como os elementos clicaveis tambem usam .item, o clique
+   morria neles. Reativa so no que e' para clicar. */
+.slide.active .face,.slide.active .revelar,.slide.active .jogo,.slide.active .jogo iframe{pointer-events:auto}
+/* ---- blocos de quem fala ---- */
+.quemfala{position:fixed;left:26px;bottom:22px;z-index:60;display:flex;gap:10px;
+  align-items:center;font-size:.9rem;letter-spacing:3px;color:var(--muted);
+  text-transform:uppercase;pointer-events:none;opacity:.85}
+.quemfala b{color:var(--cyan);font-weight:800}
+.quemfala .bl{padding:2px 8px;border:1px solid rgba(255,255,255,.18);border-radius:3px}
+/* ---- grade de rostos: o teste de adivinhar ---- */
+.faces{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1000px;width:100%}
+@media(max-width:820px){.faces{grid-template-columns:repeat(2,1fr);gap:12px}}
+.face{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;
+  border:2px solid rgba(255,255,255,.12);cursor:pointer;background:var(--card)}
+.face img{width:100%;height:100%;object-fit:cover;display:block}
+.face .verd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:6px;background:rgba(7,8,13,.9);opacity:0;transition:.35s;
+  font-weight:800;letter-spacing:2px;font-size:.8rem;color:var(--accent);text-align:center;padding:10px}
+.face.on .verd{opacity:1}
+.face .verd small{font-weight:400;letter-spacing:0;color:var(--muted);font-size:.68rem}
+.revelar{margin-top:24px;padding:12px 26px;background:transparent;color:var(--cyan);
+  border:1px solid var(--cyan);border-radius:4px;font-size:.72rem;letter-spacing:2px;
+  text-transform:uppercase;cursor:pointer;transition:.3s;font-family:inherit}
+.revelar:hover,.revelar:focus-visible{background:var(--cyan);color:#07080d;outline:none}
+/* ---- enquete de mao levantada ---- */
+.enq{display:flex;flex-direction:column;gap:14px;max-width:760px;width:100%}
+.eitem{display:flex;gap:16px;align-items:flex-start;padding:16px 20px;background:var(--card);
+  border-left:3px solid var(--primary);border-radius:0 6px 6px 0}
+.eitem i{color:var(--cyan);font-size:1.1rem;margin-top:3px;flex:0 0 auto}
+.eitem p{margin:0;font-size:1rem}
+/* ---- pilha de dados ---- */
+.pilha{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;width:100%}
+@media(max-width:820px){.pilha{grid-template-columns:1fr}}
+.pcard{background:var(--card);border-radius:8px;padding:24px;border-top:3px solid var(--accent);
+  display:flex;flex-direction:column;gap:10px}
+.pcard .pn{font-size:2rem;font-weight:900;color:var(--accent);line-height:1}
+.pcard h4{font-size:1rem;margin:0}
+.pcard p{color:var(--muted);font-size:.88rem;margin:0}
+/* ---- jogo ao vivo ---- */
+.jogo{width:100%;max-width:1040px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;
+  border:2px solid rgba(255,255,255,.14);background:#000}
+.jogo iframe{width:100%;height:100%;border:0;display:block}
+/* ---- qr ---- */
+.qrbox{display:flex;gap:44px;align-items:center;flex-wrap:wrap;justify-content:center}
+.qr{background:#fff;padding:14px;border-radius:10px;line-height:0}
+.qr canvas{display:block;image-rendering:pixelated;width:220px;height:220px}
+.qrtxt{max-width:420px}
+.qrtxt h4{font-size:1.15rem;margin:0 0 10px}
+.qrtxt p{color:var(--muted);font-size:.92rem;margin:0 0 8px}
+.qrtxt code{color:var(--cyan);font-size:.86rem;word-break:break-all}
+/* ---- tres pecas ---- */
+.pecas{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:1000px;width:100%}
+@media(max-width:820px){.pecas{grid-template-columns:1fr}}
+.peca{background:var(--card);border-radius:8px;padding:26px 22px;text-align:center;
+  display:flex;flex-direction:column;gap:12px;align-items:center;
+  border:1px solid rgba(255,255,255,.08)}
+.peca i{font-size:1.8rem;color:var(--cyan)}
+.peca h4{margin:0;font-size:1.05rem}
+.peca p{margin:0;color:var(--muted);font-size:.85rem}
+
+</style>
+</head>
+<body>
+
+<canvas id="net"></canvas>
+<div class="hudframe hf1"></div><div class="hudframe hf2"></div>
+<div class="hudframe hf3"></div><div class="hudframe hf4"></div>
+<div id="sysname">JOY.EXE // JUSTIÇA ALGORÍTMICA</div>
+<div id="progress"></div>
+<div id="counter">01 / 12</div>
+<div id="hint">▼ ROLE OU USE AS SETAS ▼</div>
+
+<div id="versao">v9 · dossie</div><div id="zonas"><div class="z-ant"></div><div class="z-prox"></div></div><div id="nav"><button id="nav-ant" type="button" aria-label="Voltar">&#8249;</button><span class="qual" id="nav-qual"></span><button id="nav-prox" type="button" aria-label="Avancar">&#8250;</button></div>
+<div class="quemfala"><span class="bl" id="qf-bloco">DAVI</span><b id="qf-parte">bloco 1</b></div>
+<div id="deck">
+  <!-- 1 CAPA -->
+  <section class="slide active" data-hue="cyan" data-num="01" data-bloco="DAVI · 1">
+    <div class="grid-floor"></div>
+    <p class="kicker item d1">// SEMINÁRIO · TECNOLOGIA E SOCIEDADE</p>
+    <h1 class="glitch item d2">Joy Buolamwini</h1>
+    <p class="sub item d3" style="margin-top:22px">A cientista que desmascarou o preconceito escondido dentro da Inteligência Artificial</p>
+    <p class="term item d4">> identidade: <b>"POETA DO CÓDIGO"</b> _</p>
+  </section>
+  <!-- 4 EXPERIMENTO DA MÁSCARA -->
+  <section class="slide" data-hue="red" data-num="02" data-bloco="DAVI · 1">
+    <p class="kicker item d1">// O PONTO DE PARTIDA</p>
+    <h2 class="item d1">O experimento da máscara branca</h2>
+    <div class="row" style="margin-top:16px">
+      <div class="col media item d2">
+        <div class="maskdemo">
+          <svg viewBox="0 0 300 340">
+            <ellipse cx="150" cy="140" rx="70" ry="85" fill="#8d5524"/>
+            <path d="M80 300 Q150 240 220 300 L220 340 L80 340 Z" fill="#4b3a63"/>
+            <circle cx="125" cy="130" r="7" fill="#1e1420"/>
+            <circle cx="175" cy="130" r="7" fill="#1e1420"/>
+            <path d="M130 175 Q150 188 170 175" stroke="#1e1420" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <g class="whitemask">
+              <ellipse cx="150" cy="140" rx="72" ry="87" fill="#f5f2ec"/>
+              <ellipse cx="125" cy="130" rx="12" ry="8" fill="#07080d"/>
+              <ellipse cx="175" cy="130" rx="12" ry="8" fill="#07080d"/>
+              <path d="M132 180 Q150 190 168 180" stroke="#07080d" stroke-width="4" fill="none"/>
+            </g>
+            <rect class="facebox" x="60" y="35" width="180" height="215" rx="10"/>
+          </svg>
+          <div class="lblno">[ ✗ ROSTO NÃO DETECTADO ]</div>
+          <div class="lblok">[ ✓ ROSTO DETECTADO ]</div>
+        </div>
+      </div>
+      <div class="col text">
+        <div class="box item d3" style="margin-bottom:18px">
+          <h3><i class="fas fa-mask"></i>&nbsp; O que aconteceu</h3>
+          <p>No MIT, o software de reconhecimento facial <b style="color:#fff">ignorava o rosto de Joy</b>. Só quando ela vestiu uma <b style="color:#fff">máscara branca</b>, o sistema a "enxergou".</p>
+        </div>
+        <div class="box item d4">
+          <h3><i class="fas fa-code"></i>&nbsp; O que isso revelou</h3>
+          <p>A IA aprende com dados escolhidos por humanos. Dados com preconceito geram <b style="color:var(--accent)">máquinas com preconceito</b>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOVO  DAVI 2  enquete com a plateia -->
+  <section class="slide" data-hue="cyan" data-num="XX" data-bloco="DAVI · 2">
+    <p class="kicker item d1">// ANTES DE CONTINUAR</p>
+    <h2 class="item d1">Levanta a mão quem já passou por isso</h2>
+    <div class="enq">
+      <div class="eitem item d2"><i class="fas fa-mobile-screen"></i><p>O reconhecimento facial do seu celular já <b>deixou de te reconhecer</b> sem motivo?</p></div>
+      <div class="eitem item d3"><i class="fas fa-camera"></i><p>A câmera do celular já <b>não achou o seu rosto</b> em uma foto de grupo, mas achou o dos outros?</p></div>
+      <div class="eitem item d4"><i class="fas fa-microphone-lines"></i><p>Um assistente de voz já <b>não entendeu o seu jeito de falar</b>, mas entendeu o de outra pessoa?</p></div>
+      <div class="eitem item d5"><i class="fas fa-id-card"></i><p>Você já teve que <b>tirar o boné, o óculos ou mudar a luz</b> para uma máquina te aceitar?</p></div>
+    </div>
+    <p class="item d5" style="color:var(--muted);margin-top:26px;text-align:center;max-width:720px">Isso que vocês acabaram de levantar a mão tem nome, tem dono e tem número. É sobre isso que a gente veio falar.</p>
+  </section>
+  <!-- 5 VIÉS ALGORÍTMICO -->
+  <section class="slide" data-hue="red" data-num="04" data-bloco="DAVI · 2">
+    <div class="binwrap" id="binrain"></div>
+    <p class="kicker item d1">// CONCEITO-CHAVE</p>
+    <h2 class="item d1">O que é viés algorítmico?</h2>
+    <p class="sub item d2">É quando um sistema de IA comete erros sistemáticos que prejudicam certos grupos de pessoas.</p>
+    <div class="grid">
+      <div class="box item d2" style="text-align:center">
+        <div class="icon"><i class="fas fa-database"></i></div>
+        <h3>1. Dados enviesados</h3>
+        <p>A IA é treinada com muito mais rostos de homens brancos do que de mulheres negras.</p>
+      </div>
+      <div class="box item d3" style="text-align:center">
+        <div class="icon"><i class="fas fa-robot"></i></div>
+        <h3>2. Máquina aprende errado</h3>
+        <p>O sistema fica ótimo em reconhecer um grupo e péssimo em reconhecer outros.</p>
+      </div>
+      <div class="box item d4" style="text-align:center">
+        <div class="icon"><i class="fas fa-user-slash"></i></div>
+        <h3>3. Pessoas prejudicadas</h3>
+        <p>Erros em prisões, contratações, empréstimos e saúde atingem quem já é discriminado.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOVO  NIKOLAS 1  de onde vem o erro -->
+  <section class="slide" data-hue="purple" data-num="XX" data-bloco="NIKOLAS · 1">
+    <p class="kicker item d1">// A MÁQUINA NÃO NASCE ASSIM</p>
+    <h2 class="item d1">De onde vem o erro, em três passos</h2>
+    <p class="sub item d2">Ninguém programou a máquina para errar.</p>
+    <div class="pilha">
+      <div class="pcard item d3">
+        <span class="pn">1</span>
+        <h4>Alguém junta as fotos</h4>
+        <p>Milhões de rostos tirados da internet. O que é fácil de achar já vem torto.</p>
+      </div>
+      <div class="pcard item d4">
+        <span class="pn">2</span>
+        <h4>A máquina treina no que recebeu</h4>
+        <p>Ótima no rosto que viu dez milhões de vezes. Péssima no que viu dez mil.</p>
+      </div>
+      <div class="pcard item d5">
+        <span class="pn">3</span>
+        <h4>O sistema vai para a rua</h4>
+        <p>Aeroporto, escola, polícia. Deixa de ser estatística e vira gente parada na rua.</p>
+      </div>
+    </div>
+    <p class="item d5" style="color:var(--muted);margin-top:26px;text-align:center;max-width:760px">A máquina aprende com os dados que <b style="color:var(--accent)">a gente</b> escolhe dar para ela.</p>
+  </section>
+  <!-- 6 GENDER SHADES -->
+  <section class="slide" data-hue="red" data-num="06" data-bloco="NIKOLAS · 1">
+    <p class="kicker item d1">// A PESQUISA QUE MUDOU TUDO</p>
+    <h2 class="item d1">Gender Shades (2018)</h2>
+    <p class="sub item d2">Taxa de erro dos sistemas de reconhecimento facial testados, por grupo (valores aproximados do pior caso):</p>
+    <div class="chart">
+      <div class="crow item d2">
+        <span class="clabel">Homens de pele clara</span>
+        <div class="ctrack"><div class="cfill cok" style="--w:4%"></div></div>
+        <span class="cnum">~1%</span>
+      </div>
+      <div class="crow item d3">
+        <span class="clabel">Mulheres de pele clara</span>
+        <div class="ctrack"><div class="cfill cok" style="--w:18%"></div></div>
+        <span class="cnum">~7%</span>
+      </div>
+      <div class="crow item d4">
+        <span class="clabel">Homens de pele escura</span>
+        <div class="ctrack"><div class="cfill cbad" style="--w:32%"></div></div>
+        <span class="cnum">~12%</span>
+      </div>
+      <div class="crow item d5">
+        <span class="clabel">Mulheres de pele escura</span>
+        <div class="ctrack"><div class="cfill cbad" style="--w:90%"></div></div>
+        <span class="cnum">~35%</span>
+      </div>
+    </div>
+    <p class="item d5" style="color:var(--muted);margin-top:24px;text-align:center;max-width:700px">A mesma tecnologia, resultados completamente diferentes dependendo de quem está na frente da câmera.</p>
+  </section>
+
+  <!-- NOVO  GABRIEL 2  como a pesquisa foi feita -->
+  <section class="slide" data-hue="purple" data-num="XX" data-bloco="NIKOLAS · 1">
+    <p class="kicker item d1">// COMO A GENTE PESQUISOU</p>
+    <h2 class="item d1">De onde saiu cada número</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">1</span><h4>A pesquisa original</h4>
+        <p>Gender Shades, 2018. Os 99,7% e os 65,3% saem do estudo dela, não de resumo de internet.</p></div>
+      <div class="pcard item d4"><span class="pn">2</span><h4>A voz dela</h4>
+        <p>TED, o livro <i>Unmasking AI</i> e o depoimento no Congresso. Só usamos o que ela disse em público.</p></div>
+      <div class="pcard item d5"><span class="pn">3</span><h4>O que não entrou</h4>
+        <p>Opinião dela sobre assunto que ela nunca tratou. Se não achamos a fonte, ficou de fora.</p></div>
+    </div>
+    <p class="item d5" style="color:var(--muted);margin-top:26px;text-align:center;max-width:760px">gendershades.org · ajl.org</p>
+  </section>
+  <!-- 7 EVOLUÇÃO DA IA (VÍDEOS EM LOOP) -->
+  <section class="slide" data-hue="red" data-num="08" data-bloco="NIKOLAS · 2">
+    <p class="kicker item d1">// A IA EVOLUI RÁPIDO DEMAIS</p>
+    <h2 class="item d1">De piada a indistinguível do real</h2>
+    <p class="sub item d2">O famoso teste do "Will Smith comendo espaguete": em 2023, a IA gerava vídeos bizarros. Hoje, quase não dá pra diferenciar do real.</p>
+    <div class="vgrid">
+      <div class="vcard item d3">
+        <span class="vlabel vold">[ 2023 · IA "ANTIGA" · ERA UMA PIADA ]</span>
+        <div class="vid">
+          <iframe data-src="https://www.youtube-nocookie.com/embed/XQr4Xklqzw8?autoplay=1&mute=1&loop=1&playlist=XQr4Xklqzw8&controls=0&playsinline=1&rel=0&modestbranding=1"
+                  title="Will Smith IA 2023" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+          <span class="vmute"><i class="fas fa-volume-xmark"></i> LOOP AUTOMÁTICO</span>
+        </div>
+        <a class="vlink" href="https://www.youtube.com/watch?v=XQr4Xklqzw8" target="_blank">▶ assistir com som no YouTube</a>
+      </div>
+      <div class="vcard item d4">
+        <span class="vlabel vnew">[ HOJE · COMPARAÇÃO 2023 vs ATUAL ]</span>
+        <div class="vid">
+          <iframe data-src="https://www.youtube-nocookie.com/embed/IjaBUk3D5Uw?autoplay=1&mute=1&loop=1&playlist=IjaBUk3D5Uw&controls=0&playsinline=1&rel=0&modestbranding=1"
+                  title="Will Smith IA hoje" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+          <span class="vmute"><i class="fas fa-volume-xmark"></i> LOOP AUTOMÁTICO</span>
+        </div>
+        <a class="vlink" href="https://www.youtube.com/watch?v=IjaBUk3D5Uw" target="_blank">▶ assistir com som no YouTube</a>
+      </div>
+    </div>
+    <p class="item d5" style="color:var(--muted);margin-top:22px;text-align:center;max-width:760px">Se a IA já engana nossos olhos, <b style="color:var(--accent)">quem garante que ela está sendo usada com justiça?</b> É exatamente por isso que o trabalho de Joy é tão urgente.</p>
+  </section>
+
+  <!-- NOVO  NIKOLAS 2  onde a IA chegou, video real -->
+  <section class="slide" data-hue="red" data-num="XX" data-bloco="NIKOLAS · 2">
+    <p class="kicker item d1">// MESMO TESTE, HOJE</p>
+    <h2 class="item d1">2026</h2>
+    <div class="jogo item d2" style="max-width:900px"><iframe data-src="https://www.youtube-nocookie.com/embed/xnY-j43ih_0?autoplay=1&mute=1&loop=1&playlist=xnY-j43ih_0&controls=0&playsinline=1&rel=0&modestbranding=1" title="Will Smith IA 2026" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+    <p class="item d4" style="color:var(--muted);margin-top:18px;text-align:center;max-width:640px">Três anos separam este vídeo do anterior.</p>
+  </section>
+
+  <!-- DOC  o que a pesquisa mudou (fatos) -->
+  <section class="slide" data-hue="purple" data-num="XX" data-bloco="NIKOLAS · 2">
+    <p class="kicker item d1">// O QUE A PESQUISA MUDOU</p>
+    <h2 class="item d1">Três fatos documentados</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">1</span><h4>As três empresas corrigiram</h4>
+        <p>IBM, Microsoft e Face++ atualizaram seus modelos depois da auditoria.</p></div>
+      <div class="pcard item d4"><span class="pn">2</span><h4>Chegou ao Congresso</h4>
+        <p>Ela depôs nos Estados Unidos defendendo limites para o reconhecimento facial.</p></div>
+      <div class="pcard item d5"><span class="pn">3</span><h4>Virou política pública</h4>
+        <p>A auditoria é base de leis e debates sobre reconhecimento facial no mundo inteiro.</p></div>
+    </div>
+  </section>
+
+  <!-- NOVO  GABRIEL 1  a voz dela -->
+  <section class="slide" data-hue="cyan" data-num="XX" data-bloco="GABRIEL · 1">
+    <p class="kicker item d1">// AGORA ELA MESMA</p>
+    <h2 class="item d1">Nas palavras dela</h2>
+    <div class="jogo item d2" style="max-width:900px"><iframe data-src="https://www.youtube-nocookie.com/embed/UG_X_7g63rY?autoplay=1&mute=1&loop=1&playlist=UG_X_7g63rY&controls=0&playsinline=1&rel=0&modestbranding=1" title="Joy Buolamwini no TED" allow="autoplay; encrypted-media" loading="lazy"></iframe></div>
+    <p class="item d4" style="color:var(--muted);margin-top:16px;text-align:center;max-width:620px">TED. Tire o mudo e deixe correr trinta segundos.</p>
+  </section>
+
+  <!-- DOC  como fizemos: o blog -->
+  <section class="slide" data-hue="cyan" data-num="XX" data-bloco="GABRIEL · 1">
+    <p class="kicker item d1">// COMO A GENTE FEZ · O BLOG</p>
+    <h2 class="item d1">Primeiro a pesquisa virou texto</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">a</span><h4>Escrever com fonte</h4>
+        <p>Cada seção do blog nasceu de uma fonte pública dela. Sem fonte, não entrou.</p></div>
+      <div class="pcard item d4"><span class="pn">b</span><h4>O chat com voz</h4>
+        <p>A gente escreveu as instruções que o modelo segue: no máximo duas frases, sem inventar número, e admitir quando não sabe.</p></div>
+      <div class="pcard item d5"><span class="pn">c</span><h4>Avisar que é IA</h4>
+        <p>A primeira regra das instruções: se perguntarem se é a Joy de verdade, dizer que não é.</p></div>
+    </div>
+  </section>
+
+  <!-- DOC  como fizemos: o jogo -->
+  <section class="slide" data-hue="red" data-num="XX" data-bloco="GABRIEL · 1">
+    <p class="kicker item d1">// COMO A GENTE FEZ · O JOGO</p>
+    <h2 class="item d1">Depois o texto virou regra</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">a</span><h4>A máscara é o caso real</h4>
+        <p>Com ela o sistema te aceita e você deixa de ser você. O episódio dela, virado em mecânica.</p></div>
+      <div class="pcard item d4"><span class="pn">b</span><h4>Arte gerada, e refeita</h4>
+        <p>As primeiras texturas saíram quase pretas do gerador. Medimos o brilho, jogamos fora e geramos de novo.</p></div>
+      <div class="pcard item d5"><span class="pn">c</span><h4>Nada sobrando</h4>
+        <p>Os pedaços de rosto são exatos: o que a fase pede é o que o mapa tem.</p></div>
+    </div>
+  </section>
+
+  <!-- DOC  como fizemos: os testes -->
+  <section class="slide" data-hue="purple" data-num="XX" data-bloco="GABRIEL · 2">
+    <p class="kicker item d1">// COMO A GENTE FEZ · OS TESTES</p>
+    <h2 class="item d1">E a regra foi testada até valer</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">400</span><h4>mundos por fase</h4>
+        <p>Simulados por robô antes de publicar: em nenhum deles a máscara nasce fora de alcance.</p></div>
+      <div class="pcard item d4"><span class="pn">1%</span><h4>da tela</h4>
+        <p>Era o que o feixe ocupava, medido em pixels. Por isso ele ganhou um risco no chão que anda junto.</p></div>
+      <div class="pcard item d5"><span class="pn">39cm</span><h4>de folga</h4>
+        <p>Do feixe até a cabeça de quem agacha. Antes eram 24, e passar parecia sorte.</p></div>
+    </div>
+    <p class="item d5" style="color:var(--muted);margin-top:26px;text-align:center;max-width:740px">A lição do projeto inteiro: <b style="color:var(--accent)">não confiar no que parece pronto, medir</b>. Foi o que a Joy fez com os sistemas das empresas.</p>
+  </section>
+
+  <!-- DOC  como fizemos: o VR -->
+  <section class="slide" data-hue="cyan" data-num="XX" data-bloco="GABRIEL · 2">
+    <p class="kicker item d1">// COMO A GENTE FEZ · O ÓCULOS</p>
+    <h2 class="item d1">E o corredor aprendeu o seu tamanho</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">a</span><h4>Mede a sua altura</h4>
+        <p>No primeiro segundo de óculos o jogo lê o capacete e ajusta o mundo para o seu corpo.</p></div>
+      <div class="pcard item d4"><span class="pn">b</span><h4>Conforto primeiro</h4>
+        <p>Visão periférica fecha enquanto anda, velocidade menor, nada te empurra sem você mandar.</p></div>
+      <div class="pcard item d5"><span class="pn">c</span><h4>Agachar é de verdade</h4>
+        <p>Não tem botão: o feixe passa por cima de quem abaixa o corpo.</p></div>
+    </div>
+  </section>
+
+  <!-- NOVO  GABRIEL 2  as decisoes de projeto -->
+  <section class="slide" data-hue="red" data-num="XX" data-bloco="GABRIEL · 2">
+    <p class="kicker item d1">// TRÊS DECISÕES QUE A GENTE TOMOU</p>
+    <h2 class="item d1">E por quê</h2>
+    <div class="pilha">
+      <div class="pcard item d3"><span class="pn">1</span><h4>Jogo, e não vídeo</h4>
+        <p>Número não assusta. A pessoa tinha que <b>escolher</b> pôr a máscara e sentir o que isso custa.</p></div>
+      <div class="pcard item d4"><span class="pn">2</span><h4>A máscara é o miolo</h4>
+        <p>Ela não é um poder qualquer: é o episódio real da Joy virado em regra de jogo.</p></div>
+      <div class="pcard item d5"><span class="pn">3</span><h4>Avisar que é IA</h4>
+        <p>O chat diz na tela que é simulação. Projeto sobre honestidade em IA não pode enganar quem usa.</p></div>
+    </div>
+  </section>
+  <!-- 11 FRASE -->
+  <section class="slide" data-hue="red" data-num="17" data-bloco="GABRIEL · 2">
+    <p class="kicker item d1">// PARA REFLETIR</p>
+    <p class="quote item d2">"A tecnologia deve servir a <span>todos nós</span>, não apenas a alguns de nós. Se não formos vigilantes, <span>codificaremos o passado</span> no nosso futuro."</p>
+    <p class="item d3" style="margin-top:26px;color:var(--muted);font-family:'Share Tech Mono',monospace">— JOY BUOLAMWINI</p>
+  </section>
+  <!-- 12 CONCLUSÃO -->
+  <section class="slide" data-hue="cyan" data-num="18" data-bloco="GABRIEL · 2">
+    <p class="kicker item d1">// CONCLUSÃO</p>
+    <h2 class="item d1">O que aprendemos com Joy?</h2>
+    <div class="grid" style="margin-top:10px">
+      <div class="box item d2" style="text-align:center">
+        <div class="icon"><i class="fas fa-eye"></i></div>
+        <p style="color:var(--muted)">A IA <b style="color:#fff">não é neutra</b>: ela reflete quem a constrói.</p>
+      </div>
+      <div class="box item d3" style="text-align:center">
+        <div class="icon"><i class="fas fa-users"></i></div>
+        <p style="color:var(--muted)"><b style="color:#fff">Diversidade</b> nas equipes de tecnologia gera sistemas mais justos.</p>
+      </div>
+      <div class="box item d4" style="text-align:center">
+        <div class="icon"><i class="fas fa-bullhorn"></i></div>
+        <p style="color:var(--muted)">Uma pessoa questionando pode <b style="color:var(--accent)">mudar leis e empresas gigantes</b>.</p>
+      </div>
+    </div>
+    <p class="term item d5">> fim_da_apresentacao :: <b>OBRIGADO!</b> _</p>
+    <p class="credit item d5">Fotos: Niccolò Caranti / Wikimedia Commons (CC BY-SA 4.0) · Dados: estudo Gender Shades, MIT (2018) · Vídeos: YouTube</p>
+  </section>
+
+  <!-- NOVO  GABRIEL 2  as estacoes, por fora da apresentacao -->
+  <section class="slide" data-hue="cyan" data-num="XX" data-bloco="GABRIEL · 2">
+    <p class="kicker item d1">// AGORA É COM VOCÊS</p>
+    <h2 class="item d1">Tem três coisas para usar lá fora</h2>
+    <div class="pecas">
+      <div class="peca item d3"><i class="fas fa-book-open"></i><h4>O blog</h4><p>A história dela, e um chat que responde em voz alta.</p></div>
+      <div class="peca item d4"><i class="fas fa-gamepad"></i><h4>O jogo</h4><p>Cinco fases juntando pedaços do seu rosto.</p></div>
+      <div class="peca item d5"><i class="fas fa-vr-cardboard"></i><h4>O óculos</h4><p>A máscara vai na sua cara de verdade.</p></div>
+    </div>
+    <div class="qrbox" style="margin-top:34px">
+      <div class="qr item d5"><canvas id="qrcv" width="240" height="240"></canvas></div>
+      <div class="qrtxt item d5"><h4>Ou joguem daí mesmo</h4><code>blog-joy.vercel.app</code></div>
+    </div>
+  </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+<script>
+/* ===== FUNDO TEMÁTICO: DETECÇÃO FACIAL ===== */
+const HUES={
+  cyan:{c:[0,229,255]},
+  purple:{c:[138,120,250]},
+  red:{c:[255,90,100]}
+};
+let cur=[0,229,255],target=[0,229,255];
+
+const cv=document.getElementById('net'),cx=cv.getContext('2d');
+let W,H,boxes=[],dots=[];
+function rnd(a,b){return a+Math.random()*(b-a)}
+function makeBox(){return{x:rnd(0,W),y:rnd(0,H),w:rnd(60,150),
+  vx:rnd(-.25,.25),vy:rnd(-.2,.2),ph:rnd(0,6.28),
+  pct:Math.floor(rnd(40,99)),spd:rnd(.4,1.2)}}
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;
+  boxes=Array.from({length:Math.max(5,Math.floor(W/230))},makeBox);
+  dots=Array.from({length:Math.floor(W*H/26000)},()=>({
+    x:rnd(0,W),y:rnd(0,H),vx:rnd(-.3,.3),vy:rnd(-.3,.3)}));}
+resize();addEventListener('resize',resize);
+
+function lerp(){for(let k=0;k<3;k++)cur[k]+=(target[k]-cur[k])*.04;}
+let t=0;
+(function loop(){
+  t+=.016;lerp();
+  const C=cur.map(Math.round),col=a=>`rgba(${C[0]},${C[1]},${C[2]},${a})`;
+  cx.clearRect(0,0,W,H);
+  for(const d of dots){d.x+=d.vx;d.y+=d.vy;
+    if(d.x<0||d.x>W)d.vx*=-1;if(d.y<0||d.y>H)d.vy*=-1;
+    cx.fillStyle=col(.35);cx.fillRect(d.x,d.y,2,2);}
+  cx.font="10px 'Share Tech Mono',monospace";
+  for(const b of boxes){
+    b.x+=b.vx;b.y+=b.vy;
+    if(b.x<-160)b.x=W;if(b.x>W+160)b.x=-160;
+    if(b.y<-160)b.y=H;if(b.y>H+160)b.y=-160;
+    const a=.14+.12*Math.sin(t*b.spd+b.ph);
+    const h=b.w*1.15,L=Math.min(18,b.w*.24);
+    cx.strokeStyle=col(a);cx.lineWidth=1.5;
+    cx.beginPath();
+    cx.moveTo(b.x,b.y+L);cx.lineTo(b.x,b.y);cx.lineTo(b.x+L,b.y);
+    cx.moveTo(b.x+b.w-L,b.y);cx.lineTo(b.x+b.w,b.y);cx.lineTo(b.x+b.w,b.y+L);
+    cx.moveTo(b.x+b.w,b.y+h-L);cx.lineTo(b.x+b.w,b.y+h);cx.lineTo(b.x+b.w-L,b.y+h);
+    cx.moveTo(b.x+L,b.y+h);cx.lineTo(b.x,b.y+h);cx.lineTo(b.x,b.y+h-L);
+    cx.stroke();
+    const mx=b.x+b.w/2,my=b.y+h/2;
+    cx.beginPath();cx.moveTo(mx-6,my);cx.lineTo(mx+6,my);
+    cx.moveTo(mx,my-6);cx.lineTo(mx,my+6);cx.stroke();
+    const sy=b.y+(h*(.5+.45*Math.sin(t*b.spd*1.4+b.ph)));
+    cx.strokeStyle=col(a*1.6);
+    cx.beginPath();cx.moveTo(b.x+4,sy);cx.lineTo(b.x+b.w-4,sy);cx.stroke();
+    cx.fillStyle=col(a*2);
+    cx.fillText(`ID ${b.pct}%`,b.x,b.y+h+14);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ===== CHUVA BINÁRIA ===== */
+const rain=document.getElementById('binrain');
+if(rain){for(let i=0;i<16;i++){
+  const c=document.createElement('div');c.className='bin';
+  let s='';for(let j=0;j<40;j++)s+=(Math.random()>.5?'1':'0')+'\n';
+  c.textContent=s;c.style.left=(i*6.5)+'%';
+  c.style.animationDuration=(6+Math.random()*8)+'s';
+  c.style.animationDelay=(-Math.random()*10)+'s';
+  rain.appendChild(c);}}
+
+/* ===== NAVEGAÇÃO + VÍDEOS DE FUNDO ===== */
+const slides=[...document.querySelectorAll('.slide')];
+const progress=document.getElementById('progress');
+const counter=document.getElementById('counter');
+const hint=document.getElementById('hint');
+let i=0,lock=false;
+const pad=n=>String(n).padStart(2,'0');
+
+function setHue(){
+  const h=HUES[slides[i].dataset.hue||'cyan'];
+  target=[...h.c];
+  const c=`rgb(${h.c.join(',')})`;
+  counter.style.color=c;counter.style.borderColor=c;
+}
+
+/* liga os vídeos quando o slide deles abre; desliga quando sai */
+function handleVideos(){
+  document.querySelectorAll('iframe[data-src]').forEach(f=>{
+    const on=f.closest('.slide').classList.contains('active');
+    if(on&&!f.getAttribute('src'))f.src=f.dataset.src;
+    if(!on&&f.getAttribute('src'))f.removeAttribute('src');
+  });
+}
+
+function go(n){
+  if(lock||n<0||n>=slides.length||n===i)return;
+  lock=true;
+  slides.forEach((s,idx)=>{
+    s.classList.toggle('prev',idx<n);
+    s.classList.toggle('active',idx===n);
+  });
+  i=n;setHue();handleVideos();
+  progress.style.width=(i/(slides.length-1))*100+'%';
+  counter.textContent=pad(i+1)+' / '+pad(slides.length);
+  hint.style.display=i===0?'block':'none';
+  setTimeout(()=>lock=false,1000);
+}
+setHue();
+
+let wheelT;
+addEventListener('wheel',e=>{clearTimeout(wheelT);
+  wheelT=setTimeout(()=>{e.deltaY>0?go(i+1):go(i-1);},40);},{passive:true});
+addEventListener('keydown',e=>{
+  if(['ArrowDown','ArrowRight','PageDown',' '].includes(e.key))go(i+1);
+  if(['ArrowUp','ArrowLeft','PageUp'].includes(e.key))go(i-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(slides.length-1);
+});
+let y0=null;
+addEventListener('touchstart',e=>y0=e.touches[0].clientY,{passive:true});
+addEventListener('touchend',e=>{
+  if(y0===null)return;
+  const dy=y0-e.changedTouches[0].clientY;
+  if(Math.abs(dy)>50)dy>0?go(i+1):go(i-1);
+  y0=null;},{passive:true});
+
+/* ---- quem fala, lido do data-bloco do slide ativo ---- */
+(function(){
+  const el=document.getElementById('qf-bloco'), pt=document.getElementById('qf-parte');
+  const pintar=()=>{
+    const a=document.querySelector('.slide.active');
+    if(!a)return;
+    const b=(a.dataset.bloco||'').split('·');
+    el.textContent=(b[0]||'').trim()||'—';
+    pt.textContent=b[1]?('bloco '+b[1].trim()):'';
+  };
+  new MutationObserver(pintar).observe(document.getElementById('deck'),
+    {subtree:true,attributes:true,attributeFilter:['class']});
+  pintar();
+})();
+
+/* ---- o teste dos rostos ---- */
+(function(){
+  const btn=document.getElementById('btn-revelar');
+  if(!btn)return;
+  const caras=[...document.querySelectorAll('.face')];
+  const txt=document.getElementById('txt-revelar');
+  const revelar=()=>{
+    caras.forEach((c,i)=>setTimeout(()=>c.classList.add('on'),i*220));
+    setTimeout(()=>{txt.innerHTML='<b style="color:var(--accent)">Nenhuma.</b> As quatro foram geradas por inteligência artificial hoje, a partir de uma frase de texto, e levaram poucos segundos cada. Nenhuma dessas pessoas existe.';},caras.length*220);
+    btn.disabled=true;btn.style.opacity=.4;btn.textContent='Resposta revelada';
+  };
+  btn.addEventListener('click',revelar);
+  caras.forEach(c=>{
+    c.addEventListener('click',()=>c.classList.toggle('on'));
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.classList.toggle('on');}});
+  });
+})();
+
+/* ---- QR code desenhado no canvas, sem biblioteca externa ---- */
+(function(){
+  const cv=document.getElementById('qrcv');
+  if(!cv)return;
+  /* QR de versao 3, correcao L, para blog-joy.vercel.app
+     gerado como matriz fixa: mais simples e sem dependencia de rede */
+  const M=[[1,1,1,1,1,1,1,0,0,1,0,0,0,0,1,1,0,1,1,1,0,0,1,1,1,1,1,1,1],[1,0,0,0,0,0,1,0,1,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,0,0,0,0,1],[1,0,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,0,1,0,1,1,1,0,1],[1,0,1,1,1,0,1,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,1,0,1,1,1,0,1],[1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,0,0,1,0,0,1,0,1,1,1,0,1],[1,0,0,0,0,0,1,0,0,1,1,1,1,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,1],[1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],[0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,0,1,1,0,0,1,1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,1,1,0],[0,1,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1],[1,0,1,0,0,0,1,0,1,1,1,0,1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,1,0],[0,1,0,1,1,0,0,0,1,0,0,1,1,0,1,1,0,0,1,1,0,0,0,1,0,0,0,0,1],[0,0,1,0,0,0,1,0,0,1,1,1,0,1,1,0,0,1,1,0,0,1,0,1,0,0,1,1,1],[1,1,0,0,1,0,0,1,0,0,0,1,0,1,1,1,0,1,0,1,0,0,1,1,0,1,1,1,1],[0,0,0,0,0,1,1,1,1,0,1,1,1,0,0,1,1,0,0,1,0,1,0,1,1,1,0,1,1],[1,0,0,1,0,1,0,0,1,0,0,0,1,0,0,1,1,0,1,1,0,1,0,0,1,1,0,1,1],[1,1,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,1,1,0,1,1],[0,1,1,0,1,0,0,1,1,0,1,1,1,0,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0],[1,0,1,0,0,1,1,0,0,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,0,1,0,0,0],[0,0,0,1,0,1,0,1,0,1,0,0,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,0,0],[0,1,0,1,1,1,1,0,1,0,1,0,1,1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,0],[0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,1,1,1,0,1,0,0,0,1,1,0,1,1],[1,1,1,1,1,1,1,0,0,1,1,0,0,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,0],[1,0,0,0,0,0,1,0,1,1,1,0,1,0,1,1,0,1,0,0,1,0,0,0,1,0,0,1,1],[1,0,1,1,1,0,1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,1,1,1,1,1,1,1,1],[1,0,1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0],[1,0,1,1,1,0,1,0,1,1,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,1,1,0,1],[1,0,0,0,0,0,1,0,1,0,0,0,1,1,0,1,0,0,1,0,1,0,1,0,1,1,0,1,0],[1,1,1,1,1,1,1,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0,1,1,0,0,0,1,0]];
+  const n=M.length,g=cv.getContext('2d'),esc=cv.width/(n+8);
+  g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);
+  g.fillStyle='#07080d';
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)
+    if(M[y][x])g.fillRect(Math.round((x+4)*esc),Math.round((y+4)*esc),Math.ceil(esc),Math.ceil(esc));
+})();
+
+/* ---- setas e zonas de toque: no celular o gesto sozinho nao basta ---- */
+(function(){
+  const S=[...document.querySelectorAll('.slide')];
+  const ant=document.getElementById('nav-ant'), prox=document.getElementById('nav-prox');
+  const qual=document.getElementById('nav-qual');
+  if(!ant)return;
+  const atual=()=>S.findIndex(s=>s.classList.contains('active'));
+  const pintar=()=>{const i=atual();
+    ant.disabled=i<=0; prox.disabled=i>=S.length-1;
+    qual.textContent=(i+1)+'/'+S.length;};
+  const ir=(d)=>{const i=atual(); if(i<0)return; go(i+d); setTimeout(pintar,60);};
+  for(const [el,d] of [[ant,-1],[prox,1]]){
+    el.addEventListener('click',e=>{e.preventDefault();ir(d);});
+    el.addEventListener('touchend',e=>{e.preventDefault();ir(d);},{passive:false});
+  }
+  document.body.classList.add('zonas');
+  const z=document.getElementById('zonas');
+  z.querySelector('.z-ant').addEventListener('click',()=>ir(-1));
+  z.querySelector('.z-prox').addEventListener('click',()=>ir(1));
+  new MutationObserver(pintar).observe(document.getElementById('deck'),
+    {subtree:true,attributes:true,attributeFilter:['class']});
+  pintar();
+})();
+
+</script>
+</body>
+</html>
