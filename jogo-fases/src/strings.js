@@ -61,6 +61,7 @@ export const STR = {
     first_frag: 'Um pedaço. O portão do fim só abre com o rosto completo.',
     mask_found: 'A máscara branca é sua e já está no seu rosto. Agora a parede te deixa passar, não porque você mudou, mas porque parou de parecer você. Foi literalmente assim que a pesquisadora descobriu a falha. Use o botão MÁSCARA, ou a tecla E, para tirar e botar.',
     mask_on: 'Agora ele te vê. Repare no que isso quer dizer: ele te aceita justamente quando você não está sendo você.',
+    vr_pronto: 'Altura calibrada. O corredor foi ajustado para o seu tamanho: agache de verdade que o feixe passa por cima.',
     mask_hot: 'A máscara superaqueceu. Tire e espere esfriar.',
     duck: 'Agache. O feixe passa na altura do peito.',
     jump: 'Esse passa rente ao chão. Pula.',

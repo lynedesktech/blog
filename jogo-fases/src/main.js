@@ -48,7 +48,8 @@ const P = {
   BOSS_HP: 8, BOSS_SWEEP: 6.0, BOSS_OPEN: 3.2,
 
   TURN_SPEED: 2.1, SNAP_TURN: Math.PI / 6,
-  VR_CROUCH_Y: 1.25,     // abaixo disso, no VR, conta como agachado
+  VR_CROUCH_Y: 1.25,     // reserva, so ate a calibracao medir a pessoa
+  VR_OLHO: 1.64,         // altura de olho para a qual o mundo foi desenhado
 };
 
 const COL = {
@@ -1157,9 +1158,45 @@ export class Game {
 
     this.renderer.xr.addEventListener('sessionstart', () => {
       this.reticle.visible = false;
+      this._calibraVR();
       if (this.mode === 'idle') this.start();
     });
     this.renderer.xr.addEventListener('sessionend', () => { this.reticle.visible = true; });
+  }
+
+  // ------------------------------------------------------------- VR: calibra
+  // O jogo foi desenhado para olho a 1,64 m. VR_CROUCH_Y era 1,25 m fixo, e
+  // isso e' de quem tem 1,78 m: para alguem de 1,55 m agachar significa
+  // encolher 20 cm, e para alguem de 1,90 m significa um agachamento de 53 cm
+  // que ninguem aguenta repetir. Crianca baixa ficava agachada o tempo todo.
+  //
+  // Aqui a altura REAL do capacete e medida no primeiro segundo em pe, e daí
+  // saem duas coisas: o limite de agachar, que passa a ser uma fracao da
+  // altura da pessoa, e a escala do rig, que faz o mundo ter o mesmo tamanho
+  // relativo para todo mundo.
+  _calibraVR() {
+    this.vrAltura = null;
+    this.rig.scale.setScalar(1);
+    let maior = 0, quadros = 0;
+    const medir = () => {
+      if (!this.renderer.xr.isPresenting) return;
+      const y = this.camera.position.y;
+      if (y > 0.6 && y < 2.4) { maior = Math.max(maior, y); quadros++; }
+      if (quadros < 60) { requestAnimationFrame(medir); return; }
+      this.vrAltura = maior;
+      // escala do rig: quem e mais baixo e "esticado" ate o olho do jogo, e
+      // quem e mais alto e encolhido. Limitada, porque escala demais deforma
+      // a nocao de distancia e da enjoo.
+      const k = Math.max(0.78, Math.min(1.30, P.VR_OLHO / maior));
+      this.rig.scale.setScalar(k);
+      this._say(STR.aya.vr_pronto || '', 4);
+    };
+    requestAnimationFrame(medir);
+  }
+
+  // limite de agachar: fracao da altura medida, e nao um numero fixo
+  get vrLimiteAgachar() {
+    return this.vrAltura ? this.vrAltura * 0.78 : P.VR_CROUCH_Y;
   }
 
   // botões de tela (celular)
@@ -1433,7 +1470,7 @@ export class Game {
     // --- agachar: no VR vale a altura REAL do capacete
     let wantDuck = this.held.has('duck') || this.duckBtn || this.duckPad;
     if (this.renderer.xr.isPresenting) {
-      wantDuck = wantDuck || this.camera.position.y < P.VR_CROUCH_Y;
+      wantDuck = wantDuck || this.camera.position.y < this.vrLimiteAgachar;
     }
     const targetH = wantDuck ? P.CROUCH_H : (this._canStand() ? P.STAND_H : P.CROUCH_H);
     pl.h += (targetH - pl.h) * Math.min(1, dt * 14);
