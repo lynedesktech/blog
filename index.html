@@ -651,7 +651,7 @@
         .joy-panel.tela-cheia .voice-bars { justify-content: flex-start; }
 
         .joy-panel.tela-cheia .voice-caption {
-            font-size: clamp(1rem, 1.5vw, 1.4rem);
+            font-size: var(--cap-fonte, clamp(1rem, 1.5vw, 1.4rem));
             line-height: 1.5;
             color: #2d3436;
             max-height: none;
@@ -1210,6 +1210,27 @@
                 return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
 
+            // O prompt pede linha de ate 70 caracteres, mas quem escreve e um
+            // modelo e as vezes ele estoura. Aqui a garantia nao depende de
+            // ninguem obedecer: a fonte encolhe ate cada frase caber numa linha
+            // so. Tem piso, entao nunca fica ilegivel; se nem no piso couber,
+            // deixa quebrar, que e melhor que letra de bula.
+            const CAP_MAX = 22, CAP_MIN = 15;   // pixels
+            function caberUmaPorLinha(texto) {
+                if (!caption) return;
+                const linhas = texto.split('\n').filter(Boolean).length;
+                caption.style.removeProperty('--cap-fonte');
+                if (!panel.classList.contains('tela-cheia') || linhas < 2) return;
+                for (let px = CAP_MAX; px >= CAP_MIN; px--) {
+                    caption.style.setProperty('--cap-fonte', px + 'px');
+                    const alt = parseFloat(getComputedStyle(caption).lineHeight);
+                    if (caption.scrollHeight <= alt * linhas + 2) return;
+                }
+            }
+            window.addEventListener('resize', () => {
+                if (caption && caption.textContent) caberUmaPorLinha(caption.textContent);
+            });
+
             function falar(texto) {
                 synth.cancel();
                 const u = new SpeechSynthesisUtterance(texto);
@@ -1223,6 +1244,7 @@
                     box.classList.add('falando');
                     status.innerHTML = ICO.som + 'Joy está respondendo...';
                     caption.textContent = texto;   // o CSS usa pre-line: cada frase, uma linha
+                    caberUmaPorLinha(texto);
                 };
                 u.onend = function () {
                     box.classList.remove('falando');
