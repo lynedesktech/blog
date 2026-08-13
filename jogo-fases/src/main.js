@@ -148,24 +148,31 @@ const MODELS = {
   boss:  {
     url: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260813_174215_a3ea12e3-69d1-496e-8b70-dfa1c6dc046f.glb',
     tam: 5.5,
-    // Mesmo ajuste do drone, e pela mesma razão: o `lookAt` aponta o −Z do
-    // objeto ao alvo, e estas malhas nascem com a frente em +X. No drone isso
-    // foi MEDIDO renderizando os quatro ângulos; aqui é a mesma ferramenta,
-    // gerando a partir do mesmo tipo de imagem frontal, então herda o valor.
-    // Se o olho encarar de lado, é este número que se acerta (±π/2).
-    rot: [0, Math.PI / 2, 0],
+    // SEM giro: a lente do olho já nasce em +Z, que é o eixo que o `lookAt`
+    // aponta ao alvo (ver a nota de convenção no drone, abaixo).
+    //
+    // Aqui esteve π/2 por um tempo, herdado do drone "por analogia". Era o
+    // erro clássico de copiar a conclusão sem copiar a medição: o valor do
+    // drone estava certo, a EXPLICAÇÃO dele é que estava errada, e foi a
+    // explicação que eu propaguei. Resultado: o chefe encarava de perfil.
+    // Medido renderizando os quatro ângulos — só em 0 aparece a íris com
+    // pupila. Em π há um bocal magenta pequeno que engana à primeira vista,
+    // mas é a traseira.
+    rot: [0, 0, 0],
   },
   drone: {
     url: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260813_174221_6812cc27-dc9c-43ec-b14a-95b8f2629fd2.glb',
     tam: 1.3,
-    // O `lookAt` do three aponta o −Z do objeto para o alvo, e esta malha nasce
-    // com a FRENTE em +X. Girar +90° em Y leva +X para −Z, que é o que faz o
-    // drone encarar o jogador de cara em vez de de lado.
+    // CONVENÇÃO DO `lookAt` (vale para o chefe também, e é contraintuitiva):
+    // em `Object3D.lookAt` o three inverte os argumentos quando o objeto NÃO é
+    // câmera nem luz — veja `vendor/three.module.js`, no corpo de lookAt. O
+    // efeito é que quem passa a apontar para o alvo é o **+Z** do objeto, não
+    // o −Z. Câmera olha para −Z; malha comum encara com +Z.
     //
-    // Este valor foi MEDIDO, não deduzido: o modelo foi renderizado nos quatro
-    // ângulos possíveis, vistos de uma câmera na posição do jogador, e só em
-    // π/2 aparece a lente magenta redonda no centro. Em 3π/2 a silhueta também
-    // fica simétrica, mas é a traseira — sem lente, só os escapes.
+    // Então o giro aqui existe para levar a frente da malha até +Z. O valor foi
+    // MEDIDO: o modelo foi renderizado nos quatro ângulos, visto de uma câmera
+    // na posição do jogador, e só em π/2 aparece a lente magenta redonda. Em
+    // 3π/2 a silhueta também fica simétrica, mas é a traseira — sem lente.
     rot: [0, Math.PI / 2, 0],
   },
   // MÃO SEGURANDO A ARMA, peça única. Antes era só a pistola flutuando: sem
