@@ -1,9 +1,11 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fala do Corredor Codificado</title>
 <style>
   :root{--bg:#EEECF2;--surface:#FCFBFE;--surface-2:#E5E2EC;--ink:#16131F;--muted:#5A5468;
     --faint:#8A8399;--rule:#D3CEDE;--cyan:#0C6072;--gold:#7E5F0A;--mag:#A81C63;--fala-bg:#FFFFFF;
     --shadow:0 1px 2px rgba(22,19,31,.06),0 8px 24px -12px rgba(22,19,31,.18)}
-  media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
     --bg:#100D18;--surface:#191524;--surface-2:#221C31;--ink:#EDEAF2;--muted:#A49CB8;
     --faint:#7C748F;--rule:#302943;--cyan:#4FD8EE;--gold:#F0BE4B;--mag:#FF74B4;--fala-bg:#1E1830;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7)}}
@@ -48,7 +50,8 @@
   .deixa{display:grid;grid-template-columns:1fr;gap:.5rem;padding:1.5rem 0 .25rem;
     border-top:1px solid var(--rule)}
   .deixa:first-child{border-top:0}
-  media (min-width:46rem){.deixa{grid-template-columns:9rem 1fr;gap:1.5rem}}
+  .deixa>*{min-width:0}
+  @media (min-width:46rem){.deixa{grid-template-columns:9rem 1fr;gap:1.5rem}}
   .rail{padding-top:.1rem}
   .rail .rot{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
     color:var(--gold);display:block}
@@ -82,6 +85,23 @@
   .slide{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.7rem;
     font-weight:700;background:var(--cyan);color:var(--surface);padding:.1rem .45rem;
     border-radius:3px;margin-right:.4rem;vertical-align:.08em}
+  .mapa{width:100%;border-collapse:collapse;font-size:.88rem;margin:.6rem 0}
+  .mapa th,.mapa td{padding:.45rem .7rem .45rem 0;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+  .mapa th{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .mapa td.p{font-weight:700;white-space:nowrap}
+  .mapa td.s{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;white-space:nowrap;color:var(--cyan)}
+  .diz{display:block;font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 .35rem}
+  .fala .pausa{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.68rem;
+    font-weight:700;letter-spacing:.06em;color:var(--mag);border:1px solid var(--mag);border-radius:3px;
+    padding:.02rem .4rem;margin:0 .15rem;vertical-align:.1em;text-transform:uppercase}
+  .passa{font-size:.86rem;color:var(--muted);font-style:italic;
+    font-family:Georgia,"Iowan Old Style",serif;margin:.8rem 0 0;padding-left:1.1rem;
+    border-left:2px solid var(--gold)}
+  .som{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.3rem .9rem;margin:.6rem 0 0}
+  .som div{font-size:.86rem;color:var(--muted)}
+  .som b{color:var(--ink);font-weight:600}
+  .som i{font-family:ui-monospace,Menlo,Consolas,monospace;font-style:normal;color:var(--cyan);font-size:.82rem}
   footer.rodape{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--rule);
     font-size:.82rem;color:var(--faint)}
   footer.rodape p{margin:0 0 .5rem;max-width:62ch}
@@ -113,6 +133,40 @@
   <p>Apresentação: <strong>blog-joy.vercel.app/apresentacao</strong> · Blog e jogo: <strong>blog-joy.vercel.app</strong>. O carimbo no canto da apresentação diz a versão; este roteiro é da <strong>v16</strong> (12 slides).</p>
 </div>
 
+<div class="nota">
+  <h4>Quem fala o quê</h4>
+  <div class="tabela-wrap"><table class="mapa">
+    <tr><th>Quem</th><th>Slides</th><th>Assunto</th><th>Tempo</th></tr>
+    <tr><td class="p">Davi</td><td class="s">1 a 4</td><td>Abertura, quem é ela e o experimento da máscara branca</td><td class="s">3,5 min</td></tr>
+    <tr><td class="p">Nikolas</td><td class="s">5 a 8</td><td>O que é viés, os números do Gender Shades, os vídeos e a Liga</td><td class="s">4 min</td></tr>
+    <tr><td class="p">Gabriel Vieira</td><td class="s">9 a 12</td><td>Livro, documentário, reconhecimento, a citação e a conclusão</td><td class="s">3,5 min</td></tr>
+    <tr><td class="p">Gabriel Lima</td><td class="s">área</td><td>Fica no totem o tempo todo, e volta para a área assim que o palco acaba</td><td class="s">contínuo</td></tr>
+  </table></div>
+  <p>O texto abaixo é para ser <strong>falado, não lido em voz de leitura</strong>. Está escrito do jeito que sai da boca. Onde tem <span class="pausa">pausa</span>, pare de verdade: é ali que a sala entende.</p>
+</div>
+
+<div class="nota">
+  <h4>Como falar os nomes</h4>
+  <div class="som">
+    <div><b>Joy Buolamwini</b> <i>djói bu-o-lam-UÍ-ni</i></div>
+    <div><b>Timnit Gebru</b> <i>TIM-nit GUÉ-bru</i></div>
+    <div><b>Gender Shades</b> <i>djênder xêids</i></div>
+    <div><b>Unmasking AI</b> <i>an-MÁS-king ei-ai</i></div>
+    <div><b>Coded Bias</b> <i>CÓU-ded BÁI-as</i></div>
+    <div><b>Rhodes</b> <i>rôuds</i></div>
+    <div><b>Fulbright</b> <i>FUL-brait</i></div>
+    <div><b>Face++</b> <i>feice plus plus</i></div>
+    <div><b>MIT Media Lab</b> <i>ême-i-tê mídia lébi</i></div>
+    <div><b>Algorithmic Justice League</b> <i>pode falar em português: Liga da Justiça Algorítmica</i></div>
+  </div>
+</div>
+
+<div class="nota">
+  <h4>Cuidado para ninguém se contradizer no número</h4>
+  <p>O slide 6 mostra <strong>taxa de erro</strong>: 1%, 7%, 12% e 35%. O blog mostra <strong>taxa de acerto</strong>: 99,7% e 65,3%. É o mesmo estudo, só o lado da conta que muda, porque errar 35% é acertar 65%.</p>
+  <p><strong>No palco, fale erro</strong>, que é o que está na tela atrás de você. <strong>Na estação do blog, fale acerto</strong>, que é o que está na página. Se alguém perguntar por que os números parecem diferentes, a resposta é essa mesma: um é o avesso do outro.</p>
+</div>
+
 <!-- ================================================== PALCO -->
 <section class="roteiro">
   <div class="cabeca">
@@ -126,27 +180,40 @@
       <div class="rail"><span class="rot">Davi, bloco 1</span><span class="quem">slides 1 e 2 · 2 min</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p><span class="slide">1</span>Bom dia. A gente é o grupo do seminário de Tecnologia e Sociedade. Eu sou o Davi e abro o tema. O Nikolas traz a pesquisa e os números. O Gabriel Vieira mostra o alcance do trabalho dela e fecha. E o Gabriel Lima está no controle do jogo, ali na nossa área.</p>
+          <span class="diz">Davi diz, slide 1</span>
+          <p><span class="slide">1</span>Bom dia, gente. A gente é o grupo do seminário de Tecnologia e Sociedade, e o nosso trabalho é sobre a Joy Buolamwini.</p>
+          <p>Antes de começar, quem é quem aqui. Eu sou o Davi, e eu abro o tema. O Nikolas vem depois de mim com a pesquisa e com os números. O Gabriel Vieira mostra até onde esse trabalho chegou e fecha com a gente. E o Gabriel Lima está ali na nossa área, no controle do jogo que a gente fez.</p>
+          <p>A Joy é a cientista que desmascarou o preconceito que estava escondido dentro da inteligência artificial. Ela se chama de poeta do código. <span class="pausa">pausa</span> Até o fim vocês vão entender por quê.</p>
         </div>
-        <div class="acao">Cada um levanta a mão ou acena quando o nome é dito. Sem pressa: a plateia precisa gravar quem é quem antes do conteúdo começar.</div>
+        <div class="acao">Cada um levanta a mão ou acena quando o Davi disser o seu nome. <b>Sem pressa aqui</b>: a plateia precisa gravar quem é quem antes de o conteúdo começar.</div>
         <div class="fala">
-          <p>O nosso trabalho é sobre Joy Buolamwini, a cientista que desmascarou o preconceito escondido dentro da inteligência artificial. Ela se chama de poeta do código, e vocês vão entender por quê.</p>
-          <p><span class="slide">2</span>Quem é ela: nasceu no Canadá em 1990, de família ganesa, e cresceu nos Estados Unidos. Aos 9 anos já mexia com robô e aprendeu a programar sozinha. Virou doutora pelo MIT Media Lab e juntou ciência com arte para mostrar como a tecnologia repete desigualdade.</p>
+          <span class="diz">Davi diz, slide 2</span>
+          <p><span class="slide">2</span>Antes de qualquer número, quem é ela.</p>
+          <p>A Joy nasceu no Canadá, em 1990, de família ganesa, e cresceu nos Estados Unidos. Com nove anos ela já era apaixonada por robô e aprendeu a programar sozinha.</p>
+          <p>Depois ela virou doutora pelo MIT Media Lab, que é um dos lugares mais respeitados do mundo quando o assunto é tecnologia. E aí vem a parte que interessa para a gente: ela juntou ciência com arte para mostrar uma coisa que quase ninguém estava olhando, que é como a tecnologia repete a desigualdade que já existe aqui fora.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Davi, bloco 2</span><span class="quem">slides 3 e 4 · 2 min</span></div>
+      <div class="rail"><span class="rot">Davi, bloco 2</span><span class="quem">slides 3 e 4 · 1,5 min</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p><span class="slide">3</span>A trajetória em quatro paradas: nasce em Edmonton e cresce no Mississippi programando desde os 9 anos; se forma em Ciência da Computação na Georgia Tech em 2012; vira bolsista Rhodes em Oxford e também Fulbright, que são as bolsas mais concorridas do mundo; e chega ao MIT Media Lab, onde faz mestrado e doutorado. Isso importa por um motivo só: quando ela apontou o erro, ninguém pôde dizer que era falta de competência.</p>
+          <span class="diz">Davi diz, slide 3</span>
+          <p><span class="slide">3</span>Essa é a trajetória dela, em quatro paradas.</p>
+          <p>1990: nasce em Edmonton, no Canadá, e cresce no Mississippi programando desde os nove anos. 2012: se forma em Ciência da Computação na Georgia Tech. Depois vai para Oxford como bolsista Rhodes, e também é bolsista Fulbright, que são duas das bolsas mais concorridas do mundo. E chega no MIT, onde faz mestrado e doutorado. É lá dentro que nasce a pesquisa que mudou tudo.</p>
+          <p>E eu não estou falando isso para encher o slide de currículo. Eu estou falando porque, quando ela apontou o erro, ninguém pôde dizer que era ela que não sabia o que estava fazendo.</p>
         </div>
-        <div class="acao">Slide 4 é o coração da apresentação. <b>Baixe o ritmo</b> e deixe a imagem da máscara na tela enquanto fala.</div>
+        <div class="acao">Slide 4 é o coração da apresentação inteira. <b>Baixe o ritmo</b> e deixe a imagem da máscara na tela enquanto fala. Não corra para o próximo slide.</div>
         <div class="fala ouro">
-          <p><span class="slide">4</span>O ponto de partida foi um acidente. No MIT, o software de reconhecimento facial simplesmente não achava o rosto dela. Quando ela vestiu uma máscara branca de plástico, o sistema detectou na hora.</p>
-          <p>E o que isso revela é o trabalho inteiro dela: a IA aprende com dados escolhidos por gente. Dado com preconceito gera máquina com preconceito. Agora o Nikolas explica como isso acontece por dentro.</p>
+          <span class="diz">Davi diz, slide 4</span>
+          <p><span class="slide">4</span>E o começo de tudo foi um acidente.</p>
+          <p>Ela estava no MIT, trabalhando num projeto, e o software de reconhecimento facial simplesmente não achava o rosto dela. Não reconhecia que tinha uma pessoa ali.</p>
+          <p>Aí ela pegou uma máscara branca de plástico, dessas de fantasia, e colocou no rosto. O sistema detectou na hora. <span class="pausa">pausa</span></p>
+          <p>Parem um segundo nisso: a máquina enxergava a máscara, e não enxergava a pessoa.</p>
+          <p>E é isso que o trabalho inteiro dela mostra. A inteligência artificial aprende com dados que foram escolhidos por gente. Se o dado entra com preconceito, a máquina sai com preconceito.</p>
         </div>
+        <p class="passa">Passa para o Nikolas: "Agora o Nikolas vai explicar como isso acontece por dentro, e mostrar o número."</p>
       </div>
     </div>
 
@@ -154,28 +221,44 @@
       <div class="rail"><span class="rot">Nikolas, bloco 1</span><span class="quem">slides 5 e 6 · 2,5 min</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p><span class="slide">5</span>O nome disso é viés algorítmico: quando o sistema erra sempre, e erra contra o mesmo grupo. Acontece em três passos. Um: os dados vêm tortos, com muito mais rosto de homem branco do que de mulher negra. Dois: a máquina aprende o que recebeu, e fica ótima em reconhecer um grupo e péssima nos outros. Três: quem paga são pessoas, em prisão, contratação, empréstimo e saúde, e normalmente quem já era discriminado antes.</p>
-          <p>E registrem uma coisa: ninguém programou a máquina para errar com um grupo. O erro entrou antes de alguém escrever o código.</p>
+          <span class="diz">Nikolas diz, slide 5</span>
+          <p><span class="slide">5</span>Obrigado, Davi. Isso que ele acabou de mostrar tem nome: viés algorítmico.</p>
+          <p>É quando o sistema não erra por acaso. Ele erra sempre, e erra contra o mesmo grupo de gente.</p>
+          <p>E acontece em três passos, que estão aí na tela. Um: os dados já chegam tortos, porque a IA é treinada com muito mais rosto de homem branco do que de mulher negra. Dois: a máquina aprende exatamente o que recebeu, então ela fica excelente em reconhecer um grupo e péssima em reconhecer os outros. Três: quem paga a conta são pessoas de verdade, com erro em prisão, em contratação, em empréstimo e na saúde. E cai justamente em cima de quem já era discriminado antes.</p>
+          <p>E tem uma coisa importante para vocês registrarem: ninguém sentou e programou a máquina para errar com um grupo. O erro entrou antes de alguém escrever a primeira linha de código.</p>
         </div>
-        <div class="acao">Slide 6 é o gráfico. <b>Aponte as barras na tela</b>, uma por uma, em vez de só falar os números.</div>
+        <div class="acao">Slide 6 é o gráfico. <b>Aponte as barras na tela</b>, uma de cada vez, em vez de só falar os números de costas para elas.</div>
         <div class="fala ouro">
-          <p><span class="slide">6</span>Em 2018 ela mediu isso, com a Timnit Gebru, no estudo Gender Shades. Elas testaram os sistemas da IBM, da Microsoft e da Face++. Olhem a taxa de erro: cerca de 1% para homens de pele clara, 7% para mulheres de pele clara, 12% para homens de pele escura, e cerca de 35% para mulheres de pele escura.</p>
-          <p>É a mesma tecnologia, e o resultado muda completamente dependendo de quem está na frente da câmera.</p>
+          <span class="diz">Nikolas diz, slide 6</span>
+          <p><span class="slide">6</span>E isso não é opinião, é medição.</p>
+          <p>Em 2018 a Joy fez essa medição junto com a Timnit Gebru, no estudo que se chama Gender Shades. Elas testaram os sistemas de três gigantes: IBM, Microsoft e Face++.</p>
+          <p>Olhem a taxa de erro. Homem de pele clara: mais ou menos 1% de erro. Mulher de pele clara: 7%. Homem de pele escura: 12%. Mulher de pele escura: quase 35%. <span class="pausa">pausa</span></p>
+          <p>É a mesma tecnologia, o mesmo software, rodando no mesmo dia. O que muda é só quem está na frente da câmera.</p>
+          <p>Colocando de outro jeito, para ficar claro: para o homem de pele clara o sistema acertava praticamente sempre. Para a mulher de pele escura ele errava uma vez a cada três.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Nikolas, bloco 2</span><span class="quem">slides 7 e 8 · 2,5 min</span></div>
+      <div class="rail"><span class="rot">Nikolas, bloco 2</span><span class="quem">slides 7 e 8 · 2 min</span></div>
       <div class="conteudo">
-        <div class="acao">Slide 7 tem dois vídeos em loop. <b>Fale pouco e deixe rodar</b>, uns dez segundos cada.</div>
+        <div class="acao">Slide 7 tem dois vídeos rodando sozinhos, sem som. <b>Fale a primeira frase, cale a boca e deixe rodar</b> uns dez segundos cada um. O silêncio aqui trabalha melhor que qualquer explicação.</div>
         <div class="fala perigo">
-          <p><span class="slide">7</span>E isso não é problema de tecnologia velha, porque a IA anda rápido demais. Esse é o teste do Will Smith comendo espaguete: em 2023 a IA gerava aquilo ali, que era piada na internet. Agora olhem o de hoje: quase não dá para diferenciar do real.</p>
-          <p>Se ela já engana os nossos olhos assim, quem garante que ela está sendo justa com o nosso rosto? É exatamente por isso que o trabalho da Joy é urgente.</p>
+          <span class="diz">Nikolas diz, slide 7</span>
+          <p><span class="slide">7</span>E antes que alguém pense que isso é problema de tecnologia velha, de 2018, olhem o que aconteceu com a IA nesse meio tempo.</p>
+          <p>Esse aqui é o teste do Will Smith comendo espaguete. Do lado esquerdo é 2023: era isso que a IA conseguia gerar. Virou piada na internet, todo mundo compartilhava rindo. <span class="pausa">deixa rodar</span></p>
+          <p>Agora olhem o de hoje, do lado direito. <span class="pausa">deixa rodar</span></p>
+          <p>Em pouco mais de dois anos, saiu de piada para uma coisa que a gente quase não consegue distinguir do real.</p>
+          <p>E aí fica a pergunta: se ela já engana os nossos olhos desse jeito, quem é que garante que ela está sendo justa com o nosso rosto? É por isso que o trabalho da Joy não é assunto de 2018. É assunto de agora.</p>
         </div>
         <div class="fala">
-          <p><span class="slide">8</span>E ela não parou na pesquisa. Em 2016 fundou a Liga da Justiça Algorítmica, que junta pesquisa, arte e ativismo para cobrar uma IA mais justa e transparente. Ela testemunhou no Congresso dos Estados Unidos, e a pressão dela fez empresas gigantes revisarem ou suspenderem seus sistemas de reconhecimento facial. O Gabriel mostra até onde isso chegou.</p>
+          <span class="diz">Nikolas diz, slide 8</span>
+          <p><span class="slide">8</span>E ela não parou na pesquisa.</p>
+          <p>Em 2016 ela fundou a Liga da Justiça Algorítmica, que junta pesquisa, arte e ativismo para cobrar uma inteligência artificial mais justa e mais transparente.</p>
+          <p>Ela foi depor no Congresso dos Estados Unidos. E a pressão do trabalho dela fez empresas gigantes revisarem, e em alguns casos suspenderem, os sistemas de reconhecimento facial que elas estavam vendendo.</p>
+          <p>Uma pesquisa de doutorado fez isso acontecer.</p>
         </div>
+        <p class="passa">Passa para o Gabriel: "Agora o Gabriel mostra até onde isso chegou."</p>
       </div>
     </div>
 
@@ -183,22 +266,40 @@
       <div class="rail"><span class="rot">Gabriel Vieira, bloco 1</span><span class="quem">slides 9 e 10 · 2 min</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p><span class="slide">9</span>O alerta virou obra. Ela escreveu o livro Unmasking AI, em que conta a missão de proteger o que é humano num mundo de máquinas, com casos reais de IA repetindo racismo e machismo. Em 2020 a história dela virou o documentário Coded Bias, na Netflix, e aí o assunto saiu da universidade e chegou no público. E ela tem até poema visual, o "AI, Ain't I A Woman?", que já foi exposto em museu em Boston e em Londres.</p>
-          <p><span class="slide">10</span>O reconhecimento veio junto: em 2016 o TED sobre viés algorítmico, com mais de um milhão de visualizações; em 2019 a lista TIME 100 Next, de líderes que moldam o futuro; em 2020 o documentário; e em 2022 o doutorado no MIT, virando consultora de governos e da ONU sobre IA responsável.</p>
+          <span class="diz">Gabriel Vieira diz, slide 9</span>
+          <p><span class="slide">9</span>Valeu, Nikolas. O alerta dela saiu do mundo acadêmico e virou obra, em três formatos.</p>
+          <p>Tem o livro, o Unmasking AI, que em português é Desmascarando a IA. Nele ela conta a missão de proteger o que é humano num mundo de máquinas, com caso real de inteligência artificial repetindo racismo e machismo.</p>
+          <p>Tem o documentário, o Coded Bias, que saiu em 2020 e está na Netflix. Foi ele que tirou o assunto de dentro da universidade e colocou na sala de casa das pessoas.</p>
+          <p>E tem até poesia: o poema visual "AI, Ain't I A Woman?", que já foi exposto em museu em Boston e em Londres.</p>
+          <p>É por isso que ela se chama poeta do código. Ela usa arte para fazer as pessoas entenderem uma coisa que o gráfico sozinho não faz entender.</p>
+        </div>
+        <div class="fala">
+          <span class="diz">Gabriel Vieira diz, slide 10</span>
+          <p><span class="slide">10</span>E o mundo ouviu.</p>
+          <p>Em 2016 ela dá o TED dela sobre viés algorítmico, que passou de um milhão de visualizações. Em 2019 entra na lista TIME 100 Next, de líderes que estão moldando o futuro. Em 2020 vira protagonista do documentário. E em 2022 termina o doutorado no MIT e passa a ser consultora de governos e da ONU sobre inteligência artificial responsável.</p>
+          <p>Ou seja: tudo isso começou com uma pessoa sozinha, na frente de uma webcam, com uma máscara de plástico na mão.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Gabriel Vieira, bloco 2</span><span class="quem">slides 11 e 12 · 2 min</span></div>
+      <div class="rail"><span class="rot">Gabriel Vieira, bloco 2</span><span class="quem">slides 11 e 12 · 1,5 min</span></div>
       <div class="conteudo">
-        <div class="acao">Slide 11 é só a frase dela. <b>Leia devagar e pare depois</b>, uns dois segundos de silêncio antes de virar.</div>
+        <div class="acao">Slide 11 é só a frase dela na tela. <b>Leia devagar</b> e depois fique em silêncio uns dois segundos antes de continuar. É o único momento da apresentação em que o silêncio é planejado.</div>
         <div class="fala ouro">
-          <p><span class="slide">11</span>Nas palavras dela: a tecnologia deve servir a todos nós, não apenas a alguns de nós. Se não formos vigilantes, codificaremos o passado no nosso futuro.</p>
+          <span class="diz">Gabriel Vieira diz, slide 11</span>
+          <p><span class="slide">11</span>E eu queria terminar com uma frase dela, que resume tudo o que a gente falou aqui.</p>
+          <p>"A tecnologia deve servir a todos nós, não apenas a alguns de nós. Se não formos vigilantes, codificaremos o passado no nosso futuro." <span class="pausa">dois segundos</span></p>
+          <p>Codificar o passado no futuro é isso: a máquina aprende com o mundo do jeito que ele foi, com toda a desigualdade que ele tinha, e joga isso para a frente parecendo que é só matemática neutra.</p>
         </div>
         <div class="fala">
-          <p><span class="slide">12</span>O que a gente aprendeu com ela, em três pontos. A IA não é neutra: ela reflete quem a constrói. Diversidade na equipe de tecnologia gera sistema mais justo. E uma pessoa questionando pode mudar lei e mudar empresa gigante.</p>
-          <p>Para vocês sentirem isso na prática, a gente montou um blog e um jogo sobre o caso da máscara branca, e estão funcionando ali na nossa área, com o Gabriel Lima no totem. Passem lá depois. Obrigado.</p>
+          <span class="diz">Gabriel Vieira diz, slide 12</span>
+          <p><span class="slide">12</span>Então, o que a gente aprendeu com a Joy, em três pontos.</p>
+          <p>Primeiro: a inteligência artificial não é neutra. Ela reflete quem constrói ela e com o que ela foi treinada.</p>
+          <p>Segundo: diversidade dentro da equipe de tecnologia não é enfeite. É o que faz o sistema sair mais justo. Se tivesse mais gente parecida com ela naquela sala, aquele erro teria aparecido bem antes.</p>
+          <p>Terceiro: uma pessoa questionando pode mudar lei e pode mudar empresa gigante. Ela é a prova viva disso.</p>
+          <p>E para vocês não saírem daqui só com a nossa palavra, a gente montou um blog e um jogo em cima desse caso da máscara branca. Está tudo funcionando ali na nossa área, com o Gabriel Lima no totem. Passem lá depois para jogar. <span class="pausa">pausa</span></p>
+          <p>Obrigado, gente.</p>
         </div>
       </div>
     </div>
@@ -232,9 +333,39 @@
       </div>
     </div>
     <div class="deixa">
+      <div class="rail"><span class="rot">A fala do Gabriel Lima</span><span class="quem">enquanto joga</span></div>
+      <div class="conteudo">
+        <div class="acao"><b>Fale jogando, não pare para falar.</b> Cada trecho abaixo cai num metro da tabela de cima.</div>
+        <div class="fala">
+          <span class="diz">Gabriel Lima diz, no metro 0</span>
+          <p>Esse corredor aqui é um sistema de reconhecimento facial, e eu sou uma pessoa que ele não reconhece. Repara no que vai acontecer.</p>
+        </div>
+        <div class="fala">
+          <span class="diz">Gabriel Lima diz, no metro 6</span>
+          <p>Olha ali no chão: a máscara branca. Eu passo por cima e ela é minha. <span class="pausa">pausa</span> Só que repara numa coisa, ela não ligou sozinha. Está escrito ali no painel: E LIGA. O poder é meu, mas vestir ainda é escolha minha. Eu vou deixar desligada de propósito.</p>
+        </div>
+        <div class="fala">
+          <span class="diz">Gabriel Lima diz, no metro 14</span>
+          <p>Primeiro laser, na altura do peito. Sem máscara eu tenho que agachar e passar por baixo. <span class="pausa">agacha</span> Esse é o preço de continuar sendo eu.</p>
+        </div>
+        <div class="fala ouro">
+          <span class="diz">Gabriel Lima diz, no metro 18 e no 21</span>
+          <p>Agora eu aperto o E. <span class="pausa">aperta</span> Máscara no rosto.</p>
+          <p>Vem o segundo laser, exatamente igual ao primeiro. <span class="pausa">pausa</span> E eu atravesso em pé.</p>
+          <p>Mesmo laser, mesma pessoa. A única coisa que mudou é que eu parei de parecer eu. Foi isso que aconteceu com a pesquisadora de verdade, e aqui virou um botão.</p>
+        </div>
+        <div class="fala">
+          <span class="diz">Gabriel Lima diz, no metro 41</span>
+          <p>E olha a parede-scanner: de máscara ela me reconhece e abre sozinha. <span class="pausa">pausa</span> Quer tentar?</p>
+        </div>
+        <div class="acao">Termine sempre entregando o controle. <b>A pergunta final não é enfeite</b>: é ela que puxa a pessoa para o totem.</div>
+      </div>
+    </div>
+    <div class="deixa">
       <div class="rail"><span class="rot">Se pedirem a fase 3</span></div>
       <div class="conteudo">
         <div class="fala">
+          <span class="diz">Gabriel Lima diz, se pedirem a fase 3</span>
           <p>A fase 3 é a caçada: a máscara está logo no início, e o objetivo é derrubar os cinco drones usando as paredes de cobertura, porque tiro de drone morre em parede. Morrer devolve para a entrada, mas o que caiu continua no chão.</p>
         </div>
       </div>
@@ -255,7 +386,8 @@
       <div class="conteudo">
         <div class="acao">Controle na mão da pessoa <b>antes</b> de qualquer fala. Só o mínimo: <b>WASD anda, espaço pula, Ctrl agacha, E veste a máscara, clique atira.</b></div>
         <div class="fala">
-          <p>Você está dentro de um sistema de reconhecimento facial que não te reconhece. Junte os pedaços do seu rosto, monte a sua cara no fim, e a porta abre.</p>
+          <span class="diz">Quem está no totem diz, com o controle já na mão da pessoa</span>
+          <p>Você está dentro de um sistema de reconhecimento facial que não te reconhece. Junta os pedaços do seu rosto, monta a tua cara lá no fim, e a porta abre.</p>
         </div>
       </div>
     </div>
@@ -264,7 +396,8 @@
       <div class="conteudo">
         <div class="acao">Espere a pessoa passar por cima da máscara branca. O painel mostra <b>E LIGA</b>. Fale nessa hora:</div>
         <div class="fala ouro">
-          <p>O poder é seu, mas repare: ele não liga sozinho. Aperta o E. Pronto: agora os drones não te veem e o scanner abre, não porque você mudou, mas porque você parou de parecer você. Essa escolha, de vestir ou não, é o caso real da pesquisadora virado em botão.</p>
+          <span class="diz">Quem está no totem diz, na hora que aparecer E LIGA</span>
+          <p>O poder é seu, mas repara: ele não liga sozinho. Aperta o E. Pronto: agora os drones não te veem e o scanner abre, não porque você mudou, mas porque você parou de parecer você. Essa escolha, de vestir ou não, é o caso real da pesquisadora virado em botão.</p>
         </div>
         <div class="acao">Avise depois: <b>ela superaquece</b>, dá para atravessar um trecho, não a fase inteira.</div>
       </div>
@@ -273,7 +406,8 @@
       <div class="rail"><span class="rot">Fase 3, a caçada</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p>Aqui o jogo vira: atire. Pegue a máscara logo no início, use as paredes como cobertura, e derrube os cinco drones. Morrer devolve para a entrada, mas o que você derrubou continua no chão.</p>
+          <span class="diz">Quem está no totem diz, se a pessoa chegar na fase 3</span>
+          <p>Aqui o jogo vira: atira. Pegue a máscara logo no início, use as paredes como cobertura, e derrube os cinco drones. Morrer devolve para a entrada, mas o que você derrubou continua no chão.</p>
         </div>
       </div>
     </div>
@@ -302,6 +436,7 @@
       <div class="rail"><span class="rot">Abertura</span></div>
       <div class="conteudo">
         <div class="fala">
+          <span class="diz">Quem está no blog diz, para quem chega</span>
           <p>Oi. Já ouviu falar de um software de reconhecimento facial que só enxergava o rosto de uma pesquisadora quando ela vestia uma máscara branca?</p>
         </div>
         <div class="acao">Pausa de um segundo. É a única isca que a gente tem.</div>
@@ -312,6 +447,7 @@
       <div class="conteudo">
         <div class="acao">Role até <b>Gender Shades</b> e aponte o número na tela.</div>
         <div class="fala ouro">
+          <span class="diz">Quem está no blog diz, apontando o número na tela</span>
           <p>Aconteceu com a Dra. Joy Buolamwini, no MIT. Ela foi medir: em 2018 testou IBM, Microsoft e Face++. Homens de pele clara, 99,7% de acerto. Mulheres de pele escura, 65,3%. A máquina aprende com os dados que a gente escolhe dar para ela.</p>
         </div>
       </div>
@@ -321,6 +457,7 @@
       <div class="conteudo">
         <div class="acao">Abra o chat e digite você mesma: <b>a IA tem preconceito?</b> Deixe a voz responder.</div>
         <div class="fala perigo">
+          <span class="diz">Quem está no blog diz, sem ninguém precisar perguntar</span>
           <p>E eu preciso ser honesta: isso não é a Joy de verdade. É uma simulação feita com IA, baseada no que ela falou publicamente, e a gente avisa isso na tela. Seria irônico fazer um projeto sobre honestidade em IA e enganar você aqui.</p>
         </div>
         <div class="acao">Fala obrigatória, mesmo sem ninguém perguntar. É a coisa mais forte da estação.</div>
