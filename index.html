@@ -1237,24 +1237,41 @@
 
             function falar(texto) {
                 synth.cancel();
+
+                // O texto aparece SEMPRE, antes de qualquer coisa de áudio. Ele
+                // estava sendo escrito só dentro do onstart da voz: em aparelho
+                // sem voz instalada, ou com a fala bloqueada pelo navegador, a
+                // resposta simplesmente nunca aparecia na tela. A resposta é o
+                // conteúdo; a voz é o extra.
+                box.classList.remove('ouvindo');
+                box.classList.add('falando');
+                status.innerHTML = ICO.som + 'Joy está respondendo...';
+                caption.textContent = texto;   // o CSS usa pre-line: cada frase, uma linha
+                caberUmaPorLinha(texto);
+
+                let acabou = false;
+                function fim() {
+                    if (acabou) return;
+                    acabou = true;
+                    box.classList.remove('falando');
+                    status.innerHTML = ICO.mic + 'Pergunte outra coisa. Ela lembra do que já foi dito.';
+                }
+
                 const u = new SpeechSynthesisUtterance(texto);
                 u.lang = 'pt-BR';
                 if (vozPt) u.voice = vozPt;
                 u.rate = VOZ.taxa;
                 u.pitch = VOZ.tom;
                 u.volume = VOZ.volume;
-                u.onstart = function () {
-                    box.classList.remove('ouvindo');
-                    box.classList.add('falando');
-                    status.innerHTML = ICO.som + 'Joy está respondendo...';
-                    caption.textContent = texto;   // o CSS usa pre-line: cada frase, uma linha
-                    caberUmaPorLinha(texto);
-                };
-                u.onend = function () {
-                    box.classList.remove('falando');
-                    status.innerHTML = ICO.mic + 'Pergunte outra coisa. Ela lembra do que já foi dito.';
-                };
-                synth.speak(u);
+                let comecou = false;
+                u.onstart = function () { comecou = true; };
+                u.onend = fim;
+                u.onerror = fim;
+                try { synth.speak(u); } catch (e) { fim(); return; }
+
+                // Se a fala nem começar, a tela não pode ficar presa em
+                // "respondendo": passa sozinha para o estado de espera.
+                setTimeout(function () { if (!comecou) fim(); }, 1800);
             }
 
             // Reserva local: só entra em ação se a chamada à API falhar.
