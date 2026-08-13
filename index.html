@@ -1215,7 +1215,7 @@
             // ninguem obedecer: a fonte encolhe ate cada frase caber numa linha
             // so. Tem piso, entao nunca fica ilegivel; se nem no piso couber,
             // deixa quebrar, que e melhor que letra de bula.
-            const CAP_MAX = 22, CAP_MIN = 15;   // pixels
+            const CAP_MAX = 22, CAP_MIN = 14;   // pixels
             function caberUmaPorLinha(texto) {
                 if (!caption) return;
                 const linhas = texto.split('\n').filter(Boolean).length;
