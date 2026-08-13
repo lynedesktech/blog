@@ -54,7 +54,11 @@ const P = {
   // inflava isso em 70%. O resultado é que o tiro acertava sem mira: bastava
   // ter o drone em algum canto da tela. 0,025 rad é 1,4°, uma correção de
   // ponteiro, não um cone.
-  SHOT_CD: 0.20, SHOT_RANGE: 38, SHOT_TOL: 0.025,
+  // ALCANCE. Foi de 26 (curto demais, o tiro não chegava no que se via) para
+  // 55, depois 38, e ainda ficava longe demais. O numero que dá sentido a ele
+  // é a VISÃO DO DRONE, que é 13 m: com 20 m o jogador tem vantagem real sobre
+  // quem ainda não o viu, sem conseguir limpar o corredor inteiro de longe.
+  SHOT_CD: 0.20, SHOT_RANGE: 20, SHOT_TOL: 0.025,
 
   // DRONES. Antes ficavam PARADOS — o motor só somava um seno em y, então
   // eles balançavam no lugar — e atiravam a cada 1,9 s a partir de 15 m. Alvo
@@ -144,15 +148,25 @@ const MODELS = {
   boss:  {
     url: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260813_174215_a3ea12e3-69d1-496e-8b70-dfa1c6dc046f.glb',
     tam: 5.5,
+    // Mesmo ajuste do drone, e pela mesma razão: o `lookAt` aponta o −Z do
+    // objeto ao alvo, e estas malhas nascem com a frente em +X. No drone isso
+    // foi MEDIDO renderizando os quatro ângulos; aqui é a mesma ferramenta,
+    // gerando a partir do mesmo tipo de imagem frontal, então herda o valor.
+    // Se o olho encarar de lado, é este número que se acerta (±π/2).
+    rot: [0, Math.PI / 2, 0],
   },
   drone: {
     url: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260813_174221_6812cc27-dc9c-43ec-b14a-95b8f2629fd2.glb',
     tam: 1.3,
-    // O `lookAt` do three aponta o −Z do objeto para o alvo. A malha veio de
-    // uma imagem em vista frontal, ou seja, encarando a câmera (+Z): sem este
-    // giro de 180° o drone mira o jogador com as costas, e é por isso que ele
-    // aparecia de lado em vez de encarar.
-    rot: [0, Math.PI, 0],
+    // O `lookAt` do three aponta o −Z do objeto para o alvo, e esta malha nasce
+    // com a FRENTE em +X. Girar +90° em Y leva +X para −Z, que é o que faz o
+    // drone encarar o jogador de cara em vez de de lado.
+    //
+    // Este valor foi MEDIDO, não deduzido: o modelo foi renderizado nos quatro
+    // ângulos possíveis, vistos de uma câmera na posição do jogador, e só em
+    // π/2 aparece a lente magenta redonda no centro. Em 3π/2 a silhueta também
+    // fica simétrica, mas é a traseira — sem lente, só os escapes.
+    rot: [0, Math.PI / 2, 0],
   },
   // MÃO SEGURANDO A ARMA, peça única. Antes era só a pistola flutuando: sem
   // mão, não há ninguém empunhando — e encaixar mão e arma como dois modelos
@@ -519,15 +533,23 @@ export class Game {
     // num traço fino de menos de um pixel a 20 m. Na prática o jogador
     // atirava e não via nada sair. Agora é quase três vezes mais grosso e
     // dura o dobro, apagando aos poucos em vez de sumir de uma vez.
-    this.shotLine = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.30, 1),
-      new THREE.MeshBasicMaterial({
-        map: this.tex.beam, transparent: true, blending: THREE.AdditiveBlending,
-        depthWrite: false, side: THREE.DoubleSide,
-      })
-    );
-    this.shotLine.visible = false;
-    this.scene.add(this.shotLine);
+    // PROJÉTIL, não risco.
+    //
+    // O tiro era um retângulo esticado da arma até o alvo, e isso não tem
+    // largura certa: um quad em espaço de mundo fica gordo colado no olho e
+    // vira sub-pixel a 20 m. Por isso 30 cm leu como feixe de laser e 9 cm
+    // leu como fiapo — os dois estavam certos numa ponta e errados na outra.
+    //
+    // Agora é uma bala: um ponto luminoso de tamanho fixo que VIAJA da boca do
+    // cano até onde o tiro parou. O acerto continua instantâneo — quem viaja é
+    // só o desenho, e ele mostra a distância em vez de esticar sobre ela.
+    this.shotBala = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: this.tex.ring, color: 0x00E5FF, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    this.shotBala.scale.set(0.22, 0.22, 1);
+    this.shotBala.visible = false;
+    this.scene.add(this.shotBala);
 
     // Clarão no ponto de impacto. Sem ele não havia como saber se o tiro
     // acertou: o drone só reagia quando morria, no segundo acerto.
@@ -1109,6 +1131,20 @@ export class Game {
       };
       this.bossBeam = fazFeixe(1.28, COL.mag);      // peito: agacha
       this.bossBeamLow = fazFeixe(0.34, 0xff7a3a);  // chão: pula
+
+      // LIMIAR DA ARENA, criado junto com a fase e não só na hora de selar.
+      // É a separação que faltava entre o corredor e a luta: uma superfície
+      // magenta pulsando devagar, visível de longe, que diz "a partir daqui é
+      // outra coisa". Ao entrar, ela fecha atrás e fica opaca.
+      this.bossDoor = new THREE.Mesh(
+        new THREE.PlaneGeometry(def.w, def.h),
+        new THREE.MeshBasicMaterial({
+          color: COL.mag, transparent: true, opacity: 0.10,
+          side: THREE.DoubleSide, depthWrite: false,
+        })
+      );
+      this.bossDoor.position.set(0, def.h / 2, lv.end + this.arenaLen - 1.2);
+      this.levelRoot.add(this.bossDoor);
     }
 
     // estado da fase
@@ -1127,7 +1163,7 @@ export class Game {
 
       morto: false,
       hunt: !!def.hunt, masksGot: 0, masksTotal: (lv.maskItems || []).length,
-      shotCd: 0, shotVis: 0, flashVis: 0, shots: [],
+      shotCd: 0, flashVis: 0, shots: [], bala: null,
       gateOpen: false, done: false,
       // `bossCfg` na fase sobrescreve qualquer número do chefe (é o que o
       // editor mexe); o que não vier de lá cai no padrão de P.
@@ -1149,6 +1185,7 @@ export class Game {
         };
       })() : null,
       aya: '', ayaT: 0, said: {},
+      narrI: 0,                   // qual linha da narrativa da fase vem agora
       shake: 0, hurt: 0, banner: null, objective: '',
     };
 
@@ -1273,6 +1310,18 @@ export class Game {
     return false;
   }
 
+  // Até onde o tiro viaja antes de encontrar sólido. Serve ao DESENHO do
+  // traço: sem isto, um tiro que não acerta nada era riscado até o alcance
+  // máximo — 38 m atravessando parede e cenário, o que lia como "o tiro vai
+  // longe demais". Agora ele para onde pararia de verdade.
+  _alcanceLivre(o, d, max) {
+    const passo = 0.35;
+    for (let t = passo; t < max; t += passo) {
+      if (this._dentroSolido(o.x + d.x * t, o.y + d.y * t, o.z + d.z * t, 0)) return t;
+    }
+    return max;
+  }
+
   // Há parede entre estes dois pontos? Amostragem ao longo do segmento: é
   // barata e suficiente, porque a parede mais fina do jogo tem 55 cm e o passo
   // é de 35 cm. Roda uma vez por disparo, não por alvo.
@@ -1318,21 +1367,12 @@ export class Game {
     }));
     boca.scale.set(0.10, 0.10, 1);
     boca.position.set(0, 0.006, -0.30);
-    // Clarão de disparo. O tamanho é em METROS, e a peça fica a 40 cm do olho:
-    // com 0,26 ele virava um disco azul cobrindo boa parte da tela a cada
-    // tiro — o "pulso" que aparecia saindo da arma. 6 cm é uma faísca na boca
-    // do cano, que é o que ele deveria ser.
-    // A cor vem da TEXTURA, não de um tingimento. `tex.ring` já é ciano
-    // (0,229,255); pintá-la de dourado multiplicava as duas cores e dava
-    // VERDE — tingir só funciona sobre textura branca. `tex.ringG` já nasce
-    // dourada, igual ao emissor desenhado na própria arma.
-    const fogo = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: this.tex.ringG, transparent: true,
-      blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
-    }));
-    fogo.scale.set(0.06, 0.06, 1);
-    fogo.position.copy(boca.position);
-    fogo.visible = false;
+    // NÃO existe clarão de boca. Ele existiu em três versões — dourada, ciano
+    // e (por multiplicação de textura) verde — e em todas ficou estranho, pela
+    // mesma razão de fundo: é um sprite preso a um ponto FIXO do grupo, e a
+    // boca do cano do modelo não está nesse ponto. Acertar isso exigiria mais
+    // um número medido à mão, para ganhar um efeito que o traço do tiro e o
+    // clarão de impacto já entregam. Removido de propósito.
 
     // A peça de geometria é RESERVA: ela existe para a arma aparecer desde o
     // primeiro quadro, sem esperar o download do GLB. Quando o modelo chega,
@@ -1352,19 +1392,33 @@ export class Game {
     this._anexaModelo('weapon', modelo, (malha) => {
       reserva.visible = false;
       if (principal) this.armaMalha = malha;
-      // só o clarão de disparo se muda para a boca do modelo; ele só acende
-      // por 0,07 s, então nunca vira adereço parado na tela
-      const b = MODELS.weapon.boca;
-      if (b) fogo.position.set(b[0], b[1], b[2]);
+
+      // BOCA DO CANO, medida em vez de escrita à mão.
+      //
+      // O traço do tiro saía da origem do grupo, que cai na altura do punho —
+      // o disparo brotava do meio da mão. A alternativa seria mais um número
+      // ajustado no olho, como o `boca` que já tentei antes e nunca encaixou.
+      //
+      // Aqui a caixa envolvente do modelo é levada para o espaço do grupo, e a
+      // boca é o ponto MAIS À FRENTE dela (menor z), no centro em x e y. Se o
+      // modelo mudar de tamanho, de pose ou de arma, o ponto acompanha sozinho.
+      g.updateMatrixWorld(true);
+      const cx = new THREE.Box3().setFromObject(malha);
+      cx.applyMatrix4(new THREE.Matrix4().copy(g.matrixWorld).invert());
+      g.userData.bocaLocal = new THREE.Vector3(
+        (cx.min.x + cx.max.x) / 2,
+        (cx.min.y + cx.max.y) / 2,
+        cx.min.z
+      );
     });
 
-    g.add(reserva, modelo, fogo);
+    g.add(reserva, modelo);
     // Posição na câmera, também medida com o afinador.
     g.position.set(0.14, -0.25, -0.40);
     g.rotation.set(0.04, -0.10, 0.03);
     g.renderOrder = 1005;
     g.traverse((o) => { o.renderOrder = 1005; });
-    g.userData = { fogo, base: g.position.z };
+    g.userData = { base: g.position.z };
     return g;
   }
 
@@ -1392,18 +1446,13 @@ export class Game {
       corpo.add(borda);
     });
 
-    // O anel é o OLHO, e agora é SÓ aviso: fica invisível enquanto ele
-    // patrulha e acende quando te vê. Antes ficava sempre aceso e grande,
-    // piscando em volta de todo drone — virava enfeite confuso em vez de
-    // informação.
-    const eye = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: this.tex.ringM, transparent: true, blending: THREE.AdditiveBlending,
-      depthWrite: false, opacity: 0,
-    }));
-    eye.scale.set(0.45, 0.45, 1);
-    g.add(corpo, eye);
+    // SEM anel de "te vi". Ele existiu para avisar que o drone te detectou,
+    // mas em cima do contorno laranja virava só mais um halo — e halo é
+    // exatamente o que polui esta cena, que já é toda emissiva. O aviso agora
+    // vem do próprio corpo: quando ele te vê, ELE VIRA E TE ENCARA, e isso é
+    // legível de longe sem acrescentar luz nenhuma à tela.
+    g.add(corpo);
     g.userData.corpo = corpo;
-    g.userData.eye = eye;
     this.levelRoot.add(g);
     return g;
   }
@@ -1928,6 +1977,7 @@ export class Game {
     this._shooting(dt);
     if (s.boss) this._boss(dt);
     this._gate();
+    this._narra();
 
     if (s.left <= 0 && !s.done) this._death(true);
   }
@@ -2072,6 +2122,34 @@ export class Game {
     this.rig.position.set(pl.pos.x,
       pl.pos.y + (this.renderer.xr.isPresenting ? (this.vrYOff || 0) : 0), pl.pos.z);
     if (!this.renderer.xr.isPresenting) this.camera.position.set(0, pl.h - P.EYE_OFF, 0);
+  }
+
+  // A HISTÓRIA, contada enquanto se anda.
+  //
+  // As falas da AYA eram todas presas a eventos — achar a máscara, encostar
+  // num feixe, ver um drone. A fase 1 não tem nenhum deles, então ela dava bom
+  // dia e sumia: dois minutos de corredor em silêncio.
+  //
+  // Aqui a próxima linha entra quando o jogador passa da fração de corredor
+  // que ela pede. Duas regras a mantêm fora do caminho: nunca fala por cima de
+  // outra fala (espera a legenda anterior sair), e nunca volta atrás, porque o
+  // índice só avança.
+  _narra() {
+    const s = this.s, lv = this.level;
+    const roteiro = (STR.narrativa || [])[s.phase];
+    if (!roteiro || s.narrI >= roteiro.length) return;
+    if (s.ayaT > 0) return;                       // tem legenda na tela agora
+
+    const total = Math.abs(lv.end) || 1;
+    const andado = Math.min(1, Math.max(0, -this.pl.pos.z / total));
+    const proxima = roteiro[s.narrI];
+    if (andado < proxima.em) return;
+
+    s.narrI++;
+    // 4,5 s por linha, mais um tempinho proporcional ao tamanho do texto: as
+    // falas longas desta narração não cabem na duração fixa das falas curtas
+    // de evento.
+    this._say(proxima.t, 4.5 + proxima.t.length * 0.035);
   }
 
   _pickups() {
@@ -2356,13 +2434,6 @@ export class Game {
         else mesh.rotation.y += dt * 0.7;
         const c = mesh.userData.corpo;
         if (c) c.rotation.z = Math.sin(d.phase * 1.3) * 0.13;   // inclina no voo
-        const eye = mesh.userData.eye;
-        if (eye) {
-          // apagado enquanto patrulha: o anel só existe para dizer "te vi"
-          const k = vendo ? 0.55 + Math.sin(d.phase * 9) * 0.12 : 0.45;
-          eye.scale.set(k, k, 1);
-          eye.material.opacity = vendo ? 0.95 : 0;
-        }
       }
 
       if (!vendo) continue;
@@ -2427,23 +2498,28 @@ export class Game {
     const firing = this.mode === 'playing' && !s.morto && (this.mouseDown || this.xrTrigger >= 0 || this._padTrig);
     // o traço fica visível por um tempinho próprio: apagar no frame seguinte
     // deixava o tiro invisível na prática
-    if (s.shotVis > 0) {
-      s.shotVis -= dt;
-      // apaga aos poucos: sumir de um quadro para o outro lia como falha
-      this.shotLine.material.opacity = Math.max(0, Math.min(1, s.shotVis / 0.22));
-      if (s.shotVis <= 0) this.shotLine.visible = false;
+    // a bala em voo: anda da boca do cano até o impacto e acende o clarão lá
+    if (s.bala) {
+      s.bala.t += dt;
+      const k = Math.min(1, s.bala.t / s.bala.dur);
+      this.shotBala.visible = true;
+      this.shotBala.position.copy(s.bala.de).lerp(s.bala.ate, k);
+      if (k >= 1) {
+        this.shotBala.visible = false;
+        this.shotFlash.visible = true;
+        this.shotFlash.position.copy(s.bala.ate);
+        this.shotFlash.material.color.setHex(s.bala.cor);
+        s.flashVis = 0.18;
+        s.bala = null;
+      }
     }
 
-    // coice da arma e clarão de boca
+    // coice da arma
     if (this.weapon) {
       const w = this.weapon;
       this.weaponKick = Math.max(0, this.weaponKick - dt * 7);
       w.position.z = w.userData.base + this.weaponKick * 0.05;
       w.rotation.x = 0.04 + this.weaponKick * 0.28;
-      if (w.userData.fogoT > 0) {
-        w.userData.fogoT -= dt;
-        if (w.userData.fogoT <= 0) w.userData.fogo.visible = false;
-      }
       // em VR a arma vai na MÃO, presa ao controle: a da câmera some
       w.visible = !this.renderer.xr.isPresenting;
     }
@@ -2456,13 +2532,7 @@ export class Game {
     }
     if (!firing || s.shotCd > 0) return;
     s.shotCd = P.SHOT_CD;
-    s.shotVis = 0.22;
     this.weaponKick = 1;
-    for (const w of [this.weapon, this.weaponVR]) {
-      if (!w) continue;
-      w.userData.fogo.visible = true;
-      w.userData.fogoT = 0.07;
-    }
 
     const src = (this.renderer.xr.isPresenting && this.activeCtrl != null) ? this.controllers[this.activeCtrl] : this.camera;
     src.getWorldPosition(_v1);
@@ -2472,7 +2542,8 @@ export class Game {
     // acerto por cone: janela generosa, senão mirar em VR vira sofrimento.
     // O alvo escolhido é o de menor ângulo RELATIVO à própria tolerância, para
     // um drone longe e centrado ganhar de um perto e de raspão.
-    let hit = null, best = 1, hitD = P.SHOT_RANGE;
+    // o traço começa parando na parede; se um drone for acertado, encurta até ele
+    let hit = null, best = 1, hitD = this._alcanceLivre(_v1, _v2, P.SHOT_RANGE);
     const lv = this.level;
     for (let i = 0; i < lv.drones.length; i++) {
       const d = lv.drones[i];
@@ -2496,6 +2567,10 @@ export class Game {
     // meia-parede — e, pior, através da parede do corredor, sem nem ver o
     // alvo. Uma checagem por disparo, no alvo já escolhido.
     if (hit && this._bloqueado(_v1.x, _v1.y, _v1.z, hit.d.x, hit.d.y, hit.d.z)) hit = null;
+
+    // O clarão não acende mais aqui: quem o acende é a CHEGADA da bala, senão
+    // o impacto apareceria antes do projétil sair do cano.
+    let acertouChefe = false;
     if (this.bossGroup && s.boss && s.boss.open) {
       this.bossGroup.getWorldPosition(_v3);
       _v3.sub(_v1);
@@ -2503,11 +2578,7 @@ export class Game {
       _v3.multiplyScalar(1 / dist);
       if (Math.acos(Math.max(-1, Math.min(1, _v3.dot(_v2)))) < 0.14) {
         s.boss.hp--; hitD = dist;
-        this.bossGroup.getWorldPosition(_v3);
-        this.shotFlash.visible = true;
-        this.shotFlash.position.copy(_v3);
-        this.shotFlash.material.color.setHex(0xFFC93C);
-        s.flashVis = 0.22;
+        acertouChefe = true;
         this.sfx.corrupt();
         if (s.boss.hp <= 0) this._winGame();
       }
@@ -2515,11 +2586,6 @@ export class Game {
 
     if (hit) {
       hit.d.hp--;
-      // clarão em cima do drone atingido: é a resposta de "acertei"
-      this.shotFlash.visible = true;
-      this.shotFlash.position.set(hit.d.x, hit.d.y, hit.d.z);
-      this.shotFlash.material.color.setHex(0x00E5FF);
-      s.flashVis = 0.22;
       this.sfx.purify();
       if (hit.d.hp <= 0) {
         hit.d.dead = true; s.dronesKilled++; this.sfx.feed(s.dronesKilled);
@@ -2542,14 +2608,40 @@ export class Game {
     // representação — quem manda é o centro da tela.
     const alvo = _v3.copy(_v1).addScaledVector(_v2, hitD);
     const origem = new THREE.Vector3();
-    if (this.weapon && this.weapon.visible) this.weapon.userData.fogo.getWorldPosition(origem);
-    else origem.copy(_v1);
+    const w = this.weapon;
+    if (w && w.visible && w.userData.bocaLocal) {
+      // ponto medido na malha: a ponta do cano, não a origem do grupo
+      origem.copy(w.userData.bocaLocal);
+      w.localToWorld(origem);
+    } else if (w && w.visible) {
+      w.getWorldPosition(origem);
+    } else {
+      origem.copy(_v1);                 // VR, ou antes do modelo carregar
+    }
 
-    this.shotLine.visible = true;
-    this.shotLine.position.copy(origem).lerp(alvo, 0.5);
-    this.shotLine.scale.set(1, origem.distanceTo(alvo), 1);
-    this.shotLine.lookAt(alvo);
-    this.shotLine.rotateX(Math.PI / 2);
+    // COMPRIMENTO DO RASTRO — separado do alcance da arma.
+    //
+    // Antes o risco ia da boca do cano até onde o tiro pararia. Com 38 m isso
+    // era uma faixa atravessando a fase; mesmo com 20 m continua um feixe
+    // aceso de ponta a ponta, e foi por isso que baixar o alcance não resolveu:
+    // eu estava mexendo no numero errado.
+    //
+    // Agora o rastro é curto e sai do cano, como um projétil deixando um
+    // risco atrás de si. Quem informa ONDE o tiro chegou é o clarão de
+    // impacto, que já acende no alvo. O alcance segue sendo 20 m para efeito
+    // de acerto — só o desenho encurtou.
+    // A bala leva o mesmo tempo por metro em qualquer distância, com um mínimo
+    // para o tiro de perto não ser instantâneo demais para o olho ver.
+    const dist = origem.distanceTo(alvo);
+    s.bala = {
+      de: origem.clone(),
+      ate: alvo.clone(),
+      t: 0,
+      dur: Math.max(0.05, dist * 0.007),
+      // a cor do impacto diz o que foi atingido: ciano em drone, dourado no
+      // chefe, cinza em parede
+      cor: hit ? 0x00E5FF : (acertouChefe ? 0xFFC93C : 0x8fa0b4),
+    };
   }
 
   // ==========================================================================
@@ -2565,11 +2657,46 @@ export class Game {
   // ==========================================================================
   _boss(dt) {
     const b = this.s.boss, pl = this.pl, lv = this.level;
-    b.t += dt;
 
     // centro da arena: é onde os feixes pivotam e em volta de que ele voa
     const arenaZ = lv.end + this.arenaLen / 2;
     const bocaZ = lv.end + this.arenaLen;        // onde a arena começa
+
+    // ====================================================================
+    // DORMENTE ATÉ VOCÊ ENTRAR.
+    //
+    // O chefe começava a lutar no instante em que a fase carregava: varria
+    // feixes e cuspia bolas enquanto o jogador ainda estava 40 m atrás, no
+    // corredor, recolhendo os pedaços. A luta acontecia sozinha, e o jogador
+    // só apanhava de longe sem entender de onde vinha.
+    //
+    // Agora ele só acorda quando o jogador cruza a boca da arena. Antes disso
+    // fica lá no fundo, respirando devagar, visível como ameaça — que é o que
+    // dá à entrada o peso de uma porta.
+    // ====================================================================
+    if (!b.trancado && pl.pos.z > bocaZ) {
+      b.dormindo = true;
+      if (this.bossBeam) this.bossBeam.visible = false;
+      if (this.bossBeamLow) this.bossBeamLow.visible = false;
+      if (this.bossGroup) {
+        // flutua no fundo, lente apagada, sem orbitar
+        b.orbit += dt * 0.12;
+        this.bossGroup.position.set(0, 4.2 + Math.sin(b.orbit) * 0.5, arenaZ);
+        const u = this.bossGroup.userData;
+        u.corpo.rotation.y += dt * 0.12;
+        u.iris.material.color.setHex(0xFF2D9B);
+        u.iris.material.opacity = 0.16;
+        u.iris.scale.set(3.4, 3.4, 1);
+      }
+      // limiar aceso como aviso: "a luta é depois desta linha"
+      if (this.bossDoor) {
+        this.bossDoor.visible = true;
+        this.bossDoor.material.opacity = 0.10 + Math.sin(this.s.t * 1.6) * 0.04;
+      }
+      return;
+    }
+    b.dormindo = false;
+    b.t += dt;
 
     // ------------------------------------------------------------- a tranca
     // Ao entrar, a câmara sela atrás. Antes dava para ficar no corredor
@@ -2583,18 +2710,11 @@ export class Game {
       b.trancado = true;
       this._say(STR.boss.trancou, 4.5);
       this.sfx.pulse();
-      if (!this.bossDoor) {
-        this.bossDoor = new THREE.Mesh(
-          new THREE.PlaneGeometry(lv.def.w, lv.def.h),
-          new THREE.MeshBasicMaterial({
-            color: COL.mag, transparent: true, opacity: 0.30,
-            side: THREE.DoubleSide, depthWrite: false,
-          })
-        );
-        this.levelRoot.add(this.bossDoor);
+      // o limiar já existe desde o começo da fase; aqui ele SELA
+      if (this.bossDoor) {
+        this.bossDoor.material.opacity = 0.34;
+        this.bossDoor.visible = true;
       }
-      this.bossDoor.position.set(0, lv.def.h / 2, bocaZ - 1.2);
-      this.bossDoor.visible = true;
     }
     if (b.trancado && b.hp > 0 && pl.pos.z > bocaZ - 1.4) {
       pl.pos.z = bocaZ - 1.4;
@@ -2621,9 +2741,15 @@ export class Game {
       // A leitura do estágio é toda pela LENTE: magenta apertada enquanto ele
       // varre, dourada e aberta quando dá para machucá-lo. Quem está no meio
       // da luta não lê barra: lê cor.
+      // ELE ENCARA VOCÊ. Antes só girava sozinho (`rotation.y += dt`), como
+      // enfeite rodando: um olho que não olha para ninguém. Agora a frente da
+      // malha acompanha o jogador o tempo todo — é o que faz a sala inteira
+      // parecer vigiada, e é a leitura de que ele SABE onde você está.
+      _v3.set(pl.pos.x, this.bossGroup.position.y, pl.pos.z);
+      this.bossGroup.lookAt(_v3);
       const u = this.bossGroup.userData;
-      u.corpo.rotation.y += dt * 0.4 * raiva;
-      u.corpo.rotation.x = Math.sin(b.t * 0.7) * 0.12;
+      u.corpo.rotation.x = Math.sin(b.t * 0.7) * 0.12;   // respiração
+      u.corpo.rotation.z = Math.sin(b.t * 0.45) * 0.08;
       const pulso = b.open ? 1.10 + Math.sin(b.t * 8) * 0.045 : 1;
       u.corpo.scale.setScalar(pulso);
       u.iris.material.color.setHex(b.open ? 0xFFC93C : 0xFF2D9B);

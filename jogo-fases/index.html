@@ -399,10 +399,13 @@ setInterval(() => {
     lastFrags = -1; return;
   }
 
-  // barra do chefe: só existe na fase que tem chefe, e some quando ele cai
+  // Barra do chefe: só na fase que tem chefe, só depois que ele ACORDA, e some
+  // quando ele cai. Enquanto ele dorme no fundo da arena a barra não aparece —
+  // ela entregava a luta antes de o jogador sequer chegar na porta.
   const bs = s.boss;
-  $('bossbar').classList.toggle('on', !!bs && bs.hp > 0);
-  if (bs && bs.hp > 0) {
+  const bossAtivo = !!bs && bs.hp > 0 && !bs.dormindo;
+  $('bossbar').classList.toggle('on', bossAtivo);
+  if (bossAtivo) {
     // A caixa de OBJETIVO fica no topo e muda de altura com a quebra de linha:
     // com posição fixa, a barra caía por cima dela. Aqui ela é empurrada para
     // logo abaixo, medindo a altura real da caixa a cada quadro.

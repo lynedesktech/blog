@@ -99,6 +99,55 @@ export const STR = {
   },
   hud_bossbar: 'INTEGRIDADE DO MODELO',
 
+  // ---------------------------------------------------------------- NARRAÇÃO
+  // A AYA falava no começo da fase e depois emudecia: as outras falas dela são
+  // presas a eventos (achar a máscara, ver um drone, chegar num feixe), e a
+  // fase 1 não tem nenhum desses. O jogador atravessava dois minutos de
+  // corredor em silêncio.
+  //
+  // Aqui a história é contada por DISTÂNCIA ANDADA. Cada linha tem um `em`,
+  // que é a fração do corredor já percorrida, então o texto acompanha quem
+  // joga: quem corre ouve mais junto, quem explora ouve espaçado. É uma fala
+  // por capítulo, e os cinco capítulos, na ordem, contam a pesquisa inteira —
+  // da primeira palavra à última.
+  narrativa: [
+    // FASE 1 — o que é este lugar, e o que são os pedaços
+    [
+      { em: 0.10, t: 'Isto aqui é um sistema de reconhecimento facial visto por dentro. Cada corredor é uma etapa da decisão que ele toma sobre você.' },
+      { em: 0.32, t: 'Os pedaços dourados são dados do seu rosto. Enquanto faltarem, para ele você simplesmente não está aqui.' },
+      { em: 0.56, t: 'Em 2018, uma pesquisadora do MIT chamada Joy Buolamwini resolveu medir quanto esses sistemas erravam. Ninguém tinha feito essa conta separando as pessoas.' },
+      { em: 0.80, t: 'Para homens de pele clara, o erro era quase zero. Para mulheres de pele escura, chegava a 34,7 por cento. Um em cada três rostos.' },
+    ],
+    // FASE 2 — a máscara branca
+    [
+      { em: 0.12, t: 'A máscara branca deste corredor não é invenção do jogo. É uma coisa que aconteceu de verdade.' },
+      { em: 0.34, t: 'O software do laboratório não achava o rosto da Joy. Ela pegou uma máscara branca de plástico, colocou no rosto, e o sistema detectou na hora.' },
+      { em: 0.58, t: 'Pare um segundo no que isso quer dizer: a máquina te aceita justamente quando você deixa de parecer você.' },
+      { em: 0.82, t: 'Ela deu nome a isso: o olhar codificado. O ponto cego de quem programou virou o olho do sistema.' },
+    ],
+    // FASE 3 — o que acontece quando isso sai do laboratório
+    [
+      { em: 0.12, t: 'Reconhecimento facial não ficou no laboratório. Ele foi para a rua, para a portaria, para a câmera da esquina.' },
+      { em: 0.36, t: 'Polícias passaram a usar essas comparações para apontar suspeitos. Uma semelhança calculada por máquina virou motivo de abordagem.' },
+      { em: 0.60, t: 'Nos Estados Unidos houve prisões de pessoas inocentes por causa de uma correspondência errada do sistema.' },
+      { em: 0.84, t: 'Os casos que vieram a público têm uma coisa em comum: todas as pessoas presas por erro eram negras.' },
+    ],
+    // FASE 4 — por que o erro passa
+    [
+      { em: 0.12, t: 'Esta fase tem pressa de propósito. Modelo com prazo de lançamento é modelo testado com pressa.' },
+      { em: 0.36, t: 'Testar em todo mundo custa tempo e dinheiro. Testar em quem está na sala é barato e rápido.' },
+      { em: 0.60, t: 'Quando a sala inteira se parece com quem programou, o erro só aparece depois. E aparece em cima de quem não estava lá.' },
+      { em: 0.84, t: 'A Joy fundou a Liga da Justiça Algorítmica para que esse erro tivesse endereço, nome e alguém para responder por ele.' },
+    ],
+    // FASE 5 — a auditoria, e o que ela mudou
+    [
+      { em: 0.08, t: 'Chegamos ao olho central. É ele que decide quem é reconhecido e quem é descartado.' },
+      { em: 0.28, t: 'O estudo dela se chama Gender Shades. Ela auditou os sistemas da IBM, da Microsoft e da Face mais mais, e publicou os números com nome e data.' },
+      { em: 0.48, t: 'As três empresas corrigiram seus modelos depois disso. Não foi um discurso que mudou o sistema. Foi medida publicada.' },
+      { em: 0.68, t: 'É por isso que você atravessou tudo isto recolhendo pedaço por pedaço. Auditar é exatamente isso: juntar prova até não dar mais para negar.' },
+    ],
+  ],
+
   phase_intro: 'FASE',
   phase_done: 'FASE CONCLUÍDA',
   next_in: 'Próxima fase em',
