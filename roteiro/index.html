@@ -3,7 +3,7 @@
   :root{--bg:#EEECF2;--surface:#FCFBFE;--surface-2:#E5E2EC;--ink:#16131F;--muted:#5A5468;
     --faint:#8A8399;--rule:#D3CEDE;--cyan:#0C6072;--gold:#7E5F0A;--mag:#A81C63;--fala-bg:#FFFFFF;
     --shadow:0 1px 2px rgba(22,19,31,.06),0 8px 24px -12px rgba(22,19,31,.18)}
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
     --bg:#100D18;--surface:#191524;--surface-2:#221C31;--ink:#EDEAF2;--muted:#A49CB8;
     --faint:#7C748F;--rule:#302943;--cyan:#4FD8EE;--gold:#F0BE4B;--mag:#FF74B4;--fala-bg:#1E1830;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7)}}
@@ -48,7 +48,7 @@
   .deixa{display:grid;grid-template-columns:1fr;gap:.5rem;padding:1.5rem 0 .25rem;
     border-top:1px solid var(--rule)}
   .deixa:first-child{border-top:0}
-  @media (min-width:46rem){.deixa{grid-template-columns:9rem 1fr;gap:1.5rem}}
+  media (min-width:46rem){.deixa{grid-template-columns:9rem 1fr;gap:1.5rem}}
   .rail{padding-top:.1rem}
   .rail .rot{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
     color:var(--gold);display:block}
@@ -110,13 +110,13 @@
 
 <div class="nota">
   <h4>Endereço único, sem downloads</h4>
-  <p>Apresentação: <strong>blog-joy.vercel.app/apresentacao</strong> · Blog e jogo: <strong>blog-joy.vercel.app</strong>. O carimbo no canto da apresentação diz a versão; este roteiro é da <strong>v12</strong> (20 slides).</p>
+  <p>Apresentação: <strong>blog-joy.vercel.app/apresentacao</strong> · Blog e jogo: <strong>blog-joy.vercel.app</strong>. O carimbo no canto da apresentação diz a versão; este roteiro é da <strong>v13</strong> (24 slides).</p>
 </div>
 
 <!-- ================================================== PALCO -->
 <section class="roteiro">
   <div class="cabeca">
-    <div class="id"><span class="num">Palco</span><h2>Apresentação</h2><span class="dur">10 a 12 min</span></div>
+    <div class="id"><span class="num">Palco</span><h2>Apresentação</h2><span class="dur">12 a 14 min</span></div>
     <div class="equipe"><span class="pessoa">Davi</span><span class="pessoa">Nikolas</span><span class="pessoa">Gabriel Vieira</span><span class="pessoa">Gabriel Lima</span></div>
     <p class="onde">Sem suspense na abertura: primeiro a equipe se apresenta, depois o assunto desenrola. O canto de baixo de cada slide diz de quem é a vez.</p>
   </div>
@@ -137,75 +137,80 @@
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Davi, bloco 2</span><span class="quem">slides 4 e 5 · 2 min</span></div>
+      <div class="rail"><span class="rot">Davi, bloco 2</span><span class="quem">slides 4 a 6 · 2 min</span></div>
       <div class="conteudo">
         <div class="acao"><b>O slide 4 só funciona com a plateia respondendo.</b> Leia as quatro perguntas devagar e espere as mãos.</div>
         <div class="fala ouro">
-          <p><span class="slide">4</span>Levanta a mão quem já teve o celular deixando de reconhecer o rosto sem motivo. Quem já sumiu da foto de grupo. Quem já falou com assistente de voz que não entendeu o seu jeito de falar.</p>
+          <p><span class="slide">5</span>Levanta a mão quem já teve o celular deixando de reconhecer o rosto sem motivo. Quem já sumiu da foto de grupo. Quem já falou com assistente de voz que não entendeu o seu jeito de falar.</p>
           <p>Isso que vocês levantaram a mão tem nome e tem número.</p>
         </div>
         <div class="fala">
-          <p><span class="slide">5</span>O nome é viés algorítmico. E registrem uma coisa: ninguém programa a máquina para errar com um grupo. O erro entra antes, e é isso que o Nikolas documenta agora.</p>
+          <p><span class="slide">6</span>O nome é viés algorítmico. E registrem uma coisa: ninguém programa a máquina para errar com um grupo. O erro entra antes, e é isso que o Nikolas documenta agora.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Nikolas, bloco 1</span><span class="quem">slides 6 a 8 · 2 min</span></div>
+      <div class="rail"><span class="rot">Nikolas, bloco 1</span><span class="quem">slides 7 a 9 · 2 min</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p><span class="slide">6</span>O mecanismo em três passos: alguém junta milhões de rostos da internet, e o que é fácil de achar já vem torto. A máquina treina no que recebeu, então fica ótima no rosto que viu dez milhões de vezes e péssima no que viu dez mil. E o sistema vai para a rua: aeroporto, escola, polícia.</p>
+          <p><span class="slide">7</span>O mecanismo em três passos: alguém junta milhões de rostos da internet, e o que é fácil de achar já vem torto. A máquina treina no que recebeu, então fica ótima no rosto que viu dez milhões de vezes e péssima no que viu dez mil. E o sistema vai para a rua: aeroporto, escola, polícia.</p>
         </div>
         <div class="acao">Slide 7 é o gráfico. <b>Aponte a barra na tela</b> em vez de só falar o número.</div>
         <div class="fala ouro">
-          <p><span class="slide">7</span>Os números, registrados em 2018 no estudo Gender Shades: os sistemas da IBM, da Microsoft e da Face++ acertavam 99,7% dos homens de pele clara e 65,3% das mulheres de pele escura.</p>
-          <p><span class="slide">8</span>De onde tiramos cada número: do estudo original, do livro dela e do depoimento no Congresso. O que não tinha fonte, ficou de fora do nosso trabalho.</p>
+          <p><span class="slide">8</span>Os números, registrados em 2018 no estudo Gender Shades: os sistemas da IBM, da Microsoft e da Face++ acertavam 99,7% dos homens de pele clara e 65,3% das mulheres de pele escura.</p>
+          <p><span class="slide">9</span>De onde tiramos cada número: do estudo original, do livro dela e do depoimento no Congresso. O que não tinha fonte, ficou de fora do nosso trabalho.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Nikolas, bloco 2</span><span class="quem">slides 9 a 11 · 2 min</span></div>
+      <div class="rail"><span class="rot">Nikolas, bloco 2</span><span class="quem">slides 10 a 13 · 2,5 min</span></div>
       <div class="conteudo">
         <div class="acao">Dois slides de vídeo. <b>Fale pouco e deixe rodar.</b></div>
         <div class="fala">
-          <p><span class="slide">9</span>Contexto: em 2023 a inteligência artificial gerava isto. Era piada na internet.</p>
+          <p><span class="slide">10</span>Contexto: em 2023 a inteligência artificial gerava isto. Era piada na internet.</p>
         </div>
         <div class="acao">Oito segundos de silêncio. A sala vai rir; deixe rir.</div>
         <div class="fala perigo">
-          <p><span class="slide">10</span>Isto é 2026. Três anos separam um vídeo do outro. Se ela engana os olhos assim, quem garante que está sendo justa com o nosso rosto?</p>
+          <p><span class="slide">11</span>Isto é 2026. Três anos separam um vídeo do outro. Se ela engana os olhos assim, quem garante que está sendo justa com o nosso rosto?</p>
         </div>
         <div class="fala">
-          <p><span class="slide">11</span>E os efeitos documentados da pesquisa: as três empresas corrigiram os modelos, o caso chegou ao Congresso americano, e virou base de política pública. Agora o Gabriel mostra o que a gente construiu com tudo isso.</p>
+          <p><span class="slide">12</span>Essa história virou o documentário Coded Bias, que estreou na Netflix. Deixem o trailer rodar uns segundos.</p>
+        </div>
+        <div class="fala">
+          <p><span class="slide">13</span>E os efeitos documentados da pesquisa: as três empresas corrigiram os modelos, o caso chegou ao Congresso americano, e virou base de política pública. Agora o Gabriel mostra o que a gente construiu com tudo isso.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Gabriel Vieira, bloco 1</span><span class="quem">slides 12 a 14 · 2 min</span></div>
+      <div class="rail"><span class="rot">Gabriel Vieira, bloco 1</span><span class="quem">slides 14 a 18 · 2,5 min</span></div>
       <div class="conteudo">
         <div class="acao">Slide 12 é a fonte primária em vídeo. <b>Tire o mudo</b> e deixe trinta segundos sem falar por cima.</div>
         <div class="fala">
-          <p><span class="slide">12</span>Antes do que a gente fez, a fonte primária: ela mesma, no TED.</p>
-          <p><span class="slide">13</span>Produção, parte um: o blog. Cada seção nasceu de uma fonte pública. O chat com voz segue instruções que a gente escreveu, e a primeira regra é admitir que é uma simulação.</p>
-          <p><span class="slide">14</span>Parte dois: o jogo. O caso da máscara branca virou regra: coletar a máscara dá o poder, vestir é escolha sua, no botão. Com ela o sistema te aceita, e você deixa de ser você.</p>
+          <p><span class="slide">14</span>Antes do que a gente fez, a fonte primária: ela mesma, no TED.</p>
+          <p><span class="slide">15</span>Do experimento nasceu a Algorithmic Justice League, que ela fundou em 2016 juntando pesquisa, arte e ativismo.</p>
+          <p><span class="slide">16</span>E o alerta rodou o mundo: TED com mais de um milhão de visualizações, museus em Boston e Londres, e o Congresso americano.</p>
+          <p><span class="slide">17</span>Produção, parte um: o blog. Cada seção nasceu de uma fonte pública. O chat com voz segue instruções que a gente escreveu, e a primeira regra é admitir que é uma simulação.</p>
+          <p><span class="slide">18</span>Parte dois: o jogo. O caso da máscara branca virou regra: coletar a máscara dá o poder, vestir é escolha sua, no botão. Com ela o sistema te aceita, e você deixa de ser você.</p>
         </div>
       </div>
     </div>
 
     <div class="deixa">
-      <div class="rail"><span class="rot">Gabriel Vieira, bloco 2</span><span class="quem">slides 15 a 20 · 3 min</span></div>
+      <div class="rail"><span class="rot">Gabriel Vieira, bloco 2</span><span class="quem">slides 19 a 24 · 3 min</span></div>
       <div class="conteudo">
         <div class="fala">
-          <p><span class="slide">15</span>Parte três: os testes. A gente simulou 400 gerações de cada fase antes de publicar, e mediu até quanto tempo um jogador sobrevivia: a fase 3 durava 8 segundos quando medimos, e foi redesenhada até fechar com folga. A lição do projeto inteiro: não confiar no que parece pronto, medir. Foi o que a pesquisadora fez com os sistemas das empresas.</p>
-          <p><span class="slide">16</span>Parte quatro: o óculos. Ele mede a sua altura no primeiro segundo e ajusta o mundo; agachar é com o corpo de verdade.</p>
-          <p><span class="slide">17</span>As três decisões documentadas: jogo em vez de vídeo, a máscara como centro, e avisar que o chat é IA.</p>
+          <p><span class="slide">19</span>Parte três: os testes. A gente simulou 400 gerações de cada fase antes de publicar, e mediu até quanto tempo um jogador sobrevivia: a fase 3 durava 8 segundos quando medimos, e foi redesenhada até fechar com folga. A lição do projeto inteiro: não confiar no que parece pronto, medir. Foi o que a pesquisadora fez com os sistemas das empresas.</p>
+          <p><span class="slide">20</span>Parte quatro: o óculos. Ele mede a sua altura no primeiro segundo e ajusta o mundo; agachar é com o corpo de verdade.</p>
+          <p><span class="slide">21</span>As três decisões documentadas: jogo em vez de vídeo, a máscara como centro, e avisar que o chat é IA.</p>
         </div>
         <div class="fala ouro">
-          <p><span class="slide">18</span><span class="slide">19</span>A citação registrada dela: se a gente não for vigilante, codifica o passado no futuro. As nossas conclusões estão no slide: a IA não é neutra, ela reflete quem constrói e com o que treina.</p>
+          <p><span class="slide">22</span><span class="slide">23</span>A citação registrada dela: se a gente não for vigilante, codifica o passado no futuro. As nossas conclusões estão no slide: a IA não é neutra, ela reflete quem constrói e com o que treina.</p>
         </div>
         <div class="fala">
-          <p><span class="slide">20</span>E está tudo funcionando aqui na nossa área: o blog, o jogo no totem com o Gabriel Lima, e o óculos. Quem quiser testar do celular, aponta a câmera nesse código. Obrigado.</p>
+          <p><span class="slide">24</span>E está tudo funcionando aqui na nossa área: o blog, o jogo no totem com o Gabriel Lima, e o óculos. Quem quiser testar do celular, aponta a câmera nesse código. Obrigado.</p>
         </div>
       </div>
     </div>
@@ -347,7 +352,7 @@
 
 <footer class="rodape">
   <p>Julia, Ana Clara e Izabelly cobrem totem e blog em rodízio: uma em cada, trocando a cada rodada. Gabriel Lima sai do totem durante o palco.</p>
-  <p>Este roteiro acompanha a apresentação v12. Se o carimbo na tela for outro, procure a versão nova deste arquivo.</p>
+  <p>Este roteiro acompanha a apresentação v13. Se o carimbo na tela for outro, procure a versão nova deste arquivo.</p>
 </footer>
 
 </div>
