@@ -1221,6 +1221,10 @@
                 const linhas = texto.split('\n').filter(Boolean).length;
                 caption.style.removeProperty('--cap-fonte');
                 if (!panel.classList.contains('tela-cheia') || linhas < 2) return;
+                // Numa coluna estreita, encolher nao resolve: uma frase de 70
+                // caracteres precisaria de uns 10px para caber em 343px, e ai
+                // ninguem le. Melhor manter o tamanho bom e deixar quebrar.
+                if (caption.getBoundingClientRect().width < 520) return;
                 for (let px = CAP_MAX; px >= CAP_MIN; px--) {
                     caption.style.setProperty('--cap-fonte', px + 'px');
                     const alt = parseFloat(getComputedStyle(caption).lineHeight);
