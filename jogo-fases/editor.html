@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor 3D · O Corredor Codificado</title>
+<style>
+  :root{ --void:#05020c; --panel:rgba(10,6,22,.92); --line:#241a3f;
+         --cyan:#00E5FF; --gold:#FFC93C; --mag:#FF2D9B; --bone:#F3EFE6;
+         --dim:#8fa0b4; --ok:#4ade80; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--void);color:var(--bone);
+    font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  canvas{display:block}
+  #view{position:fixed;inset:0}
+
+  /* ------------------------------------------------------------- barra de cima */
+  #top{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:.5rem;
+    padding:.4rem .6rem;background:var(--panel);border-bottom:1px solid var(--line);
+    backdrop-filter:blur(6px);flex-wrap:wrap}
+  #tabs{display:flex;gap:2px}
+  #tabs button{font:inherit;font-size:.68rem;font-weight:700;letter-spacing:.05em;cursor:pointer;
+    padding:.35rem .55rem;border:1px solid var(--line);background:transparent;color:var(--dim);
+    border-radius:3px}
+  #tabs button.on{background:#1c1136;color:var(--gold);border-color:#4a3a80}
+  #tabs button b{opacity:.55;margin-right:.3rem;font-weight:800}
+  .sp{flex:1}
+  .tbtn{font:inherit;font-size:.66rem;font-weight:700;letter-spacing:.06em;cursor:pointer;
+    padding:.35rem .6rem;border-radius:3px;border:1px solid var(--cyan);background:transparent;
+    color:var(--cyan);text-transform:uppercase}
+  .tbtn:hover{background:var(--cyan);color:var(--void)}
+  .tbtn.gold{border-color:var(--gold);color:var(--gold)}
+  .tbtn.gold:hover{background:var(--gold);color:var(--void)}
+  .tbtn.mute{border-color:#4a4258;color:#9aa4b4}
+  .tbtn.mute:hover{background:#4a4258;color:var(--bone)}
+  .tbtn:disabled{opacity:.3;cursor:default}
+  .tbtn:disabled:hover{background:transparent;color:#9aa4b4}
+
+  /* aviso de "clique para posicionar": some sozinho quando o modo termina */
+  #placing{position:fixed;top:3.2rem;left:50%;transform:translateX(-50%);z-index:12;display:none;
+    background:var(--gold);color:#05020c;font-size:.7rem;font-weight:700;letter-spacing:.05em;
+    padding:.4rem .8rem;border-radius:3px;box-shadow:0 0 20px rgba(255,201,60,.35)}
+  #placing.on{display:block}
+
+  /* ------------------------------------------------------------ painel esquerdo */
+  #panel{position:fixed;top:3.1rem;left:.6rem;z-index:9;width:270px;max-height:calc(100vh - 8rem);
+    overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:5px;
+    backdrop-filter:blur(6px);padding:.7rem}
+  #panel::-webkit-scrollbar{width:8px}
+  #panel::-webkit-scrollbar-thumb{background:#2a1f4d;border-radius:4px}
+
+  .four{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+  .f{display:flex;flex-direction:column;gap:.15rem}
+  .f label{font-size:.56rem;letter-spacing:.12em;color:var(--dim)}
+  input,select,textarea{font:inherit;font-size:.78rem;background:#100a22;color:var(--bone);
+    border:1px solid var(--line);border-radius:3px;padding:.28rem .35rem;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--cyan)}
+  input[type=color]{padding:1px;height:26px;cursor:pointer}
+  textarea{resize:vertical;min-height:52px;font-size:.7rem}
+
+  h4{font-size:.56rem;letter-spacing:.14em;color:var(--cyan);margin:.8rem 0 .35rem;font-weight:700}
+
+  /* trechos: uma linha por trecho, barra colorida proporcional ao comprimento */
+  .seg{display:flex;align-items:center;gap:.25rem;margin-bottom:.22rem}
+  .seg .bar{width:4px;border-radius:2px;align-self:stretch;min-height:22px}
+  .seg select{flex:1;font-size:.68rem;padding:.22rem .25rem}
+  .seg input{width:44px;font-size:.68rem;padding:.22rem .2rem;text-align:center}
+  .seg button{background:#1a1030;border:1px solid var(--line);color:var(--dim);cursor:pointer;
+    font:inherit;font-size:.62rem;padding:.2rem .28rem;border-radius:2px;line-height:1}
+  .seg button:hover{background:#5a1030;color:#ffb0c8;border-color:var(--mag)}
+  .seghead{display:flex;gap:.25rem;font-size:.5rem;letter-spacing:.1em;color:#5c6478;
+    padding-left:.3rem;margin-bottom:.15rem}
+  .seg input.inerte{opacity:.3;text-decoration:line-through;border-style:dashed}
+
+  /* categorias congeladas em `place`: o número do trecho deixa de valer nelas */
+  #frozen{margin-top:.5rem}
+  .froz-t{font-size:.52rem;letter-spacing:.1em;color:var(--gold);margin-bottom:.25rem}
+  .froz-none{font-size:.52rem;color:#5c6478;line-height:1.3}
+  .chip{display:inline-flex;align-items:center;gap:.25rem;font-size:.6rem;color:var(--bone);
+    background:#241a3f;border:1px solid #4a3a80;border-radius:10px;padding:.1rem .2rem .1rem .45rem;
+    margin:0 .2rem .2rem 0}
+  .chip b{color:var(--gold)}
+  .chip button{background:transparent;border:none;color:#9aa4b4;cursor:pointer;font:inherit;
+    font-size:.6rem;padding:0 .2rem;line-height:1}
+  .chip button:hover{color:var(--mag)}
+
+  details{margin-top:.7rem;border-top:1px solid var(--line);padding-top:.5rem}
+  summary{font-size:.58rem;letter-spacing:.14em;color:var(--dim);cursor:pointer;user-select:none}
+  summary:hover{color:var(--bone)}
+  details .four{margin-top:.5rem}
+
+  /* ------------------------------------------------------------- barra de baixo */
+  #bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--panel);
+    border-top:1px solid var(--line);backdrop-filter:blur(6px);padding:.4rem .6rem;
+    display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .add{font:inherit;font-size:.64rem;cursor:pointer;padding:.3rem .5rem;border-radius:3px;
+    border:1px solid var(--line);background:#140c28;color:var(--bone)}
+  .add:hover{border-color:var(--cyan)}
+  .add i{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;margin-right:.3rem;
+    vertical-align:-1px}
+  #sel{display:none;align-items:center;gap:.35rem;font-size:.66rem;color:var(--dim)}
+  #sel.on{display:flex}
+  #sel input{width:58px;padding:.2rem .25rem;font-size:.7rem;text-align:center}
+  #sel .tag{color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  #sel button{background:#3a1030;border:1px solid var(--mag);color:#ffb0c8;cursor:pointer;
+    font:inherit;font-size:.62rem;padding:.25rem .45rem;border-radius:3px}
+  #help{font-size:.58rem;color:#5c6478;letter-spacing:.02em}
+
+  #warn{position:fixed;right:.6rem;top:3.1rem;z-index:9;width:250px;display:flex;
+    flex-direction:column;gap:.25rem}
+  .w{font-size:.66rem;padding:.35rem .5rem;border-radius:3px;border-left:3px solid;
+    background:rgba(10,6,22,.92);line-height:1.35;backdrop-filter:blur(6px)}
+  .w.bad{border-color:var(--mag);color:#ffc2da}
+  .w.warn{border-color:var(--gold);color:#ffe6ac}
+  .w.info{border-color:#3a3050;color:#8fa0b4}
+  .w b{font-weight:700}
+
+  dialog{background:#0c0718;color:var(--bone);border:1px solid var(--cyan);border-radius:5px;
+    max-width:min(900px,92vw);width:100%;padding:0}
+  dialog::backdrop{background:rgba(3,1,10,.85)}
+  dialog .dh{padding:.6rem .8rem;border-bottom:1px solid var(--line);font-size:.7rem;
+    letter-spacing:.14em;color:var(--gold)}
+  dialog textarea{min-height:56vh;border:none;border-radius:0;
+    font-family:ui-monospace,Consolas,monospace;font-size:.7rem}
+  dialog .df{padding:.5rem .8rem;border-top:1px solid var(--line);display:flex;gap:.4rem;
+    justify-content:flex-end}
+  dialog button{font:inherit;font-size:.66rem;font-weight:700;cursor:pointer;padding:.4rem .7rem;
+    border-radius:3px;border:1px solid var(--cyan);background:transparent;color:var(--cyan)}
+  dialog button:hover{background:var(--cyan);color:var(--void)}
+</style>
+</head>
+<body>
+
+<div id="view"></div>
+
+<div id="top">
+  <div id="tabs"></div>
+  <div class="sp"></div>
+  <label style="display:flex;align-items:center;gap:.3rem;font-size:.58rem;color:var(--dim);
+    letter-spacing:.1em">IR PARA
+    <input type="range" id="nav" min="0" max="100" value="50" style="width:150px;padding:0">
+    <span id="nav-v" style="width:34px;text-align:right;color:var(--bone)"></span></label>
+  <span id="status" style="font-size:.58rem;color:var(--ok);letter-spacing:.06em"></span>
+  <button class="tbtn mute" id="b-undo" style="padding:.35rem .5rem">↶</button>
+  <button class="tbtn mute" id="b-redo" style="padding:.35rem .5rem">↷</button>
+  <button class="tbtn gold" id="b-play">▶ jogar</button>
+  <button class="tbtn" id="b-export">exportar</button>
+  <button class="tbtn mute" id="b-reset">restaurar fase</button>
+</div>
+
+<div id="panel">
+  <div class="four">
+    <div class="f"><label>TEMPO (s)</label><input id="f-time" type="number" min="10" max="600" step="5"></div>
+    <div class="f"><label>PEDAÇOS</label><input id="f-need" type="number" min="0" max="30" step="1"></div>
+    <div class="f"><label>LARGURA (m)</label><input id="f-w" type="number" min="4" max="40" step="0.5"></div>
+    <div class="f"><label>ALTURA (m)</label><input id="f-h" type="number" min="3" max="20" step="0.5"></div>
+  </div>
+
+  <h4>TRECHOS · na ordem em que se atravessa</h4>
+  <div class="seghead"><span style="flex:1;padding-left:.55rem">tipo</span>
+    <span style="width:44px;text-align:center">comp.</span>
+    <span style="width:44px;text-align:center">vão/nº</span>
+    <span style="width:44px;text-align:center">peças</span><span style="width:22px"></span></div>
+  <div id="segs"></div>
+  <button class="add" id="b-addseg" style="width:100%;margin-top:.3rem">+ trecho</button>
+  <div id="frozen"></div>
+
+  <details>
+    <summary>MAIS OPÇÕES</summary>
+    <div class="four" style="grid-template-columns:1fr">
+      <div class="f"><label>NOME DA FASE</label><input id="f-name" type="text"></div>
+      <div class="f"><label>SUBTÍTULO</label><input id="f-sub" type="text"></div>
+    </div>
+    <div class="four" style="margin-top:.45rem">
+      <div class="f"><label>BRUMA</label><input id="p-fog" type="color"></div>
+      <div class="f"><label>LUZ</label><input id="p-amb" type="color"></div>
+      <div class="f"><label>HORIZONTE</label><input id="p-sky" type="color"></div>
+      <div class="f"><label>ACENTO</label><input id="p-accent" type="color"></div>
+      <div class="f"><label>DENSIDADE DA BRUMA</label><input id="p-fogD" type="number" step="0.001" min="0.002" max="0.04"></div>
+      <div class="f"><label>INTENSIDADE DA LUZ</label><input id="p-ambI" type="number" step="0.05" min="0.4" max="3"></div>
+    </div>
+    <div class="four" style="grid-template-columns:1fr;margin-top:.45rem">
+      <div class="f"><label>MÁSCARA / CAÇADA / CHEFE</label>
+        <div style="display:flex;gap:.7rem;font-size:.68rem;padding-top:.15rem">
+          <label><input type="checkbox" id="f-mask" style="width:auto"> máscara</label>
+          <label><input type="checkbox" id="f-hunt" style="width:auto"> caçada</label>
+          <label><input type="checkbox" id="f-boss" style="width:auto"> chefe</label>
+        </div></div>
+      <div class="f"><label>TEXTURA DE PAREDE (url)</label><input id="p-wallImg" type="text"></div>
+      <div class="f"><label>TEXTURA DE CHÃO (url)</label><input id="p-floorImg" type="text"></div>
+      <div class="f"><label>IMAGEM DO HORIZONTE (url)</label><input id="p-skyImg" type="text"></div>
+      <div class="f"><label>NOTAS (viram comentários no arquivo)</label><textarea id="f-notes"></textarea></div>
+    </div>
+
+    <div id="bosscfg" style="display:none">
+      <h4>CHEFE</h4>
+      <div class="four">
+        <div class="f"><label>VIDA</label><input id="bc-hp" type="number" min="1" max="200" step="1"></div>
+        <div class="f"><label>VARREDURA (s)</label><input id="bc-sweep" type="number" min="1" max="20" step="0.5"></div>
+        <div class="f"><label>RAJADA (s)</label><input id="bc-salvo" type="number" min="0" max="20" step="0.5"></div>
+        <div class="f"><label>LENTE ABERTA (s)</label><input id="bc-open" type="number" min="0.5" max="20" step="0.2"></div>
+        <div class="f"><label>BOLA A CADA (s)</label><input id="bc-ballCd" type="number" min="0.1" max="5" step="0.05"></div>
+        <div class="f"><label>VELOCIDADE DA BOLA</label><input id="bc-ballSpd" type="number" min="2" max="40" step="1"></div>
+        <div class="f"><label>VOO (rapidez)</label><input id="bc-move" type="number" min="0" max="4" step="0.05"></div>
+        <div class="f"><label>RAIO DA ÓRBITA (m)</label><input id="bc-orbit" type="number" min="0" max="20" step="0.5"></div>
+        <div class="f"><label>DRONES POR CICLO</label><input id="bc-spawn" type="number" min="0" max="8" step="1"></div>
+        <div class="f"><label>MÁX. DRONES VIVOS</label><input id="bc-spawnMax" type="number" min="0" max="20" step="1"></div>
+      </div>
+    </div>
+    <button class="add" id="b-resetall" style="width:100%;margin-top:.5rem">restaurar TODAS as fases</button>
+  </details>
+</div>
+
+<div id="placing"></div>
+<div id="warn"></div>
+
+<div id="bottom">
+  <button class="add" data-add="frags"><i style="background:#FFC93C"></i>pedaço</button>
+  <button class="add" data-add="masks"><i style="background:#F3EFE6"></i>máscara</button>
+  <button class="add" data-add="drones"><i style="background:#FF2D9B"></i>drone</button>
+  <button class="add" data-add="crushers"><i style="background:#ff6a3a"></i>prensa</button>
+  <button class="add" data-add="movers"><i style="background:#00E5FF"></i>plataforma</button>
+  <button class="add" data-add="beams"><i style="background:#FF2D9B"></i>feixe</button>
+  <button class="add" data-add="walls"><i style="background:#8a6ad0"></i>parede</button>
+  <button class="add" data-add="covers"><i style="background:#6a5aa0"></i>meia-parede</button>
+  <div id="sel">
+    <span class="tag" id="sel-tag"></span>
+    X <input id="sel-x" type="number" step="0.25">
+    Y <input id="sel-y" type="number" step="0.25">
+    Z <input id="sel-z" type="number" step="0.25">
+    <span id="sel-extra" style="display:flex;gap:.35rem;align-items:center"></span>
+    <button id="sel-del">apagar</button>
+  </div>
+  <label style="font-size:.62rem;color:var(--dim);display:flex;align-items:center;gap:.25rem">
+    <input type="checkbox" id="snap" checked style="width:auto"> grade 25 cm</label>
+  <div class="sp"></div>
+  <span id="help">
+    <b style="color:#ff4d5e">X</b>/<b style="color:#4ade80">Y</b>/<b style="color:#4da3ff">Z</b>
+    arraste a seta para mover num eixo só · arraste o corpo para mover livre ·
+    <b style="color:var(--gold)">setas do teclado</b> 25 cm (Shift = 1 m) ·
+    <b style="color:var(--gold)">WASD</b> voa, Q/E desce e sobe · duplo clique vai até o item ·
+    <b style="color:var(--gold)">Ctrl+Z</b> desfaz · <b style="color:var(--gold)">Ctrl+C/V</b>
+    copia e cola (entre fases) · <b style="color:var(--gold)">Ctrl+D</b> duplica ·
+    Del apaga · botão direito move a cena · roda aproxima</span>
+</div>
+
+<dialog id="dlg">
+  <div class="dh">LEVELS.JS · pronto para substituir src/levels.js</div>
+  <textarea id="dlg-txt" spellcheck="false"></textarea>
+  <div class="df">
+    <button id="dlg-copy">copiar</button>
+    <button id="dlg-dl">baixar</button>
+    <button id="dlg-close">fechar</button>
+  </div>
+</dialog>
+
+<script type="module">
+// ===========================================================================
+// Editor 3D. Usa os MESMOS módulos do jogo: a fase que aparece aqui é o que
+// buildLevel() entrega ao motor, não uma reimplementação.
+//
+// Mexer em qualquer item CONGELA aquela categoria em `place` (posições à mão).
+// A partir daí a fase não depende mais do sorteio da seed: é desenho.
+// ===========================================================================
+import * as THREE from './vendor/three.module.js';
+import { LEVELS as ORIG, SEG, buildLevel } from './src/levels.js';
+import { P } from './src/main.js';
+
+const $ = (id) => document.getElementById(id);
+const KEY = 'corredor.editor.v1';
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const r2 = (n) => Math.round(n * 100) / 100;
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const seedReal = (i) => 1000 + i * 77;
+
+let levels = clone(ORIG);
+let notes = ORIG.map(() => '');
+let cur = 0, lv = null, srcText = null, sel = null;
+
+// ------------------------------------------------------------------ persistência
+// Desfazer por FOTOGRAFIA do estado inteiro, não por lista de operações. As
+// fases são JSON pequeno, então clonar sai barato — e assim toda mudança entra
+// no histórico de graça, inclusive as que eu ainda nem escrevi: arrastar,
+// apagar, trocar o tipo de um trecho, mexer na paleta. Nada precisa lembrar de
+// se registrar.
+const undoStack = [], redoStack = [];
+let lastSnap = null, coKey = null, coT = 0;
+const MAXHIST = 120;
+
+function save(key) {
+  const snap = JSON.stringify({ levels, notes });
+  if (snap === lastSnap) return;                 // nada mudou de fato
+
+  // Digitar "150" num campo dispara três eventos. Sem isto, três Ctrl+Z para
+  // desfazer uma coisa só. Mudanças seguidas no MESMO campo, dentro de 900 ms,
+  // viram uma entrada só no histórico.
+  const now = performance.now();
+  const junta = key && key === coKey && (now - coT) < 900;
+  if (lastSnap !== null && !junta) {
+    undoStack.push(lastSnap);
+    if (undoStack.length > MAXHIST) undoStack.shift();
+    redoStack.length = 0;
+  }
+  coKey = key; coT = now;
+  lastSnap = snap;
+  localStorage.setItem(KEY, snap);
+  paintHist();
+  const s = $('status'); s.textContent = 'salvo'; s.style.color = 'var(--ok)';
+}
+
+function applySnap(s) {
+  const d = JSON.parse(s);
+  levels = d.levels;
+  if (d.notes) notes = d.notes;
+  lastSnap = s; coKey = null;
+  localStorage.setItem(KEY, s);
+  if (cur >= levels.length) cur = 0;
+  sel = null; hover = null;
+  buildTabs(); paintTabs(); fillForm(); refresh(); paintHist();
+}
+function undo() {
+  if (!undoStack.length) { flash('nada para desfazer'); return; }
+  redoStack.push(lastSnap);
+  applySnap(undoStack.pop());
+  flash('desfeito');
+}
+function redo() {
+  if (!redoStack.length) { flash('nada para refazer'); return; }
+  undoStack.push(lastSnap);
+  applySnap(redoStack.pop());
+  flash('refeito');
+}
+function paintHist() {
+  $('b-undo').disabled = !undoStack.length;
+  $('b-redo').disabled = !redoStack.length;
+  $('b-undo').title = `desfazer (Ctrl+Z) · ${undoStack.length} passo(s)`;
+  $('b-redo').title = `refazer (Ctrl+Shift+Z) · ${redoStack.length} passo(s)`;
+}
+let flashT = 0;
+function flash(txt) {
+  const s = $('status');
+  s.textContent = txt; s.style.color = 'var(--gold)';
+  clearTimeout(flashT);
+  flashT = setTimeout(() => { s.textContent = 'salvo'; s.style.color = 'var(--ok)'; }, 1200);
+}
+try {
+  const d = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (d && d.levels && d.levels.length) { levels = d.levels; if (d.notes) notes = d.notes; }
+} catch (e) { /* storage bloqueado */ }
+
+// comentários do arquivo original, para o export não apagar o porquê das coisas
+fetch('./src/levels.js').then((r) => r.text()).then((t) => {
+  srcText = t;
+  const ch = splitChunks(t);
+  if (ch.length === ORIG.length && notes.every((n) => !n)) {
+    notes = ch.map((c) => c.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('//'))
+      .map((l) => l.replace(/^\/\/\s?/, '')).join('\n'));
+    fillForm();
+    // este carregamento não é uma edição do usuário: reancora o histórico para
+    // que o primeiro Ctrl+Z não "desfaça" a chegada dos comentários
+    lastSnap = JSON.stringify({ levels, notes });
+  }
+}).catch(() => {});
+
+function splitChunks(src) {
+  const s = src.indexOf('export const LEVELS'); if (s < 0) return [];
+  const open = src.indexOf('[', s); let d = 0, c0 = -1; const out = [];
+  for (let i = open; i < src.length; i++) {
+    const c = src[i];
+    if (c === '[' || c === '{') { d++; if (d === 2 && c === '{') c0 = i; }
+    else if (c === ']' || c === '}') {
+      if (d === 2 && c === '}' && c0 >= 0) { out.push(src.slice(c0, i + 1)); c0 = -1; }
+      if (--d === 0) break;
+    }
+  }
+  return out;
+}
+function blockRange(src) {
+  const s = src.indexOf('export const LEVELS'); if (s < 0) return null;
+  const open = src.indexOf('[', s); let d = 0;
+  for (let i = open; i < src.length; i++) {
+    const c = src[i];
+    if (c === '[' || c === '{') d++;
+    else if (c === ']' || c === '}') { if (--d === 0) return { start: s, end: src.indexOf(';', i) + 1 }; }
+  }
+  return null;
+}
+
+// ===========================================================================
+// CENA
+// ===========================================================================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05020c);
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 800);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+$('view').appendChild(renderer.domElement);
+
+const world = new THREE.Group();       // geometria da fase
+const items = new THREE.Group();       // o que se pode pegar e arrastar
+const floorMeshes = [];                // só as lajes, para mirar ao adicionar
+scene.add(world, items);
+// grade de apoio logo ABAIXO do chão: no mesmo y ela brigava com a laje
+const grid = new THREE.GridHelper(200, 100, 0x1a1030, 0x120a24);
+grid.position.y = -0.03;
+scene.add(grid);
+
+// câmera em órbita: alvo + distância + dois ângulos. Sem biblioteca extra.
+const orb = { tgt: new THREE.Vector3(), dist: 40, th: -Math.PI / 2, ph: 0.95 };
+function applyCam() {
+  orb.ph = Math.max(0.06, Math.min(1.54, orb.ph));
+  orb.dist = Math.max(3, Math.min(300, orb.dist));
+  camera.position.set(
+    orb.tgt.x + orb.dist * Math.cos(orb.ph) * Math.cos(orb.th),
+    orb.tgt.y + orb.dist * Math.sin(orb.ph),
+    orb.tgt.z + orb.dist * Math.cos(orb.ph) * Math.sin(orb.th));
+  camera.lookAt(orb.tgt);
+}
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+const MAT = {
+  floor: new THREE.MeshBasicMaterial({ color: 0x152a3a, transparent: true, opacity: 0.95 }),
+  wall:  new THREE.MeshBasicMaterial({ color: 0x2b1f52, transparent: true, opacity: 0.30 }),
+  ceil:  new THREE.MeshBasicMaterial({ color: 0x3a2f18, transparent: true, opacity: 0.30 }),
+  pillar:new THREE.MeshBasicMaterial({ color: 0x3a2a6a, transparent: true, opacity: 0.55 }),
+  edge:  new THREE.LineBasicMaterial({ color: 0x00E5FF, transparent: true, opacity: 0.22 }),
+};
+const ITEMMAT = {
+  frags:    new THREE.MeshBasicMaterial({ color: 0xFFC93C }),
+  masks:    new THREE.MeshBasicMaterial({ color: 0xF3EFE6 }),
+  drones:   new THREE.MeshBasicMaterial({ color: 0xFF2D9B }),
+  crushers: new THREE.MeshBasicMaterial({ color: 0xff6a3a, transparent: true, opacity: 0.8 }),
+  movers:   new THREE.MeshBasicMaterial({ color: 0x00E5FF, transparent: true, opacity: 0.85 }),
+  beams:    new THREE.MeshBasicMaterial({ color: 0xFF2D9B }),
+  walls:    new THREE.MeshBasicMaterial({ color: 0x8a6ad0, transparent: true, opacity: 0.75 }),
+  covers:   new THREE.MeshBasicMaterial({ color: 0x6a5aa0, transparent: true, opacity: 0.85 }),
+};
+const ITEMNAME = { frags: 'pedaço', masks: 'máscara', drones: 'drone',
+                   crushers: 'prensa', movers: 'plataforma',
+                   beams: 'feixe', walls: 'parede', covers: 'meia-parede' };
+
+// HALO. Uma esfera translúcida em volta de cada item, por um motivo prático:
+// um pedaço tem 0,38 m e a fase tem 71 m, então de longe o item vira dois
+// pixels e não há como clicar nele. O halo é reescalado a cada quadro para
+// manter SEMPRE o mesmo tamanho na tela — alvo grande de perto e de longe.
+// O corpo do item continua no tamanho real, senão o editor mentiria sobre a
+// escala da fase; quem cresce é só a "alça" de pegar.
+const haloGeo = new THREE.SphereGeometry(1, 16, 12);
+const haloMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true,
+  opacity: 0.16, depthWrite: false });
+const HALOCOL = { frags: 0xFFC93C, masks: 0xF3EFE6, drones: 0xFF2D9B,
+                  crushers: 0xff6a3a, movers: 0x00E5FF,
+                  beams: 0xFF2D9B, walls: 0x8a6ad0, covers: 0x6a5aa0 };
+let hover = null;
+
+// arredonda na grade de 25 cm quando a trava está ligada
+const snap = (v) => $('snap').checked ? Math.round(v * 4) / 4 : r2(v);
+
+function clearGroup(g) {
+  while (g.children.length) {
+    const c = g.children.pop();
+    // haloGeo é uma esfera só, compartilhada por todos os itens: destruí-la
+    // aqui deixaria a cena sem alças de pegar na primeira reconstrução
+    c.traverse((o) => { if (o.geometry && o.geometry !== haloGeo) o.geometry.dispose(); });
+    // só o halo tem material próprio (clonado por item); o resto é compartilhado
+    if (c.userData && c.userData.halo) c.userData.halo.material.dispose();
+    g.remove(c);
+  }
+}
+
+function box(w, h, d, mat, x, y, z, parent, edges = true) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); parent.add(m);
+  if (edges) {
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), MAT.edge);
+    e.position.copy(m.position); parent.add(e);
+  }
+  return m;
+}
+
+function buildScene() {
+  clearGroup(world); clearGroup(items);
+  const L = levels[cur];
+
+  floorMeshes.length = 0;
+  for (const b of lv.blocks) {
+    // paredes à mão e meias-paredes de cobertura são desenhadas como ITEM
+    // editável mais abaixo; desenhar aqui também deixaria duas malhas no mesmo
+    // lugar, brigando por pixel
+    if (b.hand || b.cover) continue;
+    const mat = MAT[b.kind] || MAT.wall;
+    const m = box(b.hx * 2, b.hy * 2, b.hz * 2, mat, b.x, b.y, b.z, world);
+    // as lajes são o alvo de mira ao posicionar item novo
+    if (b.kind === 'floor') floorMeshes.push(m);
+  }
+
+  for (const s of lv.scanners) {
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(s.w, s.h),
+      new THREE.MeshBasicMaterial({ color: 0x00E5FF, transparent: true, opacity: 0.22,
+        side: THREE.DoubleSide }));
+    p.position.set(0, s.h / 2, s.z); world.add(p);
+  }
+  const gate = new THREE.Mesh(new THREE.PlaneGeometry(L.w, 3.2),
+    new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide }));
+  gate.position.set(0, 1.6, lv.gate.z); world.add(gate);
+  const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16),
+    new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.6 }));
+  sp.position.set(lv.spawn.x, 0.06, lv.spawn.z); world.add(sp);
+  // silhueta do jogador em pé, para dar escala ao que se está desenhando
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(P.RADIUS, P.RADIUS, P.STAND_H, 10),
+    new THREE.MeshBasicMaterial({ color: 0x4ade80, wireframe: true, transparent: true, opacity: 0.5 }));
+  body.position.set(lv.spawn.x, P.STAND_H / 2, lv.spawn.z); world.add(body);
+
+  addItem('frags', lv.frags, () => new THREE.OctahedronGeometry(0.38), (o) => [o.x, o.y, o.z]);
+  addItem('masks', lv.maskItems, () => new THREE.SphereGeometry(0.42, 12, 8), (o) => [o.x, o.y, o.z]);
+  addItem('drones', lv.drones, () => new THREE.IcosahedronGeometry(0.42), (o) => [o.x, o.y, o.z]);
+  addItem('crushers', lv.crushers,
+    (o) => new THREE.BoxGeometry(o.hx * 2, 0.7, o.hz * 2), (o) => [o.x, o.top, o.z]);
+  addItem('movers', lv.movers,
+    (o) => new THREE.BoxGeometry(o.hx * 2, o.hy * 2, o.hz * 2), (o) => [o.cx || 0, o.y, o.z]);
+  addItem('beams', lv.beams,
+    () => new THREE.CylinderGeometry(0.09, 0.09, L.w, 8), (o) => [0, o.y, o.z],
+    (core) => { core.rotation.z = Math.PI / 2; });
+  addItem('walls', lv.blocks.filter((b) => b.hand),
+    (o) => new THREE.BoxGeometry(o.hx * 2, o.hy * 2, o.hz * 2), (o) => [o.x, o.y, o.z]);
+  addItem('covers', lv.blocks.filter((b) => b.cover),
+    (o) => new THREE.BoxGeometry(o.hx * 2, o.hy * 2, o.hz * 2), (o) => [o.x, o.y, o.z]);
+
+  // Cada item é um Group: corpo no tamanho real + halo de pegar. O Group é o
+  // que se arrasta, então corpo e alça andam juntos sem sincronizar nada.
+  function addItem(cat, list, geo, pos, fix) {
+    list.forEach((o, i) => {
+      const g = new THREE.Group();
+      const [x, y, z] = pos(o);
+      g.position.set(x, y, z);
+      // `yaw` é para onde o item OLHA enquanto patrulha. O grupo já gira, então
+      // o modelo e a seta abaixo giram juntos, e o que se vê no editor é o que
+      // o jogo desenha.
+      if (o.yaw != null) g.rotation.y = o.yaw;
+      const core = new THREE.Mesh(geo(o), ITEMMAT[cat]);
+      if (fix) fix(core);                       // ex.: deitar o cilindro do feixe
+      const halo = new THREE.Mesh(haloGeo, haloMat(HALOCOL[cat]));
+      g.add(core, halo);
+      // Seta de direção: sem ela o `yaw` é um número sem imagem, e não dá para
+      // saber para onde o drone está virado sem entrar no jogo.
+      if (o.yaw != null) {
+        const haste = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6),
+          new THREE.MeshBasicMaterial({ color: 0xFF6A3A })
+        );
+        haste.rotation.x = Math.PI / 2;
+        haste.position.z = -0.8;              // −Z é a frente, como no lookAt
+        const ponta = new THREE.Mesh(
+          new THREE.ConeGeometry(0.16, 0.4, 8),
+          new THREE.MeshBasicMaterial({ color: 0xFF6A3A })
+        );
+        ponta.rotation.x = -Math.PI / 2;
+        ponta.position.z = -1.8;
+        g.add(haste, ponta);
+      }
+
+      g.userData = { cat, i, halo, core };
+      items.add(g);
+
+      if (cat === 'movers') {   // curso que a plataforma percorre
+        const t = new THREE.Mesh(new THREE.BoxGeometry(o.ax * 2, 0.04, 0.1),
+          new THREE.MeshBasicMaterial({ color: 0x00E5FF, transparent: true, opacity: 0.3 }));
+        t.position.set(0, o.y, o.z); world.add(t);
+      }
+      if (cat === 'crushers') { // curso da prensa, do topo até onde ela desce
+        const t = new THREE.Mesh(new THREE.BoxGeometry(o.hx * 2, o.drop, o.hz * 2),
+          new THREE.MeshBasicMaterial({ color: 0xFF2D9B, transparent: true, opacity: 0.09 }));
+        t.position.set(o.x, o.top - o.drop / 2, o.z); world.add(t);
+      }
+    });
+  }
+}
+
+// O item selecionado não ganha contorno: quem mostra o estado é o halo, que
+// fica mais opaco quando está sob o mouse e mais ainda quando está pego.
+function selMesh() {
+  if (!sel) return null;
+  return items.children.find((c) => c.userData.cat === sel.cat && c.userData.i === sel.i) || null;
+}
+
+// ===========================================================================
+// GIZMO DE EIXOS. Três setas no item selecionado: vermelha = X (largura do
+// corredor), verde = Y (altura), azul = Z (fundo). Arrastar UMA seta move só
+// naquele eixo — é a diferença entre empurrar o item no chão e colocá-lo onde
+// se quer sem estragar as outras duas coordenadas.
+// ===========================================================================
+const AXCOL = { x: 0xff4d5e, y: 0x4ade80, z: 0x4da3ff };
+const AXV = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+const gizmo = new THREE.Group();
+gizmo.visible = false;
+gizmo.renderOrder = 999;
+scene.add(gizmo);
+for (const ax of ['x', 'y', 'z']) {
+  const g = new THREE.Group();
+  g.userData.axis = ax;
+  // depthTest desligado: a seta aparece mesmo com uma parede na frente, senão
+  // o item dentro do corredor fica sem gizmo justo quando se olha de fora
+  const mat = new THREE.MeshBasicMaterial({ color: AXCOL[ax], depthTest: false, transparent: true, opacity: 0.95 });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 8), mat);
+  shaft.position.y = 0.5; shaft.renderOrder = 999;
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.34, 12), mat);
+  tip.position.y = 1.15; tip.renderOrder = 999;
+  // cilindro invisível e gordo em volta: alça de pegar, para não exigir mira
+  // de cirurgião numa haste de 4 cm
+  const grab = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.4, 6),
+    new THREE.MeshBasicMaterial({ visible: false }));
+  grab.position.y = 0.65;
+  g.add(shaft, tip, grab);
+  if (ax === 'x') g.rotation.z = -Math.PI / 2;
+  if (ax === 'z') g.rotation.x = Math.PI / 2;
+  gizmo.add(g);
+}
+
+// Ponto da reta (O + t*A) mais próximo do raio do mouse. É o que transforma
+// "mouse na tela" em "quanto andei ao longo deste eixo".
+function axisT(A, O) {
+  const V = ray.ray.direction, C = ray.ray.origin;
+  const w0 = new THREE.Vector3().subVectors(O, C);
+  const b = A.dot(V), d = A.dot(w0), e = V.dot(w0);
+  const den = 1 - b * b;
+  if (Math.abs(den) < 1e-6) return null;      // olhando na direção do eixo
+  return (b * e - d) / den;
+}
+
+// ===========================================================================
+// POSIÇÕES À MÃO: mexer congela a categoria em `place`
+// ===========================================================================
+const FIELDS = {
+  frags:    (o) => ({ x: r2(o.x), y: r2(o.y), z: r2(o.z) }),
+  masks:    (o) => ({ x: r2(o.x), y: r2(o.y), z: r2(o.z) }),
+  drones:   (o) => ({ x: r2(o.x), y: r2(o.y), z: r2(o.z), yaw: r2(o.yaw || 0) }),
+  crushers: (o) => ({ x: r2(o.x), z: r2(o.z), hx: r2(o.hx), hz: r2(o.hz),
+                      top: r2(o.top), drop: r2(o.drop), speed: r2(o.speed), phase: r2(o.phase) }),
+  movers:   (o) => ({ z: r2(o.z), y: r2(o.y), cx: r2(o.cx || 0),
+                      hx: r2(o.hx), hy: r2(o.hy), hz: r2(o.hz),
+                      ax: r2(o.ax), speed: r2(o.speed), phase: r2(o.phase) }),
+  beams:    (o) => ({ z: r2(o.z), y: r2(o.y), kind: o.kind,
+                      speed: r2(o.speed), range: r2(o.range), phase: r2(o.phase) }),
+  walls:    (o) => ({ x: r2(o.x), y: r2(o.y), z: r2(o.z),
+                      hx: r2(o.hx), hy: r2(o.hy), hz: r2(o.hz) }),
+  covers:   (o) => ({ x: r2(o.x), y: r2(o.y), z: r2(o.z),
+                      hx: r2(o.hx), hy: r2(o.hy), hz: r2(o.hz) }),
+};
+const SOURCE = { frags: () => lv.frags, masks: () => lv.maskItems, drones: () => lv.drones,
+                 crushers: () => lv.crushers, movers: () => lv.movers,
+                 beams: () => lv.beams,
+                 // só as paredes postas à mão; as do trecho pertencem ao trecho
+                 walls: () => lv.blocks.filter((b) => b.hand),
+                 // as meias-paredes de cobertura, que o trecho WALLS gera
+                 covers: () => lv.blocks.filter((b) => b.cover) };
+
+function place(cat) {
+  const L = levels[cur];
+  L.place = L.place || {};
+  if (!L.place[cat]) L.place[cat] = SOURCE[cat]().map(FIELDS[cat]);
+  return L.place[cat];
+}
+
+const DEFAULTS = {
+  frags:    (x, z) => ({ x: r2(x), y: 1.1, z: r2(z) }),
+  masks:    (x, z) => ({ x: r2(x), y: 1.05, z: r2(z) }),
+  drones:   (x, z) => ({ x: r2(x), y: 2.2, z: r2(z), yaw: 0 }),
+  crushers: (x, z, L) => ({ x: r2(x), z: r2(z), hx: 1.9, hz: 1.4,
+                            top: r2(L.h - 0.9), drop: r2(L.h - 1.8), speed: 0.65, phase: 0 }),
+  // cx nasce onde você clicou; ax vira um vaivém curto, senão a plataforma
+  // atravessaria o corredor inteiro e "sairia" do lugar escolhido
+  movers:   (x, z, L) => ({ z: r2(z), y: 0.25, cx: r2(x), hx: 1.5, hy: 0.25, hz: 1.5,
+                            ax: 2, speed: 0.7, phase: 0 }),
+  beams:    (x, z, L) => ({ z: r2(z), y: 1.45, kind: 'low', speed: 1.2, range: 4, phase: 0 }),
+  walls:    (x, z, L) => ({ x: r2(x), y: 1.3, z: r2(z), hx: 2.5, hy: 1.3, hz: 0.3 }),
+  covers:   (x, z, L) => ({ x: r2(x), y: 1.3, z: r2(z),
+                            hx: r2(L.w * 0.31), hy: 1.3, hz: 0.275 }),
+};
+
+// ===========================================================================
+// ADICIONAR: entra em modo de posicionamento e você CLICA onde quer. Antes o
+// item nascia no centro da visão, que quase nunca é onde ele deve ficar — dava
+// sempre dois passos: adicionar e depois arrastar. O modo continua ligado
+// depois de cada clique, para pôr vários seguidos; Esc ou botão direito sai.
+//
+// A altura vem da LAJE que foi clicada, não de um valor fixo: um pedaço posto
+// numa plataforma alta nasce alcançável, e não enterrado no chão de baixo.
+// ===========================================================================
+const YOFF = { frags: 1.1, masks: 1.05, drones: 2.2, crushers: null, movers: null };
+let placing = null;
+
+const ghost = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 10),
+  new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, depthTest: false }));
+ghost.visible = false; ghost.renderOrder = 998;
+scene.add(ghost);
+
+function startPlacing(cat) {
+  placing = (placing === cat) ? null : cat;
+  if (!placing) return stopPlacing();
+  ghost.material.color.setHex(HALOCOL[cat]);
+  ghost.visible = true;
+  CV.style.cursor = 'crosshair';
+  $('placing').textContent = `clique no chão para pôr ${ITEMNAME[cat]} · Esc para sair`;
+  $('placing').classList.add('on');
+  document.querySelectorAll('[data-add]').forEach((b) =>
+    b.style.borderColor = b.dataset.add === cat ? 'var(--gold)' : '');
+}
+function stopPlacing() {
+  placing = null; ghost.visible = false;
+  CV.style.cursor = 'default';
+  $('placing').classList.remove('on');
+  document.querySelectorAll('[data-add]').forEach((b) => b.style.borderColor = '');
+}
+document.querySelectorAll('[data-add]').forEach((b) => { b.onclick = () => startPlacing(b.dataset.add); });
+
+// Onde o mouse encosta no chão da fase. Devolve o ponto e a altura do topo da
+// laje; sem laje sob o cursor, cai no plano y=0 para ainda dar para posicionar
+// sobre um vão (uma plataforma, por exemplo).
+function floorAt(e) {
+  toNdc(e);
+  const h = ray.intersectObjects(floorMeshes, false)[0];
+  if (h) return { x: h.point.x, z: h.point.z, top: h.point.y };
+  dragPlane.setFromNormalAndCoplanarPoint(AXV.y, new THREE.Vector3(0, 0, 0));
+  if (ray.ray.intersectPlane(dragPlane, hit)) return { x: hit.x, z: hit.z, top: 0 };
+  return null;
+}
+
+function addAt(cat, x, z, top) {
+  const L = levels[cur];
+  const arr = place(cat);
+  const o = DEFAULTS[cat](snap(x), snap(z), L);
+  // altura a partir da laje clicada, cada coisa do seu jeito: a parede assenta
+  // pela metade da própria altura, a plataforma pela dela, o feixe na altura
+  // do peito acima do piso onde você clicou
+  if (YOFF[cat] != null) o.y = r2(top + YOFF[cat]);
+  else if (cat === 'walls' || cat === 'covers') o.y = r2(top + o.hy);
+  else if (cat === 'movers') o.y = r2(top + o.hy);
+  else if (cat === 'beams') o.y = r2(top + 1.45);
+  arr.push(o);
+  sel = { cat, i: arr.length - 1 };
+  save(); refresh();
+  flash(`${ITEMNAME[cat]} adicionado`);
+}
+
+// Afasta a cópia do original, no eixo que o item de fato tem: um feixe não
+// tem x, uma plataforma anda pelo cx. Sem isso a cópia nasce exatamente por
+// baixo da original e parece que nada aconteceu.
+function afasta(c) {
+  if (c.x != null) c.x = r2(c.x + 1);
+  else if (c.cx != null) c.cx = r2(c.cx + 1);
+  else c.z = r2(c.z + 2);
+  return c;
+}
+
+// Ctrl+D duplica na hora. É o jeito rápido de encher um trecho depois de
+// acertar o primeiro.
+function dupSel() {
+  if (!sel) return;
+  const arr = place(sel.cat);
+  const o = arr[sel.i]; if (!o) return;
+  arr.push(afasta(clone(o)));
+  sel = { cat: sel.cat, i: arr.length - 1 };
+  save(); refresh();
+  flash(`${ITEMNAME[sel.cat]} duplicado`);
+}
+
+// Ctrl+C / Ctrl+V. Diferente do duplicar, a área de transferência atravessa
+// FASES: dá para acertar uma prensa na fase 4 e colar a mesma na 2. Copiar lê
+// da fase montada, não de `place`, então copiar sozinho não congela nada.
+let clip = null;
+function copySel() {
+  if (!sel) return;
+  const o = SOURCE[sel.cat]()[sel.i];
+  if (!o) return;
+  clip = { cat: sel.cat, o: FIELDS[sel.cat](o) };
+  flash(`${ITEMNAME[sel.cat]} copiado`);
+}
+function pasteClip() {
+  if (!clip) { flash('nada copiado'); return; }
+  const arr = place(clip.cat);
+  arr.push(afasta(clone(clip.o)));
+  sel = { cat: clip.cat, i: arr.length - 1 };
+  save(); refresh();
+  flash(`${ITEMNAME[clip.cat]} colado`);
+}
+
+function delSel() {
+  if (!sel) return;
+  place(sel.cat).splice(sel.i, 1);
+  sel = null; save(); refresh();
+}
+$('sel-del').onclick = delSel;
+// Setas empurram o item selecionado em passos exatos: o mouse põe perto, o
+// teclado põe no lugar. Shift usa passo de 1 m em vez de 25 cm.
+const NUDGE = { ArrowLeft: [-1, 0, 0], ArrowRight: [1, 0, 0],
+                ArrowUp: [0, 0, -1], ArrowDown: [0, 0, 1],
+                PageUp: [0, 1, 0], PageDown: [0, -1, 0] };
+addEventListener('keydown', (e) => {
+  // Ctrl+Z funciona em qualquer lugar MENOS dentro de um campo de texto, onde
+  // ele é o desfazer do próprio campo e tirar isso seria pior.
+  const emCampo = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+  if ((e.ctrlKey || e.metaKey) && !emCampo) {
+    const k = e.key.toLowerCase();
+    if (k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (k === 'y') { e.preventDefault(); redo(); return; }
+    if (k === 'd') { e.preventDefault(); dupSel(); return; }
+    if (k === 'c') { e.preventDefault(); copySel(); return; }
+    if (k === 'v') { e.preventDefault(); pasteClip(); return; }
+  }
+  if (emCampo) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); delSel(); return; }
+  if (e.key === 'Escape') {
+    if (placing) stopPlacing(); else { sel = null; showSel(); }
+    return;
+  }
+  const n = NUDGE[e.key];
+  if (n && sel) {
+    e.preventDefault();
+    const m = selMesh(); if (!m) return;
+    const step = e.shiftKey ? 1 : 0.25;
+    m.position.x += n[0] * step;
+    m.position.y = Math.max(0.1, m.position.y + n[1] * step);
+    m.position.z += n[2] * step;
+    syncSelInputs(m);
+    commitSel();
+  }
+});
+
+// ===========================================================================
+// MOUSE: órbita, arrasto da cena, seleção e arrasto de item
+// ===========================================================================
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const dragPlane = new THREE.Plane();
+const hit = new THREE.Vector3();
+let mode = null, last = { x: 0, y: 0 }, grabOff = new THREE.Vector3(), grabY = 0;
+let axis = null, axisT0 = 0;
+const axisStart = new THREE.Vector3();
+
+const CV = renderer.domElement;
+
+function toNdc(e) {
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+}
+// O raio acerta o corpo OU o halo; os dois são filhos do Group do item, então
+// subimos a hierarquia até achar quem carrega o userData.
+function pickAt(e) {
+  toNdc(e);
+  for (const h of ray.intersectObjects(items.children, true)) {
+    let o = h.object;
+    while (o && !(o.userData && o.userData.cat)) o = o.parent;
+    if (o) return o;
+  }
+  return null;
+}
+
+CV.addEventListener('contextmenu', (e) => e.preventDefault());
+
+CV.addEventListener('pointerdown', (e) => {
+  CV.setPointerCapture(e.pointerId);
+  last = { x: e.clientX, y: e.clientY };
+
+  // modo de posicionar: o clique põe o item e o modo continua, para pôr vários
+  if (placing) {
+    if (e.button !== 0) { stopPlacing(); return; }
+    const p = floorAt(e);
+    if (p) addAt(placing, p.x, p.z, p.top);
+    return;
+  }
+
+  if (e.button === 2 || e.button === 1) { mode = 'pan'; CV.style.cursor = 'move'; return; }
+
+  // O gizmo tem prioridade sobre tudo: ele fica POR CIMA na tela, então tem
+  // que ser o primeiro a ser testado, senão o item atrás rouba o clique.
+  const m0 = selMesh();
+  if (gizmo.visible && m0) {
+    toNdc(e);
+    const gh = ray.intersectObjects(gizmo.children, true)[0];
+    if (gh) {
+      let o = gh.object;
+      while (o && !(o.userData && o.userData.axis)) o = o.parent;
+      if (o) {
+        axis = o.userData.axis;
+        axisStart.copy(m0.position);
+        const t = axisT(AXV[axis], axisStart);
+        if (t !== null) {
+          axisT0 = t; mode = 'axis';
+          CV.style.cursor = 'grabbing';
+          return;
+        }
+      }
+    }
+  }
+
+  const g = pickAt(e);
+  if (g) {
+    sel = { cat: g.userData.cat, i: g.userData.i };
+    mode = e.shiftKey ? 'lift' : 'move';
+    grabY = g.position.y;
+    // plano horizontal na altura do item: arrastar anda no chão, não na tela
+    dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), g.position);
+    if (ray.ray.intersectPlane(dragPlane, hit)) grabOff.copy(g.position).sub(hit);
+    CV.style.cursor = 'grabbing';
+    showSel();
+  } else {
+    mode = 'orbit'; sel = null; showSel();
+  }
+});
+
+CV.addEventListener('pointermove', (e) => {
+  const dx = e.clientX - last.x, dy = e.clientY - last.y;
+  last = { x: e.clientX, y: e.clientY };
+
+  if (placing) {                     // fantasma seguindo o cursor no chão
+    const p = floorAt(e);
+    if (p) {
+      const off = YOFF[placing] != null ? YOFF[placing] : 0.6;
+      ghost.position.set(snap(p.x), p.top + off, snap(p.z));
+    }
+    return;
+  }
+  if (!mode) {                       // só passeando: destaca o que está sob o mouse
+    hover = pickAt(e);
+    CV.style.cursor = hover ? 'grab' : 'default';
+    return;
+  }
+  if (mode === 'orbit') { orb.th += dx * 0.006; orb.ph -= dy * 0.006; applyCam(); return; }
+  if (mode === 'pan') {
+    const f = orb.dist * 0.0016;
+    const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+    orb.tgt.addScaledVector(right, -dx * f).addScaledVector(up, dy * f);
+    applyCam(); syncNav(); return;
+  }
+
+  const m = selMesh(); if (!m) return;
+
+  // arrasto preso a um eixo: as outras duas coordenadas ficam INTACTAS
+  if (mode === 'axis') {
+    toNdc(e);
+    const t = axisT(AXV[axis], axisStart);
+    if (t === null) return;
+    const d2 = t - axisT0;
+    m.position.copy(axisStart);
+    if (axis === 'x') m.position.x = snap(axisStart.x + d2);
+    if (axis === 'y') m.position.y = Math.max(0.1, snap(axisStart.y + d2));
+    if (axis === 'z') m.position.z = snap(axisStart.z + d2);
+    syncSelInputs(m);
+    return;
+  }
+
+  if (mode === 'lift') {
+    m.position.y = Math.max(0.1, snap(m.position.y - dy * 0.03));
+  } else {
+    toNdc(e);
+    if (ray.ray.intersectPlane(dragPlane, hit)) {
+      m.position.x = snap(hit.x + grabOff.x);
+      m.position.z = snap(hit.z + grabOff.z);
+      m.position.y = grabY;
+    }
+  }
+  syncSelInputs(m);
+});
+
+CV.addEventListener('pointerup', (e) => {
+  CV.releasePointerCapture(e.pointerId);
+  if (mode === 'move' || mode === 'lift' || mode === 'axis') commitSel();
+  mode = null; axis = null;
+  CV.style.cursor = hover ? 'grab' : 'default';
+});
+
+// duplo clique num item: a câmera vai até ele. É o atalho para sair da visão
+// geral (onde tudo é pequeno) e trabalhar de perto.
+CV.addEventListener('dblclick', (e) => {
+  const g = pickAt(e);
+  if (!g) return;
+  orb.tgt.copy(g.position); orb.dist = 11; applyCam();
+});
+renderer.domElement.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  orb.dist *= Math.exp(e.deltaY * 0.0012);
+  applyCam();
+}, { passive: false });
+
+// grava a posição do mesh arrastado de volta no modelo
+function commitSel(key) {
+  const m = selMesh(); if (!m || !sel) return;
+  const arr = place(sel.cat), o = arr[sel.i]; if (!o) return;
+  if (sel.cat === 'movers') {
+    // x da plataforma é o CENTRO do vaivém, não uma posição fixa
+    o.cx = r2(m.position.x); o.z = r2(m.position.z); o.y = r2(m.position.y);
+  } else if (sel.cat === 'crushers') {
+    o.x = r2(m.position.x); o.z = r2(m.position.z); o.top = r2(m.position.y);
+  } else if (sel.cat === 'beams') {
+    // o feixe atravessa o corredor inteiro: x não existe para ele
+    o.z = r2(m.position.z); o.y = r2(m.position.y);
+    // quem manda no que a AYA ensina é a ALTURA: rente ao chão pede pulo,
+    // na altura do peito pede agachar
+    o.kind = o.y < 0.9 ? 'high' : 'low';
+  } else {
+    o.x = r2(m.position.x); o.y = r2(m.position.y); o.z = r2(m.position.z);
+    // arrastar não deve perder para onde o drone estava olhando
+    if (sel.cat === 'drones' && o.yaw == null) o.yaw = 0;
+  }
+  // um arrasto inteiro = um passo de histórico (chamado no soltar, sem chave);
+  // digitar em X/Y/Z agrupa pela chave
+  save(key); refresh();
+}
+
+// ------------------------------------------------------------- painel do item
+function showSel() {
+  const p = $('sel');
+  if (!sel) { p.classList.remove('on'); return; }
+  p.classList.add('on');
+  $('sel-tag').textContent = `${ITEMNAME[sel.cat]} ${sel.i + 1}`;
+  const m = selMesh(); if (m) syncSelInputs(m);
+
+  // campos extras que só fazem sentido em alguns itens
+  const ex = $('sel-extra'); ex.innerHTML = '';
+  // Os valores mostrados vêm da fase montada, que existe sempre. Só ESCREVER
+  // congela a categoria em `place` — selecionar um item não deveria, sozinho,
+  // transformar uma fase sorteada em fase desenhada.
+  const o = SOURCE[sel.cat]()[sel.i];
+  if (!o) return;
+  // O motor guarda MEIAS-medidas (hx = metade da largura). Mostrar isso cru
+  // faria você digitar 1,25 para ter 2,5 m de parede. O terceiro número de
+  // cada linha é o fator de conversão: a caixa mostra metro de verdade.
+  const extra =
+      sel.cat === 'crushers' ? [['hx', 'larg', 2], ['hz', 'prof', 2], ['speed', 'vel', 1]]
+    : sel.cat === 'movers'   ? [['ax', 'curso', 2], ['hx', 'larg', 2], ['speed', 'vel', 1]]
+    // o motor guarda o ângulo em radianos; a caixa mostra GRAUS, que é o que
+    // se consegue pensar ao olhar para um mapa
+    : sel.cat === 'drones'   ? [['yaw', 'olhar°', 180 / Math.PI]]
+    : sel.cat === 'beams'    ? [['speed', 'vel', 1], ['range', 'curso', 2]]
+    : sel.cat === 'walls' || sel.cat === 'covers'
+                             ? [['hx', 'larg', 2], ['hy', 'alt', 2], ['hz', 'esp', 2]]
+    : [];
+  for (const [k, lab, mult] of extra) {
+    const f = mult || 1;
+    const s = document.createElement('span'); s.textContent = ' ' + lab + ' ';
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.step = '0.1'; inp.min = '0.1';
+    inp.value = r2((o[k] || 0) * f);
+    inp.oninput = () => {
+      const t = place(sel.cat)[sel.i];
+      if (t) { t[k] = r2(+inp.value / f); save('extra' + sel.cat + sel.i + k); refresh(); }
+    };
+    ex.appendChild(s); ex.appendChild(inp);
+  }
+}
+function syncSelInputs(m) {
+  $('sel-x').value = r2(m.position.x); $('sel-y').value = r2(m.position.y); $('sel-z').value = r2(m.position.z);
+}
+for (const ax of ['x', 'y', 'z']) {
+  $('sel-' + ax).oninput = () => {
+    const m = selMesh(); if (!m) return;
+    m.position[ax] = +$('sel-' + ax).value;
+    commitSel('xyz' + ax + sel.cat + sel.i);
+  };
+}
+
+// ===========================================================================
+// FORMULÁRIO
+// ===========================================================================
+const hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0').slice(-6);
+const unhex = (s) => parseInt(s.slice(1), 16);
+
+const SEGNAME = {
+  [SEG.PLAIN]: 'corredor reto', [SEG.GAP]: 'vão (pular)', [SEG.LOW]: 'teto baixo',
+  [SEG.BEAM_LOW]: 'feixe no peito', [SEG.BEAM_HIGH]: 'feixe no chão',
+  [SEG.WALLS]: 'meias-paredes', [SEG.SCAN]: 'parede-scanner', [SEG.CAMS]: 'câmeras',
+  [SEG.DRONES]: 'drones', [SEG.PLAT]: 'plataformas', [SEG.CRUSH]: 'prensas',
+  [SEG.ARENA]: 'arena (chefe)',
+};
+const SEGCOLOR = {
+  [SEG.PLAIN]: '#2b3a52', [SEG.GAP]: '#FF2D9B', [SEG.LOW]: '#8a7a3a',
+  [SEG.BEAM_LOW]: '#FF2D9B', [SEG.BEAM_HIGH]: '#FF2D9B', [SEG.WALLS]: '#6a5aa0',
+  [SEG.SCAN]: '#00E5FF', [SEG.CAMS]: '#00b0c8', [SEG.DRONES]: '#FF2D9B',
+  [SEG.PLAT]: '#00E5FF', [SEG.CRUSH]: '#ff6a3a', [SEG.ARENA]: '#a866ff',
+};
+// segundo número da linha: vão para GAP, quantidade para o resto
+const SECOND = { [SEG.GAP]: 'gap', [SEG.BEAM_LOW]: 'n', [SEG.BEAM_HIGH]: 'n', [SEG.WALLS]: 'n',
+  [SEG.CAMS]: 'n', [SEG.DRONES]: 'n', [SEG.PLAT]: 'n', [SEG.CRUSH]: 'n' };
+// qual categoria de item o "nº" de cada trecho gera — é o que fica sem efeito
+// quando aquela categoria passa a ser posicionada à mão
+const SEGCAT = { [SEG.DRONES]: 'drones', [SEG.PLAT]: 'movers', [SEG.CRUSH]: 'crushers',
+                 [SEG.BEAM_LOW]: 'beams', [SEG.BEAM_HIGH]: 'beams',
+                 [SEG.WALLS]: 'covers' };
+
+function buildTabs() {
+  const t = $('tabs'); t.innerHTML = '';
+  levels.forEach((L, i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<b>${i + 1}</b>${L.name}`;
+    b.onclick = () => select(i);
+    t.appendChild(b);
+  });
+}
+function paintTabs() { [...$('tabs').children].forEach((b, i) => b.classList.toggle('on', i === cur)); }
+
+function fillForm() {
+  const L = levels[cur];
+  $('f-time').value = L.time; $('f-need').value = L.need;
+  $('f-w').value = L.w; $('f-h').value = L.h;
+  $('f-name').value = L.name; $('f-sub').value = L.sub || '';
+  $('f-mask').checked = !!L.mask; $('f-hunt').checked = !!L.hunt; $('f-boss').checked = !!L.boss;
+  const p = L.pal;
+  $('p-fog').value = hex(p.fog); $('p-amb').value = hex(p.amb);
+  $('p-sky').value = hex(p.sky); $('p-accent').value = hex(p.accent);
+  $('p-fogD').value = p.fogD; $('p-ambI').value = p.ambI;
+  $('p-skyImg').value = p.skyImg || ''; $('p-wallImg').value = p.wallImg || '';
+  $('p-floorImg').value = p.floorImg || '';
+  $('f-notes').value = notes[cur] || '';
+  fillBoss();
+  buildSegs();
+}
+
+// Ajustes do chefe. Só aparecem na fase marcada como chefe, e cada campo tem
+// um padrão vindo do motor: o que você não mexer nem chega a ser gravado, para
+// o levels.js não encher de números repetidos do padrão.
+const BOSSDEF = { hp: 26, sweep: 5.5, salvo: 3.4, open: 3.2, ballCd: 0.5,
+                  ballSpd: 13, move: 0.85, orbit: 7.5, spawn: 2, spawnMax: 6 };
+function fillBoss() {
+  const L = levels[cur];
+  $('bosscfg').style.display = L.boss ? '' : 'none';
+  if (!L.boss) return;
+  const c = L.bossCfg || {};
+  for (const k of Object.keys(BOSSDEF)) {
+    $('bc-' + k).value = c[k] != null ? c[k] : BOSSDEF[k];
+  }
+}
+for (const k of Object.keys(BOSSDEF)) {
+  $('bc-' + k).addEventListener('input', () => {
+    const L = levels[cur];
+    const v = +$('bc-' + k).value;
+    L.bossCfg = L.bossCfg || {};
+    if (v === BOSSDEF[k]) delete L.bossCfg[k]; else L.bossCfg[k] = v;
+    if (!Object.keys(L.bossCfg).length) delete L.bossCfg;
+    save('bc' + k + cur); refresh();
+  });
+}
+// o id do campo vira a chave de agrupamento: digitar num campo é UM passo de
+// histórico, não um por tecla
+function bind(id, fn, ev = 'input') {
+  $(id).addEventListener(ev, () => { fn(levels[cur], $(id)); save(id + cur); refresh(); });
+}
+bind('f-time', (L, e) => L.time = +e.value);
+bind('f-need', (L, e) => L.need = +e.value);
+bind('f-w', (L, e) => L.w = +e.value);
+bind('f-h', (L, e) => L.h = +e.value);
+bind('f-name', (L, e) => { L.name = e.value; buildTabs(); paintTabs(); });
+bind('f-sub', (L, e) => L.sub = e.value);
+bind('f-mask', (L, e) => { if (e.checked) L.mask = true; else delete L.mask; }, 'change');
+bind('f-hunt', (L, e) => { if (e.checked) L.hunt = true; else delete L.hunt; }, 'change');
+bind('f-boss', (L, e) => { if (e.checked) L.boss = true; else delete L.boss; fillBoss(); }, 'change');
+bind('p-fog', (L, e) => L.pal.fog = unhex(e.value));
+bind('p-amb', (L, e) => L.pal.amb = unhex(e.value));
+bind('p-sky', (L, e) => L.pal.sky = unhex(e.value));
+bind('p-accent', (L, e) => L.pal.accent = unhex(e.value));
+bind('p-fogD', (L, e) => L.pal.fogD = +e.value);
+bind('p-ambI', (L, e) => L.pal.ambI = +e.value);
+bind('p-skyImg', (L, e) => L.pal.skyImg = e.value);
+bind('p-wallImg', (L, e) => L.pal.wallImg = e.value);
+bind('p-floorImg', (L, e) => L.pal.floorImg = e.value);
+$('f-notes').addEventListener('input', () => { notes[cur] = $('f-notes').value; save('notes' + cur); });
+
+function buildSegs() {
+  const host = $('segs'); host.innerHTML = '';
+  const L = levels[cur];
+  L.segs.forEach((s, i) => {
+    const row = document.createElement('div'); row.className = 'seg';
+    const bar = document.createElement('div'); bar.className = 'bar';
+    bar.style.background = SEGCOLOR[s.t] || '#555'; row.appendChild(bar);
+
+    const selT = document.createElement('select');
+    Object.values(SEG).forEach((v) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = SEGNAME[v] || v; o.selected = v === s.t;
+      selT.appendChild(o);
+    });
+    selT.onchange = () => { s.t = selT.value; save(); buildSegs(); refresh(); };
+    row.appendChild(selT);
+
+    const num = (key, step) => {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = step;
+      inp.value = s[key] != null ? s[key] : '';
+      inp.oninput = () => {
+        if (inp.value === '') delete s[key]; else s[key] = +inp.value;
+        save('seg' + cur + i + key); refresh();
+      };
+      row.appendChild(inp); return inp;
+    };
+    num('len', 1);
+    const k2 = SECOND[s.t];
+    const nInp = k2 ? num(k2, k2 === 'gap' ? 0.1 : 1) : null;
+    if (!k2) { const sp = document.createElement('span'); sp.style.width = '44px'; row.appendChild(sp); }
+    const fInp = num('frags', 1);
+
+    // Se a categoria já foi congelada em `place`, o número do trecho não gera
+    // mais nada — quem manda são as posições à mão. Antes isso era invisível:
+    // digitar 5 em "nº" de drones não fazia absolutamente nada, sem aviso.
+    const froz = L.place || {};
+    const inerte = (inp, cat) => {
+      if (!inp || !froz[cat] || !froz[cat].length) return;
+      inp.classList.add('inerte');
+      inp.title = `${ITEMNAME[cat]} está À MÃO nesta fase: este número não vale mais.\n` +
+        `Use o botão "+ ${ITEMNAME[cat]}" no 3D, ou solte a categoria em À MÃO logo abaixo.`;
+    };
+    if (k2 === 'n') inerte(nInp, SEGCAT[s.t]);
+    inerte(fInp, 'frags');
+
+    const del = document.createElement('button');
+    del.textContent = '✕';
+    del.onclick = () => { L.segs.splice(i, 1); save(); buildSegs(); refresh(); };
+    row.appendChild(del);
+    host.appendChild(row);
+  });
+}
+$('b-addseg').onclick = () => { levels[cur].segs.push({ t: SEG.PLAIN, len: 12 }); save(); buildSegs(); refresh(); };
+
+// Mostra quais categorias saíram do sorteio e viraram desenho, com o total de
+// cada uma e um ✕ para devolvê-la ao gerador. Sem este painel, congelar era um
+// caminho só de ida e invisível: o editor passava a ignorar os números do
+// trecho sem dizer que estava fazendo isso.
+function buildFrozen() {
+  const L = levels[cur], host = $('frozen');
+  const p = L.place || {};
+  const cats = Object.keys(p).filter((k) => p[k] && p[k].length);
+  if (!cats.length) {
+    host.innerHTML = '<div class="froz-none">Tudo sorteado pela seed. Mover ou adicionar ' +
+      'um item congela aquela categoria, e a partir daí o número do trecho não vale mais para ela.</div>';
+    return;
+  }
+  host.innerHTML = '<div class="froz-t">À MÃO — o número do trecho não vale para:</div>';
+  for (const k of cats) {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `${ITEMNAME[k]} <b>${p[k].length}</b>`;
+    const x = document.createElement('button');
+    x.textContent = '✕';
+    x.title = `devolver ${ITEMNAME[k]} ao sorteio da seed (perde as posições à mão)`;
+    x.onclick = () => {
+      if (!confirm(`Descartar as posições à mão de ${ITEMNAME[k]} desta fase e voltar ao sorteio?`)) return;
+      delete L.place[k];
+      if (!Object.keys(L.place).length) delete L.place;
+      sel = null; save(); buildSegs(); refresh();
+    };
+    chip.appendChild(x);
+    host.appendChild(chip);
+  }
+}
+
+// ===========================================================================
+// AVISOS: só aparece o que está errado
+// ===========================================================================
+function checks(L) {
+  const out = [];
+  const tAir = 2 * P.JUMP / P.GRAV, jump = P.SPEED * tAir;
+  const total = Math.abs(lv.end), walk = total / P.SPEED;
+
+  // vãos reais, lidos da geometria montada
+  const fl = lv.blocks.filter((b) => b.kind === 'floor')
+    .map((b) => ({ a: b.z + b.hz, b: b.z - b.hz })).sort((p, q) => q.a - p.a);
+  let worst = 0;
+  for (let i = 0; i < fl.length - 1; i++) {
+    const hole = fl[i].b - fl[i + 1].a;
+    if (hole > worst) worst = hole;
+  }
+  if (worst > jump)
+    out.push(['bad', `Vão de <b>${worst.toFixed(2)} m</b> — o pulo alcança
+      ${jump.toFixed(2)} m. Intransponível.`]);
+  else if (worst > jump * 0.8)
+    out.push(['warn', `Maior vão usa ${Math.round(worst / jump * 100)}% do alcance do pulo.`]);
+
+  if (lv.frags.length < L.need)
+    out.push(['bad', `A fase exige <b>${L.need}</b> pedaços e só há
+      <b>${lv.frags.length}</b> no mapa: o portão não abriria.`]);
+  if (L.mask && !lv.maskItems.length)
+    out.push(['bad', 'Fase com máscara, mas nenhuma máscara no mapa.']);
+  if (L.hunt && !lv.drones.length)
+    out.push(['bad', 'Fase de caçada sem nenhum drone: a porta nunca abre.']);
+  if (L.segs.some((s) => s.t === SEG.SCAN) && !L.mask)
+    out.push(['bad', 'Tem parede-scanner e não tem máscara: passagem impossível.']);
+  if (L.time < walk * 1.6)
+    out.push(['warn', `<b>${L.time} s</b> para um corredor de ${walk.toFixed(0)} s andando reto.`]);
+
+  // item à mão pendurado sobre o vazio: o risco de congelar posições
+  const noFloor = (o) => !lv.blocks.some((b) => b.kind === 'floor' &&
+    Math.abs(o.x - b.x) <= b.hx && Math.abs(o.z - b.z) <= b.hz);
+  const soltos = lv.frags.filter(noFloor).length + lv.maskItems.filter(noFloor).length;
+  if (soltos) out.push(['bad', `<b>${soltos}</b> item(ns) sem chão embaixo — inalcançável.`]);
+
+  out.push(['info', `${total.toFixed(0)} m · mínimo ${walk.toFixed(0)} s · pulo alcança
+    ${jump.toFixed(2)} m e sobe ${(P.JUMP * P.JUMP / (2 * P.GRAV)).toFixed(2)} m` +
+    (L.place ? ' · <b>posições à mão</b>' : ' · posições sorteadas pela seed')]);
+  return out;
+}
+
+// ===========================================================================
+function refresh() {
+  const L = levels[cur];
+  try {
+    lv = buildLevel(clone(L), mulberry32(seedReal(cur)));
+  } catch (e) {
+    $('warn').innerHTML = `<div class="w bad">erro ao montar: ${e.message}</div>`;
+    return;
+  }
+  buildScene();
+  showSel();
+  buildFrozen();
+  $('warn').innerHTML = checks(L).map(([c, t]) => `<div class="w ${c}">${t}</div>`).join('');
+}
+
+function select(i) {
+  cur = i; sel = null;
+  paintTabs(); fillForm(); refresh();
+  // Enquadra a fase inteira, mas mais perto do que antes: a visão geral só
+  // serve se der para acertar um item nela.
+  const total = Math.abs(lv.end);
+  orb.tgt.set(0, 1, -total / 2);
+  orb.dist = total * 0.68 + 10; orb.th = -Math.PI / 2; orb.ph = 0.85;
+  hover = null;
+  applyCam(); syncNav();
+}
+
+// ===========================================================================
+// EXPORTAR
+// ===========================================================================
+const SEGKEY = Object.fromEntries(Object.entries(SEG).map(([k, v]) => [v, k]));
+const h6 = (n) => '0x' + (n >>> 0).toString(16).padStart(6, '0').toUpperCase().slice(-6);
+const q = (s) => "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+// Serializa um objeto simples. TEXTO PRECISA DE ASPAS: sem isto, o `kind` dos
+// feixes saía como `kind: low` — um identificador solto, não uma string. O
+// arquivo exportado nem carregava, e o erro só aparecia ao abrir o jogo, longe
+// de onde foi causado.
+const obj = (o) => '{ ' + Object.entries(o)
+  .map(([k, v]) => `${k}: ${typeof v === 'string' ? q(v) : v}`)
+  .join(', ') + ' }';
+
+function genLevels() {
+  const body = levels.map((L, i) => {
+    const cm = (notes[i] || '').split('\n').filter(Boolean).map((l) => '    // ' + l).join('\n');
+    const p = L.pal;
+    const flags = [];
+    if (L.mask) flags.push('mask: true');
+    if (L.hunt) flags.push('hunt: true');
+    if (L.boss) flags.push('boss: true');
+    if (L.masks && L.masks !== 1) flags.push(`masks: ${L.masks}`);
+    const segs = L.segs.map((s) => {
+      const parts = [`t: SEG.${SEGKEY[s.t] || 'PLAIN'}`, `len: ${s.len}`];
+      if (s.gap != null) parts.push(`gap: ${s.gap}`);
+      if (s.n != null) parts.push(`n: ${s.n}`);
+      if (s.frags != null) parts.push(`frags: ${s.frags}`);
+      return '      { ' + parts.join(', ') + ' },';
+    }).join('\n');
+
+    // só os ajustes que diferem do padrão do motor
+    const bcTxt = (L.boss && L.bossCfg && Object.keys(L.bossCfg).length)
+      ? `\n    bossCfg: ${obj(L.bossCfg)},` : '';
+
+    let placeTxt = '';
+    if (L.place) {
+      const cats = Object.entries(L.place).filter(([, v]) => v && v.length);
+      if (cats.length) {
+        placeTxt = '\n    // Posições postas à mão no editor: mandam sobre o sorteio.\n    place: {\n' +
+          cats.map(([k, arr]) => `      ${k}: [\n` +
+            arr.map((o) => '        ' + obj(o) + ',').join('\n') + '\n      ],').join('\n') +
+          '\n    },';
+      }
+    }
+
+    return `  {
+${cm ? cm + '\n' : ''}    name: ${q(L.name)},
+    pal: { fog: ${h6(p.fog)}, fogD: ${p.fogD}, amb: ${h6(p.amb)}, ambI: ${p.ambI}, sky: ${h6(p.sky)}, accent: ${h6(p.accent)},
+           skyImg: ${q(p.skyImg || '')},
+           wallImg: ${q(p.wallImg || '')},
+           floorImg: ${q(p.floorImg || '')} },
+    sub: ${q(L.sub || '')},
+    time: ${L.time}, need: ${L.need}, w: ${L.w}, h: ${L.h},${flags.length ? '\n    ' + flags.join(', ') + ',' : ''}
+    segs: [
+${segs}
+    ],${bcTxt}${placeTxt}
+  },`;
+  }).join('\n');
+  return 'export const LEVELS = [\n' + body + '\n];';
+}
+function fullFile() {
+  const block = genLevels();
+  if (!srcText) return block;
+  const r = blockRange(srcText);
+  return r ? srcText.slice(0, r.start) + block + srcText.slice(r.end) : block;
+}
+$('b-export').onclick = () => { $('dlg-txt').value = fullFile(); $('dlg').showModal(); };
+$('dlg-close').onclick = () => $('dlg').close();
+$('dlg-copy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('dlg-txt').value); $('dlg-copy').textContent = 'copiado!'; }
+  catch (e) { $('dlg-txt').select(); }
+  setTimeout(() => $('dlg-copy').textContent = 'copiar', 1400);
+};
+$('dlg-dl').onclick = () => {
+  const b = new Blob([$('dlg-txt').value], { type: 'text/javascript' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = 'levels.js'; a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$('b-play').onclick = () => { save(); window.open(`./index.html?fase=${cur + 1}&edit=1`, '_blank'); };
+$('b-reset').onclick = () => {
+  if (!confirm(`Restaurar a fase ${cur + 1} como está no levels.js?`)) return;
+  levels[cur] = clone(ORIG[cur]); save(); buildTabs(); select(cur);
+};
+$('b-resetall').onclick = () => {
+  if (!confirm('Descartar TODAS as edições?')) return;
+  localStorage.removeItem(KEY); levels = clone(ORIG); buildTabs(); select(0);
+};
+
+// ===========================================================================
+$('b-undo').onclick = undo;
+$('b-redo').onclick = redo;
+
+buildTabs();
+select(0);
+// ponto zero do histórico: sem isto a PRIMEIRA edição não teria como ser
+// desfeita, porque não haveria estado anterior guardado
+lastSnap = JSON.stringify({ levels, notes });
+paintHist();
+
+// ---------------------------------------------------------------- voar pela fase
+// WASD anda com a câmera, Q e E descem e sobem. A velocidade acompanha o zoom:
+// de longe cada passo é grande, de perto vira ajuste fino — senão navegar uma
+// fase de 70 m e ajustar um item de 40 cm exigiriam velocidades diferentes.
+const keys = {};
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.key.toLowerCase()] = true;
+});
+addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+// "IR PARA": leva a câmera a qualquer ponto do corredor, da entrada (0) ao
+// portão (100). Numa fase de 70 m, procurar um trecho girando a órbita é
+// trabalhoso; aqui é um arrasto só. O controle também acompanha a câmera
+// quando você voa com WASD, então ele sempre diz onde você está.
+function syncNav() {
+  if (!lv) return;
+  const total = Math.abs(lv.end) || 1;
+  const pct = Math.max(0, Math.min(100, (-orb.tgt.z / total) * 100));
+  $('nav').value = pct;
+  $('nav-v').textContent = Math.round(-orb.tgt.z) + 'm';
+}
+$('nav').addEventListener('input', () => {
+  const total = Math.abs(lv.end) || 1;
+  orb.tgt.z = -(+$('nav').value / 100) * total;
+  $('nav-v').textContent = Math.round(-orb.tgt.z) + 'm';
+  applyCam();
+});
+
+function fly(dt) {
+  const sp = orb.dist * 1.1 * dt;
+  const fwd = new THREE.Vector3();
+  camera.getWorldDirection(fwd); fwd.y = 0;
+  if (fwd.lengthSq() < 1e-6) return;
+  fwd.normalize();
+  const rgt = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+  rgt.y = 0; rgt.normalize();
+  let moved = false;
+  const go = (v, k) => { orb.tgt.addScaledVector(v, k * sp); moved = true; };
+  if (keys.w) go(fwd, 1); if (keys.s) go(fwd, -1);
+  if (keys.d) go(rgt, 1); if (keys.a) go(rgt, -1);
+  if (keys.e) go(AXV.y, 1); if (keys.q) go(AXV.y, -1);
+  if (moved) { applyCam(); syncNav(); }
+}
+
+// Laço de desenho. É aqui que o halo é reescalado para ocupar sempre o mesmo
+// tanto de tela, independente da distância da câmera, e que ele acende quando
+// está sob o mouse (0,38) ou pego (0,58). O gizmo segue a mesma regra: tamanho
+// constante na tela, para as setas serem pegáveis de qualquer distância.
+const clock = new THREE.Clock();
+(function loop() {
+  requestAnimationFrame(loop);
+  fly(Math.min(0.05, clock.getDelta()));
+
+  for (const g of items.children) {
+    const d = camera.position.distanceTo(g.position);
+    g.userData.halo.scale.setScalar(Math.max(0.5, Math.min(7, d * 0.022)));
+    const isSel = sel && g.userData.cat === sel.cat && g.userData.i === sel.i;
+    g.userData.halo.material.opacity = isSel ? 0.58 : (g === hover ? 0.38 : 0.15);
+  }
+
+  const m = selMesh();
+  gizmo.visible = !!m;
+  if (m) {
+    gizmo.position.copy(m.position);
+    gizmo.scale.setScalar(Math.max(0.6, Math.min(9, camera.position.distanceTo(m.position) * 0.055)));
+  }
+
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>

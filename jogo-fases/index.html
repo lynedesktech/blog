@@ -84,6 +84,19 @@
   #maskfill{position:absolute;inset:0;transform-origin:left;background:var(--cyan)}
   #hud2d .phase{margin-top:.4rem;padding-top:.35rem;border-top:1px solid rgba(255,201,60,.3);
     color:var(--gold);font-size:.66rem;letter-spacing:.14em}
+  /* barra do chefe: no alto e no centro, longe do painel da esquerda */
+  #bossbar{position:fixed;top:.9rem;left:50%;transform:translateX(-50%);z-index:14;display:none;
+    width:min(520px,72vw);pointer-events:none;text-align:center}
+  #bossbar.on{display:block}
+  #bossbar .nome{font-size:.62rem;letter-spacing:.24em;color:var(--mag);font-weight:800;
+    text-shadow:0 0 12px rgba(255,45,155,.6)}
+  #bossbar .lab{font-size:.5rem;letter-spacing:.16em;color:#8fa0b4;margin-top:.1rem}
+  #bossbar .trilho{height:.6rem;margin-top:.25rem;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,45,155,.5);position:relative;overflow:hidden}
+  #bossfill{position:absolute;inset:0;transform-origin:left;background:var(--mag);
+    box-shadow:0 0 18px rgba(255,45,155,.8);transition:transform .18s ease-out}
+  #bossbar .estagio{font-size:.55rem;letter-spacing:.14em;margin-top:.2rem;color:var(--gold)}
+
   #aya2d{position:fixed;left:50%;transform:translateX(-50%);bottom:4.2rem;z-index:13;display:none;pointer-events:none;
     max-width:min(680px,92vw);background:rgba(5,2,12,.88);border:1px solid rgba(255,201,60,.55);
     padding:.65rem 1rem;font-size:.92rem;line-height:1.45}
@@ -168,6 +181,12 @@
     <span style="display:flex;align-items:center;gap:.5rem"><span id="maskbar"><span id="maskfill"></span></span><span id="hv-mask" style="font-size:.62rem;color:#8fa0b4"></span></span></div>
   <div class="phase" id="hv-phase"></div>
 </div>
+<div id="bossbar">
+  <div class="nome" id="boss-nome"></div>
+  <div class="lab" id="boss-lab"></div>
+  <div class="trilho"><span id="bossfill"></span></div>
+  <div class="estagio" id="boss-estagio"></div>
+</div>
 <div id="aya2d"><b id="aya2d-name"></b><span id="aya2d-text"></span></div>
 <div id="banner2d"><h3 id="banner2d-t"></h3><p id="banner2d-s"></p></div>
 <div id="toast"></div>
@@ -219,8 +238,23 @@
 </section>
 
 <script type="module">
-import { Game } from './src/main.js';
+import { Game, LEVELS } from './src/main.js';
 import { STR } from './src/strings.js';
+
+// ?edit=1: joga as fases salvas pelo editor.html (localStorage deste
+// navegador) no lugar das do levels.js. Serve para testar um ajuste antes de
+// exportar o arquivo. SEM o parâmetro nada aqui roda: produção nunca lê o
+// storage, então uma edição esquecida no navegador não muda o site no ar.
+if (new URLSearchParams(location.search).has('edit')) {
+  try {
+    const d = JSON.parse(localStorage.getItem('corredor.editor.v1') || 'null');
+    if (d && Array.isArray(d.levels) && d.levels.length) {
+      LEVELS.length = 0;
+      for (const l of d.levels) LEVELS.push(l);
+      console.info('[editor] jogando com as fases do editor:', LEVELS.length);
+    }
+  } catch (e) { console.warn('[editor] não consegui ler as fases editadas:', e); }
+}
 
 const $ = (id) => document.getElementById(id);
 const isTouch = matchMedia('(hover:none)').matches || navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
@@ -283,7 +317,7 @@ $('b-cred-back').onclick = () => show(game.mode === 'over' ? 's-res' : 's-title'
 // leva uns dois minutos e meio, que uma apresentacao nao tem.
 const FASE_URL = (() => {
   const n = parseInt(new URLSearchParams(location.search).get('fase'), 10);
-  return Number.isFinite(n) && n >= 1 && n <= 5 ? n - 1 : 0;
+  return Number.isFinite(n) && n >= 1 && n <= LEVELS.length ? n - 1 : 0;
 })();
 function play() { hideAll(); game.start(FASE_URL); }
 $('b-flat').onclick = play;
@@ -359,7 +393,31 @@ setInterval(() => {
   const jogando = game.mode === 'playing' && s && !game.renderer.xr.isPresenting &&
     !document.querySelector('.screen.on');
   $('hud2d').classList.toggle('on', jogando);
-  if (!jogando) { $('aya2d').classList.remove('on'); $('banner2d').classList.remove('on'); lastFrags = -1; return; }
+  if (!jogando) {
+    $('aya2d').classList.remove('on'); $('banner2d').classList.remove('on');
+    $('bossbar').classList.remove('on');
+    lastFrags = -1; return;
+  }
+
+  // barra do chefe: só existe na fase que tem chefe, e some quando ele cai
+  const bs = s.boss;
+  $('bossbar').classList.toggle('on', !!bs && bs.hp > 0);
+  if (bs && bs.hp > 0) {
+    // A caixa de OBJETIVO fica no topo e muda de altura com a quebra de linha:
+    // com posição fixa, a barra caía por cima dela. Aqui ela é empurrada para
+    // logo abaixo, medindo a altura real da caixa a cada quadro.
+    const rh = $('hint').getBoundingClientRect();
+    $('bossbar').style.top = (rh.height ? rh.bottom + 10 : 16) + 'px';
+    $('boss-nome').textContent = STR.boss_name;
+    $('boss-lab').textContent = STR.hud_bossbar;
+    $('bossfill').style.transform = `scaleX(${Math.max(0, bs.hp / bs.maxHp)})`;
+    // o estágio é a informação que decide o que fazer no segundo seguinte
+    $('boss-estagio').textContent =
+      bs.fase === 'aberto' ? '◉ LENTE ABERTA — ATIRE'
+      : bs.fase === 'rajada' ? '● RAJADA — DESVIE'
+      : '≡ VARREDURA — AGACHE OU PULE';
+    $('boss-estagio').style.color = bs.fase === 'aberto' ? 'var(--cyan)' : 'var(--gold)';
+  }
 
   // números grandes e sempre no mesmo lugar
   if (s.hunt) {

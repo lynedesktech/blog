@@ -78,8 +78,26 @@ export const STR = {
     hunt_done: 'Todos os drones no chão. Se a máscara já é sua, a porta te espera.',
     hurt: 'Você foi apagado do quadro. Levanta.',
     boss: 'O olho central. Ele varre a sala com o feixe, então agache. Quando a lente abrir, atire.',
+    boss_beams: 'São dois feixes: o de cima pede agachar, o rente ao chão pede pulo. Eles giram em sentidos contrários, então olhe qual está vindo.',
+    boss_open: 'A lente abriu. É agora — é a única hora em que ele sente.',
+    boss_ajuda: 'Ele está chamando reforço. Derrube os drones ou corra deles, mas não perca a abertura da lente.',
     win: 'Reconhecida. Foi um trabalho assim, pedaço por pedaço, que fez três gigantes corrigirem seus sistemas.',
   },
+
+  // ---------------------------------------------------------------- o chefe
+  // Ele não xinga: fala como um sistema de auditoria justificando a própria
+  // decisão. É o que torna o confronto o assunto do jogo e não só uma luta.
+  boss_name: 'OLHO CENTRAL',
+  boss: {
+    intro: 'CONFIANÇA DA CORRESPONDÊNCIA: 3%. RECOMENDAÇÃO: NEGAR ACESSO.',
+    salvo: 'AMOSTRA INSUFICIENTE. COLETANDO À FORÇA.',
+    spawn: 'CHAMANDO VERIFICADORES AUXILIARES.',
+    half: 'ANOMALIA PERSISTENTE. AUMENTANDO O RIGOR DO FILTRO.',
+    low: 'INTEGRIDADE CRÍTICA. O REGISTRO NÃO PODE SER CORRIGIDO.',
+    dead: 'MODELO INVALIDADO. REAUDITORIA OBRIGATÓRIA.',
+    trancou: 'CÂMARA SELADA. A AUDITADA NÃO SAI ANTES DO VEREDITO.',
+  },
+  hud_bossbar: 'INTEGRIDADE DO MODELO',
 
   phase_intro: 'FASE',
   phase_done: 'FASE CONCLUÍDA',
