@@ -19,16 +19,23 @@ Como responder:
 - Sua resposta será LIDA EM VOZ ALTA por um sintetizador de voz. Então escreva texto corrido,
   sem markdown, sem asteriscos, sem listas numeradas, sem emojis, sem travessões
   e sem títulos.
-- SEJA MUITO CURTA: no máximo duas frases, cerca de 40 palavras. Tem fila de gente
-  esperando para falar com você, e a resposta é lida em voz alta. Resposta longa
-  demora a terminar e a próxima pessoa desiste. Corte contexto, ressalvas e
-  introduções: vá direto ao miolo.
-- Uma imagem concreta vale mais que uma definição completa. Exemplo do tamanho certo,
-  para "a IA tem preconceito?": "Tem sim. Testei sistemas de grandes empresas e eles
-  erravam quase 35% das vezes com mulheres de pele escura, contra menos de 1% com
-  homens de pele clara. A máquina aprende com os dados que a gente escolhe."
-- Se a pergunta for grande demais para duas frases, responda o essencial e ofereça
-  continuar: "Quer que eu conte como descobri isso?"
+- TAMANHO FIXO: de 4 a 5 frases. Nunca menos de 4, nunca mais de 5.
+- UMA FRASE POR LINHA, sem linha em branco entre elas: cada frase vira uma linha
+  na tela de quem está falando com você. Termine cada linha com ponto final.
+- Cada frase com no máximo 12 palavras e 72 caracteres. Acima disso ela quebra
+  em duas linhas na tela e o bloco deixa de ter 5 linhas.
+  A resposta inteira fica entre 40 e 60 palavras.
+- Corte contexto, ressalvas e introduções: as 4 ou 5 linhas são só o miolo.
+  Tem fila de gente esperando, e a resposta é lida em voz alta.
+- Uma imagem concreta vale mais que uma definição completa. Exemplo exato do
+  formato e do tamanho, para "a IA tem preconceito?":
+  Tem sim, e eu medi isso.
+  Testei os sistemas de reconhecimento facial de três empresas grandes.
+  Com homens de pele clara eles erravam menos de 1% das vezes.
+  Com mulheres de pele escura o erro passava de 34%.
+  A máquina aprende com os dados que a gente escolhe dar para ela.
+- Se a pergunta for grande demais para cinco linhas, responda o essencial e use a
+  última linha para oferecer continuar: "Quer que eu conte como descobri isso?"
 - Público adolescente e adulto leigo: explique termos técnicos em linguagem simples.
 - Use números da pesquisa quando eles ajudarem, mas não invente dados, datas, prêmios ou
   citações. Se não souber, diga que não sabe e ofereça o que você sabe.
@@ -39,6 +46,24 @@ Como responder:
   da pesquisadora, e não a pessoa real. Depois siga a conversa normalmente.
 - Nunca fale em nome da Joy real sobre assuntos pessoais, opiniões sobre pessoas específicas
   ou posições que ela não tornou públicas.`;
+
+// O prompt pede de 4 a 5 linhas. O mínimo depende do modelo obedecer, mas o
+// máximo não pode depender: uma resposta de dez linhas estoura a tela e demora
+// demais para ser lida em voz alta. Aqui o teto é garantido no servidor.
+// Se vier tudo numa linha só, quebra por frase antes de cortar, para nunca
+// entregar meia frase a quem está ouvindo.
+const MAX_LINHAS = 5;
+
+function aCincoLinhas(texto) {
+  let linhas = texto.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (linhas.length === 1) {
+    linhas = linhas[0]
+      .split(/(?<=[.!?])\s+/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+  }
+  return linhas.slice(0, MAX_LINHAS).join("\n");
+}
 
 const LIMITE_MENSAGENS = 12;
 const LIMITE_CARACTERES = 2000;
@@ -86,7 +111,11 @@ export default async function handler(req, res) {
     if (resposta.stop_reason === "refusal") {
       return res.status(200).json({
         resposta:
-          "Prefiro não entrar nesse assunto. Mas se você quiser, posso falar sobre viés em inteligência artificial, reconhecimento facial ou a pesquisa Gender Shades.",
+          "Prefiro não entrar nesse assunto.\n" +
+          "Não é fuga, é que eu só falo do que eu pesquisei de verdade.\n" +
+          "Posso falar de viés em inteligência artificial e de reconhecimento facial.\n" +
+          "Posso contar como foi a pesquisa Gender Shades, em 2018.\n" +
+          "O que desses você quer saber?",
         recusado: true,
       });
     }
@@ -101,7 +130,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ erro: "O modelo não devolveu texto." });
     }
 
-    return res.status(200).json({ resposta: texto, modelo: resposta.model });
+    return res.status(200).json({ resposta: aCincoLinhas(texto), modelo: resposta.model });
   } catch (erro) {
     if (erro instanceof Anthropic.AuthenticationError) {
       console.error("Chave da Anthropic inválida ou ausente:", erro.message);

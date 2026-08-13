@@ -596,6 +596,107 @@
 
         .chip:hover { background: var(--primary-color); color: #fff; }
 
+        /* ---- Modo tela cheia -------------------------------------------------
+           Encolhida no canto, a resposta de cinco linhas fica espremida numa
+           caixa de 370px e ninguem le de longe. Aberta na tela toda, a foto
+           dela fica de um lado e a resposta do outro, grande. E o mesmo
+           painel, so com uma classe a mais.                                  */
+        .joy-panel.tela-cheia {
+            inset: 0;
+            width: 100%;
+            max-width: none;
+            height: 100%;
+            border-radius: 0;
+            transform: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .joy-panel.tela-cheia .joy-panel-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr);
+            align-content: center;
+            align-items: center;
+            gap: clamp(20px, 4vw, 56px);
+            padding: clamp(20px, 4vh, 46px) clamp(20px, 6vw, 72px);
+            text-align: left;
+        }
+
+        .joy-retrato { display: none; margin: 0; }
+        .joy-panel.tela-cheia .joy-retrato { display: block; }
+
+        .joy-retrato img {
+            width: 100%;
+            max-width: 340px;
+            aspect-ratio: 4 / 5;
+            object-fit: cover;
+            object-position: center 20%;
+            border-radius: 20px;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+        }
+
+        .joy-retrato figcaption {
+            font-size: 0.66rem;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .joy-panel.tela-cheia .voice-avatar { display: none; }
+        .joy-panel.tela-cheia .voice-bars { justify-content: flex-start; }
+
+        .joy-panel.tela-cheia .voice-caption {
+            font-size: clamp(1rem, 1.5vw, 1.4rem);
+            line-height: 1.5;
+            color: #2d3436;
+            max-height: none;
+            white-space: pre-line;
+            text-align: left;
+            border-left: 4px solid var(--secondary-color);
+            padding-left: clamp(12px, 2vw, 22px);
+            margin-bottom: 22px;
+        }
+
+        .joy-panel.tela-cheia .voice-status { font-size: 0.95rem; text-align: left; }
+        .joy-panel.tela-cheia .voice-controls,
+        .joy-panel.tela-cheia .voice-form,
+        .joy-panel.tela-cheia .chips { justify-content: flex-start; }
+        .joy-panel.tela-cheia .chips { max-height: none; }
+
+        /* Numa tela estreita nao cabem duas colunas: a foto vira selo em cima. */
+        @media (max-width: 860px) {
+            .joy-panel.tela-cheia .joy-panel-body {
+                grid-template-columns: 1fr;
+                align-content: start;
+            }
+            .joy-retrato img { max-width: 190px; }
+        }
+
+        .joy-tamanho {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+            border: 0;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .joy-tamanho:hover { background: rgba(255, 255, 255, 0.32); }
+
+        /* Com o painel ocupando tudo, a pagina atras nao pode rolar junto. */
+        body.joy-cheia { overflow: hidden; }
+
         .joy-panel-footer {
             font-size: 0.62rem;
             color: #999;
@@ -881,8 +982,16 @@
                 <strong>Joy Buolamwini</strong>
                 <small><span class="dot-on"></span>Online · Assistente de voz com IA</small>
             </div>
+            <button class="joy-tamanho" id="joyTamanho" type="button" title="Reduzir para o canto" aria-label="Reduzir para o canto">
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4.5v4.5H4.5"/><path d="M15 19.5V15h4.5"/><path d="M9.4 9.4 4 4"/><path d="M14.6 14.6 20 20"/></svg>
+            </button>
         </div>
         <div class="joy-panel-body" id="voiceBox">
+            <figure class="joy-retrato">
+                <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/c22afacb-3289-446f-8898-73ffed59dfdd.jpg" alt="Joy Buolamwini" loading="lazy" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800';">
+                <figcaption>Joy Buolamwini · foto de divulgação, uso educacional</figcaption>
+            </figure>
+            <div class="conversa">
             <div class="voice-avatar">
                 <div class="voice-ring"></div>
                 <div class="voice-circle">JB</div>
@@ -899,6 +1008,7 @@
                 <button type="submit" id="sendBtn" title="Enviar pergunta"><i class="fas fa-paper-plane"></i></button>
             </form>
             <div class="chips" id="voiceChips"></div>
+            </div>
         </div>
         <div class="joy-panel-footer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.6 21.4 20H2.6z"/><path d="M12 10v4.2"/><path d="M12 17.3h.01"/></svg>Simulação educativa: as respostas são geradas por inteligência artificial (Claude, da Anthropic) no papel da pesquisadora, com voz sintetizada. Não são citações reais de Joy Buolamwini.</div>
     </div>
@@ -965,20 +1075,46 @@
         const bubble = document.getElementById('joyBubble');
         let panelAberto = false;
 
+        const btnTamanho = document.getElementById('joyTamanho');
+
+        // Abre ocupando a tela toda: a resposta agora tem cinco linhas e, na
+        // caixinha do canto, ninguém lê de longe. O botão do cabeçalho encolhe
+        // para o canto quem preferir continuar navegando o blog enquanto fala.
+        function tamanhoJoy(cheia) {
+            panel.classList.toggle('tela-cheia', cheia);
+            document.body.classList.toggle('joy-cheia', cheia);
+            btnTamanho.title = cheia ? 'Reduzir para o canto' : 'Abrir na tela toda';
+            btnTamanho.setAttribute('aria-label', btnTamanho.title);
+            btnTamanho.innerHTML = cheia
+                ? '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4.5v4.5H4.5"/><path d="M15 19.5V15h4.5"/><path d="M9.4 9.4 4 4"/><path d="M14.6 14.6 20 20"/></svg>'
+                : '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.5 4.5H20v5.5"/><path d="M9.5 19.5H4V14"/><path d="M20 4.5 14 10.5"/><path d="M4 19.5 10 13.5"/></svg>';
+        }
+
         function abrirJoy() {
             panelAberto = true;
             panel.classList.add('aberto');
             bubble.classList.add('aberto');
+            tamanhoJoy(true);
         }
 
         function fecharJoy() {
             panelAberto = false;
             panel.classList.remove('aberto');
             bubble.classList.remove('aberto');
+            tamanhoJoy(false);
             window.speechSynthesis && window.speechSynthesis.cancel();
         }
 
         bubble.addEventListener('click', () => panelAberto ? fecharJoy() : abrirJoy());
+        btnTamanho.addEventListener('click', () => tamanhoJoy(!panel.classList.contains('tela-cheia')));
+
+        // Esc: primeiro encolhe, e só fecha se já estiver encolhida. Fechar de
+        // uma vez quem só queria sair da tela cheia perde a conversa.
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' || !panelAberto) return;
+            if (panel.classList.contains('tela-cheia')) tamanhoJoy(false);
+            else fecharJoy();
+        });
 
         // =========================================================================
         // Ícones usados nas mensagens de status. Mesmo desenho do HTML.
@@ -1000,22 +1136,22 @@
             const sugestoes = [
                 { keys: ["inteligencia artificial", "o que e ia", "afinal"],
                   q: "O que é IA?",
-                  a: "Gosto de explicar assim: inteligência artificial é dar às máquinas a capacidade de aprender padrões a partir de dados. Ela não pensa como nós. Ela reflete o que mostramos a ela. Se os dados carregam os preconceitos do passado, corremos o risco de codificar o passado no nosso futuro." },
+                  a: "IA é dar à máquina a capacidade de aprender padrões em dados.\nEla não pensa como você e eu pensamos.\nEla devolve aquilo que a gente mostrou para ela.\nSe os dados carregam o preconceito do passado, a máquina carrega junto.\nÉ assim que a gente acaba codificando o passado dentro do futuro." },
                 { keys: ["preconceituosa", "preconceito", "racista", "vies"],
                   q: "A IA tem preconceito?",
-                  a: "Pode ter. E a minha pesquisa provou isso. No projeto Gender Shades, mostrei que sistemas de grandes empresas erravam muito mais ao analisar rostos de mulheres negras do que rostos de homens brancos. As máquinas aprendem com dados escolhidos por pessoas." },
+                  a: "Pode ter, e a minha pesquisa mediu isso.\nNo Gender Shades eu testei os sistemas de três empresas grandes.\nCom homens de pele clara o erro ficava abaixo de 1%.\nCom mulheres de pele escura o erro passava de 34%.\nA máquina aprende com os dados que pessoas escolheram dar para ela." },
                 { keys: ["olhar codificado", "coded gaze", "mascara"],
                   q: "O que é o olhar codificado?",
-                  a: "Foi o momento que mudou a minha vida. No MIT, um software de reconhecimento facial não detectava o meu rosto, até eu colocar uma máscara branca. Quem constrói a tecnologia, e com quais dados, decide quem é visto por ela." },
+                  a: "Foi o momento que mudou a minha vida.\nNo MIT, um software de reconhecimento facial não achava o meu rosto.\nEle só me detectou quando eu vesti uma máscara branca de plástico.\nA máquina enxergava a máscara e não enxergava a pessoa.\nQuem constrói a tecnologia decide quem ela enxerga." },
                 { keys: ["reconhecimento facial", "medo", "vigilancia"],
                   q: "Reconhecimento facial é perigoso?",
-                  a: "Medo não é a palavra que eu usaria. Vigilância informada, sim. O reconhecimento facial erra, e quando erra com o rosto errado, pessoas inocentes pagam o preço. Por isso testemunhei no Congresso dos Estados Unidos defendendo limites claros. Tecnologia poderosa exige responsabilidade poderosa." },
+                  a: "Medo não é a palavra que eu usaria. Atenção, sim.\nO reconhecimento facial erra, e não erra igual com todo mundo.\nQuando ele erra o rosto, quem paga o preço é uma pessoa inocente.\nFoi por isso que eu depus no Congresso pedindo limites claros.\nTecnologia poderosa exige responsabilidade do mesmo tamanho." },
                 { keys: ["emprego", "trabalho", "roubar", "tirar"],
                   q: "A IA vai tirar meu emprego?",
-                  a: "A inteligência artificial vai transformar o trabalho. Mas a pergunta mais importante é: quem decide como essa transformação acontece? Aprender sobre essas ferramentas, como você está fazendo agora, já é uma forma de se proteger." },
+                  a: "A IA vai transformar o trabalho, isso vai acontecer.\nMas quem decide como essa transformação vai acontecer?\nQuase sempre quem decide é um grupo pequeno de gente parecida entre si.\nEntender essas ferramentas já é uma forma de proteção.\nE saber cobrar de quem constrói vale tanto quanto saber usar." },
                 { keys: ["posso fazer", "justa", "ajudar", "lutar"],
                   q: "Como lutar por uma IA justa?",
-                  a: "Três coisas. Primeiro: faça perguntas. Quem criou o sistema? Com quais dados? Quem pode ser prejudicado? Segundo: conte a sua história. E terceiro: lembre-se de que a tecnologia deve servir a todos nós, não apenas a alguns de nós." }
+                  a: "São três coisas, e todas cabem no seu dia.\nPrimeira: pergunte quem criou o sistema e com quais dados.\nSegunda: conte a sua história quando a tecnologia falhar com você.\nTerceira: cobre transparência de quem vende o sistema.\nA tecnologia deve servir a todos nós, não apenas a alguns de nós." }
             ];
 
             const historico = [];
@@ -1033,13 +1169,39 @@
             const input = document.getElementById('voiceInput');
             const sendBtn = document.getElementById('sendBtn');
 
+            // ---- A voz: a mesma pegada da AYA, a guia do jogo -------------------
+            // Medi a fala da AYA no vídeo dela (8,03 s de áudio, 68% de fala):
+            // frequência de base mediana de 205 Hz e entrega corrida, sem arrastar.
+            // Estes três números são o que aproxima a voz do navegador daquilo.
+            // Se no aparelho de vocês soar aguda ou rápida demais, mexa SÓ aqui.
+            const VOZ = { taxa: 1.08, tom: 1.05, volume: 1 };
+
+            // As vozes femininas de pt-BR que existem de verdade em iPhone,
+            // Android e Chrome, da mais parecida com a AYA para a menos. Cada
+            // aparelho tem uma parte dessa lista, nenhum tem todas.
+            const VOZ_BOA = [/luciana/i, /joana/i, /francisca/i, /camila/i,
+                             /vit[oó]ria/i, /fernanda/i, /thalita/i, /maria/i,
+                             /google.*portugu/i, /female|feminin/i];
+            const VOZ_RUIM = [/felipe/i, /daniel/i, /ricardo/i, /jo[aã]o/i,
+                              /eddy/i, /reed/i, /rocko/i, /grandpa|grandma|bells|bubbles|jester|organ|superstar|trinoids|whisper|wobble|zarvox/i,
+                              /\bmale\b/i];
+
+            function nota(v) {
+                let n = 0;
+                if (v.lang === 'pt-BR') n += 100;
+                else if (v.lang && v.lang.toLowerCase().startsWith('pt')) n += 60;
+                else return -1;                       // fora do português nem entra
+                VOZ_BOA.forEach((re, i) => { if (re.test(v.name)) n += 40 - i * 3; });
+                if (VOZ_RUIM.some(re => re.test(v.name))) n -= 80;
+                if (v.localService) n += 5;           // local não gagueja sem rede
+                return n;
+            }
+
             let vozPt = null;
             function carregarVozes() {
-                const vozes = synth.getVoices();
-                vozPt = vozes.find(v => v.lang === 'pt-BR' && /female|feminina|maria|luciana|francisca/i.test(v.name))
-                     || vozes.find(v => v.lang === 'pt-BR')
-                     || vozes.find(v => v.lang.startsWith('pt'))
-                     || null;
+                const vozes = synth.getVoices().filter(v => nota(v) >= 0);
+                vozes.sort((x, y) => nota(y) - nota(x));
+                vozPt = vozes[0] || null;
             }
             carregarVozes();
             if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = carregarVozes;
@@ -1053,12 +1215,14 @@
                 const u = new SpeechSynthesisUtterance(texto);
                 u.lang = 'pt-BR';
                 if (vozPt) u.voice = vozPt;
-                u.rate = 1;
+                u.rate = VOZ.taxa;
+                u.pitch = VOZ.tom;
+                u.volume = VOZ.volume;
                 u.onstart = function () {
                     box.classList.remove('ouvindo');
                     box.classList.add('falando');
                     status.innerHTML = ICO.som + 'Joy está respondendo...';
-                    caption.textContent = '"' + texto + '"';
+                    caption.textContent = texto;   // o CSS usa pre-line: cada frase, uma linha
                 };
                 u.onend = function () {
                     box.classList.remove('falando');
@@ -1074,7 +1238,11 @@
                 if (item) {
                     falar(item.a);
                 } else {
-                    falar('Estou sem conexão com o meu assistente agora. Tente de novo em instantes, ou toque em uma das perguntas sugeridas aqui embaixo.');
+                    falar('Estou sem conexão com o meu assistente agora.\n'
+                        + 'Pode ser a sua internet, ou pode ser o servidor daqui.\n'
+                        + 'Tenta de novo daqui a pouco, que costuma voltar rápido.\n'
+                        + 'Enquanto isso, toca em uma das perguntas sugeridas aqui embaixo.\n'
+                        + 'Essas eu respondo mesmo offline.');
                 }
             }
 
