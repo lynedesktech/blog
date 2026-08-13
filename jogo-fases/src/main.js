@@ -1521,7 +1521,14 @@ export class Game {
     }
     for (let i = 0; i < lv.crushers.length; i++) {
       const c = lv.crushers[i];
-      const k = (Math.sin(this.s.t * c.speed + c.phase) + 1) / 2;
+      // Ciclo de PRENSA, nao de pendulo: 15% do tempo despencando, 20%
+      // esmagada no chao, 65% subindo devagar. O seno antigo descia tao
+      // manso quanto subia e nao assustava ninguem.
+      const u = ((this.s.t * c.speed + c.phase) / (Math.PI * 2)) % 1;
+      let k;
+      if (u < 0.15) k = (u / 0.15) * (u / 0.15);          // queda acelerando
+      else if (u < 0.35) k = 1;                            // esmaga
+      else k = 1 - (u - 0.35) / 0.65;                      // sobe devagar
       c.y = c.top - k * c.drop;
       if (this.crushMeshes[i]) this.crushMeshes[i].position.set(c.x, c.y, c.z);
     }

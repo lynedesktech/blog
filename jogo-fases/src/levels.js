@@ -263,9 +263,12 @@ export function buildLevel(def, rng) {
         const n = s.n || 3;
         for (let i = 0; i < n; i++) {
           crushers.push({
+            // A prensa VAI ATE O CHAO. Antes: top = H-0,6 e drop fixo de 2,2,
+            // que com teto de 6 m parava a 2,4 m do chao, acima da cabeca de
+            // qualquer um. Pendurada la em cima, virava decoracao.
             x: (i % 2 ? 1 : -1) * 1.8, z: z0 - (len * (i + 0.5)) / n,
-            hx: 1.9, hz: 1.4, top: H - 0.6, drop: 2.2,
-            speed: 0.75 + rng() * 0.3, phase: rng() * 6.28,
+            hx: 1.9, hz: 1.4, top: H - 0.9, drop: H - 1.8,
+            speed: 0.55 + rng() * 0.25, phase: rng() * 6.28,
           });
         }
         break;
@@ -322,6 +325,17 @@ export function buildLevel(def, rng) {
     Math.abs(x - c.x) <= c.hx + CLEAR && Math.abs(z2 - c.z) <= c.hz + CLEAR);
 
   const okAt = (x, y, z2) => hasFloor(x, z2) && !insideSolid(x, y, z2) && !inCrusher(x, z2);
+
+  // A mascara e maior que um pedaco e e O item da fase: nasce com folga de
+  // 1 m de qualquer solido e a 2 m de scanner, senao aparece encostada em
+  // parede ou enfiada no vao da meia-parede, "mal posicionada" na tela.
+  const okMask = (x, y, z2) =>
+    hasFloor(x, z2) && !inCrusher(x, z2) &&
+    !blocks.some((b) => b.kind !== 'floor' &&
+      Math.abs(x - b.x) <= b.hx + 1.0 &&
+      Math.abs(y - b.y) <= b.hy + 0.6 &&
+      Math.abs(z2 - b.z) <= b.hz + 1.0) &&
+    !scanners.some((sc) => Math.abs(z2 - sc.z) < 2.0);
 
   const tryIn = (z0, len) => {
     for (let k = 0; k < 60; k++) {
@@ -401,7 +415,7 @@ export function buildLevel(def, rng) {
         const x = (rng() - 0.5) * (W - 3.2);
         const z2 = zSpawn + dir * (dIni + rng() * (dFim - dIni));
         const y = 1.05;
-        if (okAt(x, y, z2)) { maskItems.push({ x, y, z: z2, taken: false }); break; }
+        if (okMask(x, y, z2)) { maskItems.push({ x, y, z: z2, taken: false }); break; }
       }
     }
   }
