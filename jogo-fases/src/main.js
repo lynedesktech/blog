@@ -1657,6 +1657,35 @@ export class Game {
       this.camera.add(this.vinheta);
     }
 
+    // ---- moldura da mascara (VR) ---------------------------------------
+    // Dentro do oculos nao havia NENHUM sinal de que a mascara estava no
+    // rosto: o painel do pulso mostra, mas ninguem joga olhando para o pulso.
+    // Aqui a propria visao ganha a borda de uma mascara branca, que e' o que
+    // voce veria se estivesse mesmo usando uma. Ela pulsa devagar enquanto
+    // aguenta e fica vermelha quando esta superaquecendo, entao da para saber
+    // que ela vai acabar sem ler numero nenhum.
+    {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      const g2 = cv.getContext('2d');
+      const grad = g2.createRadialGradient(128, 128, 84, 128, 128, 128);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.72, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.86, 'rgba(255,255,255,0.85)');
+      grad.addColorStop(1, 'rgba(255,255,255,1)');
+      g2.fillStyle = grad;
+      g2.fillRect(0, 0, 256, 256);
+      const tx = new THREE.CanvasTexture(cv);
+      this.moldura = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.5, 1.5),
+        new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 0,
+          depthTest: false, depthWrite: false, fog: false })
+      );
+      this.moldura.position.z = -0.44;   // na frente da vinheta
+      this.moldura.renderOrder = 1000;
+      this.camera.add(this.moldura);
+    }
+
     this.controllers = [];
     for (let i = 0; i < 2; i++) {
       const c = this.renderer.xr.getController(i);
@@ -2162,9 +2191,15 @@ export class Game {
 
     // --- agachar: no VR vale a altura REAL do capacete
     let wantDuck = this.held.has('duck') || this.duckBtn || this.duckPad;
+    // Agachar pelo BOTAO e agachar de VERDADE sao coisas diferentes dentro do
+    // oculos. Quem agacha de verdade ja teve a visao abaixada pelo proprio
+    // capacete; quem apertou o botao nao teve nada acontecendo, e era por isso
+    // que agachar no VR so deixava lento, sem nenhum sinal na tela.
+    const agachouNoBotao = wantDuck;
     if (this.renderer.xr.isPresenting) {
       wantDuck = wantDuck || this.camera.position.y < this.vrLimiteAgachar;
     }
+    this._duckVirtual = agachouNoBotao;
     const targetH = wantDuck ? P.CROUCH_H : (this._canStand() ? P.STAND_H : P.CROUCH_H);
     pl.h += (targetH - pl.h) * Math.min(1, dt * 14);
 
@@ -2234,8 +2269,14 @@ export class Game {
     if (pl.pos.y < -12) this._death(false);
 
     // o rig segue os pés do jogador; a câmera fica na altura do olho
+    // No oculos, o agachar do botao vira uma descida do rig: e o mundo que
+    // sobe em volta de voce, que e' a unica forma honesta de mostrar isso sem
+    // mexer na cabeca de quem esta jogando. Suavizado, senao e um solavanco.
+    const alvoDuck = (this.renderer.xr.isPresenting && this._duckVirtual)
+      ? (P.STAND_H - P.CROUCH_H) : 0;
+    this._duckOff = (this._duckOff || 0) + (alvoDuck - (this._duckOff || 0)) * Math.min(1, dt * 9);
     this.rig.position.set(pl.pos.x,
-      pl.pos.y + (this.renderer.xr.isPresenting ? (this.vrYOff || 0) : 0), pl.pos.z);
+      pl.pos.y + (this.renderer.xr.isPresenting ? (this.vrYOff || 0) - this._duckOff : 0), pl.pos.z);
     if (!this.renderer.xr.isPresenting) this.camera.position.set(0, pl.h - P.EYE_OFF, 0);
   }
 
@@ -3216,12 +3257,19 @@ export class Game {
       // ouvido interno jura que a cabeca esta parada. Como o giro suave virou
       // o padrao, ele entra na conta da vinheta com peso alto. Sem isto, o
       // giro linear que ele pediu sairia mais bonito e mais enjoativo.
-      const vg = (this._giroVel || 0) * 1.6;
+      const vg = (this._giroVel || 0) * 1.1;
       const v = Math.max(vh, vv, vg);
       // A velocidade de andar subiu de 5,4 para 6,6, e vista periferica em
       // movimento e' de onde vem o enjoo: a vinheta fecha um pouco mais e
       // comeca mais cedo para compensar o passo mais rapido.
-      let alvo = emVR ? Math.min(0.80, Math.max(0, (v - 0.4) / 4.0) * 0.80) : 0;
+      // A conta era por um divisor fixo: com a velocidade em 8,2 m/s ela
+      // batia no teto assim que voce saia do lugar e ficava la, e andar pelo
+      // jogo inteiro virou olhar por um tubo. Isso atrapalha justamente o que
+      // ele reclamou, que e' olhar em volta. Agora a escala e RELATIVA a
+      // velocidade maxima e o teto caiu de 0,80 para 0,55: ainda fecha a
+      // periferia, mas sobra periferia para fechar.
+      const frac = Math.min(1, Math.max(0, (v - 1.0) / Math.max(1, P.SPEED - 1.0)));
+      let alvo = emVR ? 0.55 * frac : 0;
       // durante o passo do giro ela fecha quase de vez, por um instante. O
       // olho perde a referencia periferica bem no momento em que o mundo
       // salta, que e' o truque padrao de conforto em VR.
@@ -3231,6 +3279,20 @@ export class Game {
       const vel = alvo > m.opacity ? 22 : 6;
       m.opacity += (alvo - m.opacity) * Math.min(1, dt * vel);
       this.vinheta.visible = m.opacity > 0.01;
+    }
+
+    // moldura da mascara: so aparece com ela no rosto
+    if (this.moldura) {
+      const s2 = this.s;
+      const ligada = !!(s2 && s2.maskOn) && this.renderer.xr.isPresenting;
+      const quente = s2 && s2.maskHeat > P.MASK_MAX * 0.62;
+      const pulso = 0.30 + Math.sin(t * (quente ? 9 : 2.4)) * (quente ? 0.16 : 0.06);
+      const alvoM = ligada ? pulso : 0;
+      const mm = this.moldura.material;
+      mm.opacity += (alvoM - mm.opacity) * Math.min(1, dt * 8);
+      // branca enquanto aguenta, vermelha quando esta para superaquecer
+      mm.color.setHex(quente ? 0xFF5A6E : 0xFFFFFF);
+      this.moldura.visible = mm.opacity > 0.01;
     }
 
     if (this.mode === 'playing' && this.level) {
