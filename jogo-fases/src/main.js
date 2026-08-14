@@ -1461,66 +1461,10 @@ export class Game {
     return g;
   }
 
-  // A MÃO. Dentro do óculos existia UMA mão só, e nem era uma mão: era a
-  // arma, presa ao controle direito. O controle esquerdo não tinha nada
-  // desenhado, então o braço esquerdo simplesmente não existia no jogo. Quem
-  // levantava a mão para vestir a máscara via o vazio.
-  //
-  // O desenho segue a mesma gramática do resto: caixa escura com aresta
-  // ciano, sem luz e sem textura, porque a cena inteira é assim e porque uma
-  // mão realista aqui só chamaria atenção para o quanto não é realista. São
-  // sete caixas, o suficiente para o olho ler "mão" e leve o bastante para
-  // não cobrar quadro nenhum dos 60.
-  _makeHand(esquerda) {
-    // Palma, quatro dedos dobrados, polegar por cima e um toco de pulso.
-    // Os dedos são finos com folga entre eles de propósito: colados viram uma
-    // caixa só, e aí a mão lê como um tijolo flutuando. O pulso é o que diz
-    // para que lado a mão aponta quando ela aparece de relance.
-    const caixas = [[0.062, 0.028, 0.092, 0, 0, 0, 0]];
-    for (let i = 0; i < 4; i++) caixas.push([0.011, 0.024, 0.050, -0.0225 + i * 0.015, -0.004, -0.064, -0.6]);
-    caixas.push([0.019, 0.021, 0.042, esquerda ? 0.035 : -0.035, 0.010, -0.028, -0.25]);
-    caixas.push([0.044, 0.036, 0.038, 0, 0.002, 0.068, 0]);
-
-    // SETE peças, DUAS chamadas de desenho. Cada caixa como um objeto próprio
-    // custaria catorze desenhos por mão, e a fase inteira desenha por volta de
-    // cinquenta: duas mãos assim engoliriam metade do orçamento de quadro que
-    // o piso de 60 fps depende. Como nenhuma peça se mexe em relação à outra,
-    // as posições são assadas na própria geometria e coladas numa malha só.
-    const solidos = [], fios = [];
-    for (const [lx, ly, lz, px, py, pz, rx] of caixas) {
-      const geo = new THREE.BoxGeometry(lx, ly, lz);
-      if (rx) geo.rotateX(rx);
-      geo.translate(px, py, pz);
-      solidos.push(geo.toNonIndexed().getAttribute('position').array);
-      const ar = new THREE.EdgesGeometry(geo);
-      fios.push(ar.getAttribute('position').array);
-      ar.dispose(); geo.dispose();
-    }
-    const junta = (partes) => {
-      let n = 0;
-      for (const a of partes) n += a.length;
-      const tudo = new Float32Array(n);
-      let o = 0;
-      for (const a of partes) { tudo.set(a, o); o += a.length; }
-      const bg = new THREE.BufferGeometry();
-      bg.setAttribute('position', new THREE.BufferAttribute(tudo, 3));
-      return bg;
-    };
-
-    const g = new THREE.Group();
-    g.add(new THREE.Mesh(junta(solidos), new THREE.MeshBasicMaterial({
-      color: 0x1a1030, depthTest: false, transparent: true,
-    })));
-    g.add(new THREE.LineSegments(junta(fios), new THREE.LineBasicMaterial({
-      color: COL.wire, depthTest: false, transparent: true, opacity: 0.85,
-    })));
-    // A mão fica um pouco atrás e abaixo do ponto de mira do controle, que é
-    // onde ela cai de verdade quando se segura um controle de VR.
-    g.position.set(0, -0.012, 0.048);
-    g.renderOrder = 1004;
-    g.traverse((o) => { o.renderOrder = 1004; });
-    return g;
-  }
+  // Aqui morava o _makeHand, que desenhava uma mão de sete caixas por
+  // controle. Removido: no óculos ela é o objeto mais perto do olho e o mais
+  // grosseiro da cena, e ficava feia justamente por isso. Mão só a direita, e
+  // ela é a arma.
 
   _makeDroneMesh() {
     const g = new THREE.Group();
@@ -1783,20 +1727,11 @@ export class Game {
       c.add(arma);
       c.userData.arma = arma;
 
-      // as DUAS mãos. A que atira segura a arma, a outra fica livre — é ela
-      // que aperta o grip para vestir a máscara. O polegar é espelhado, então
-      // a mão é refeita quando o aparelho informa de que lado é o controle.
-      const poeMao = (esquerda) => {
-        const velha = c.userData.mao;
-        if (velha) {
-          c.remove(velha);
-          velha.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
-        }
-        const m = this._makeHand(esquerda);
-        c.add(m);
-        c.userData.mao = m;
-      };
-      poeMao(i === 0);
+      // Aqui eu desenhava uma mão de caixas em cada controle. Ficou feia: o
+      // resto da cena é geometria de aresta fina, e uma mão de sete blocos no
+      // meio do campo de visão, a meio metro do olho, é o objeto mais próximo
+      // e mais grosseiro da tela inteira. O que se vê agora é o que já
+      // funcionava: a arma na mão direita, e nada na esquerda.
 
       c.addEventListener('connected', (e) => {
         if (this.activeCtrl == null) this.activeCtrl = i;
@@ -1805,7 +1740,6 @@ export class Game {
         // a arma vai na mão do gatilho: a direita, quando o aparelho informa
         if (c.userData.arma) c.userData.arma.visible = hand !== 'left';
         if (hand !== 'left') { this.weaponVR = c.userData.arma; this.maoArmada = i; }
-        poeMao(hand === 'left');
         if (hand && c.userData.etiqueta) {
           c.userData.etiqueta.material.map =
             this._label(hand === 'left' ? STR.vr_ctrl_l : STR.vr_ctrl_r, '#00E5FF', 30);
@@ -2187,17 +2121,35 @@ export class Game {
     if (this._vozMorta) return;                 // já respondeu que não dá
     if (texto === this._vozUltima) return;      // não repete a mesma linha
     this._vozUltima = texto;
-    if (this._voz) { try { this._voz.pause(); } catch (e) {} }
+
+    // A AYA FALAVA POR CIMA DELA MESMA.
+    //
+    // Quem calava a fala anterior era `if (this._voz) pause()`, e `this._voz`
+    // só era preenchido DEPOIS que o play() resolvia, ou seja, depois do áudio
+    // baixar. Duas falas dentro dessa janela, que é o caso comum (a narração
+    // entra e um evento acontece logo em seguida), viam `this._voz` vazio, não
+    // calavam ninguém, e as duas tocavam juntas.
+    //
+    // Agora o áudio é guardado ANTES do play, então sempre há quem calar. E
+    // cada pedido leva um número: se o play() de um áudio velho resolver
+    // depois que outra fala já começou, ele se cala sozinho. Era essa corrida
+    // que sobrava.
+    this.calaVoz();
     const a = new Audio('/api/voz?texto=' + encodeURIComponent(texto));
     a.volume = 0.95;
+    const meu = this._vozN = (this._vozN || 0) + 1;
+    this._voz = a;
     // Sem chave configurada o endpoint responde 503 e não adianta insistir a
     // cada fala; qualquer outra falha (rede caindo) apenas silencia esta.
     a.addEventListener('error', () => {
       const st = a.error && a.error.code;
       if (st === 4) this._vozMorta = true;
-      this._voz = null;
+      if (this._voz === a) this._voz = null;
     });
-    a.play().then(() => { this._voz = a; }).catch(() => { this._voz = null; });
+    a.addEventListener('ended', () => { if (this._voz === a) this._voz = null; });
+    a.play().then(() => {
+      if (meu !== this._vozN) { try { a.pause(); } catch (e) {} }
+    }).catch(() => { if (this._voz === a) this._voz = null; });
   }
   _sayOnce(key, dur) {
     if (!this.s || this.s.said[key]) return;
