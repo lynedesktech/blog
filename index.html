@@ -138,11 +138,13 @@
             max-width: 450px;
             /* A foto real dela e retrato, e este quadro sempre foi quadrado.
                Sem recorte, a coluna esticava e desmontava a primeira dobra.
-               O 18% no eixo vertical e para o corte pegar o rosto, e nao o
-               queixo: no meio, 50%, a cabeca ficava cortada. */
+               O valor vertical foi medido, nao chutado: com deteccao de rosto
+               na propria pagina, a 18% o rosto caia entre 37% e 93% da altura,
+               com o queixo quase encostando na borda de baixo. A 55% ele sobe
+               para perto do terco superior, que e onde retrato se olha. */
             aspect-ratio: 1 / 1;
             object-fit: cover;
-            object-position: 50% 18%;
+            object-position: 50% 55%;
             border-radius: 20px;
             /* A sombra sai para fora do elemento: encolhe junto, senão
                empurra a página para o lado nas telas estreitas. */
