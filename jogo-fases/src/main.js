@@ -100,7 +100,11 @@ const P = {
   // eram seis toques, soltando o analógico entre cada um. É isso que dava a
   // sensação de câmera travada. Agora o passo é de 45° e, segurando, ele
   // repete a cada 0,26 s, que é o comportamento normal de VR.
-  TURN_SPEED: 3.0, SNAP_TURN: Math.PI / 4,   // 3,0 rad/s = 172 graus por segundo no fim do curso
+  // 2,4 rad/s = 137 graus por segundo com o analogico encostado. Estava em
+  // 3,0, que da 172, e ficou exagerado: a cabeca chegava antes do olho. Este
+  // numero manda no giro do analogico no VR, no do controle no totem e nas
+  // setas do teclado, entao os tres desaceleram junto.
+  TURN_SPEED: 2.4, SNAP_TURN: Math.PI / 4,
   SNAP_REPETE: 0.26,     // segundos entre passos com o analógico segurado
   SNAP_PISCA: 0.09,      // escurecida curta no passo, contra o enjoo
   VR_CROUCH_Y: 1.25,     // reserva, so ate a calibracao medir a pessoa
