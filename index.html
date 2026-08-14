@@ -136,6 +136,13 @@
         .hero-image img, .foto-placeholder {
             width: 100%;
             max-width: 450px;
+            /* A foto real dela e retrato, e este quadro sempre foi quadrado.
+               Sem recorte, a coluna esticava e desmontava a primeira dobra.
+               O 18% no eixo vertical e para o corte pegar o rosto, e nao o
+               queixo: no meio, 50%, a cabeca ficava cortada. */
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            object-position: 50% 18%;
             border-radius: 20px;
             /* A sombra sai para fora do elemento: encolhe junto, senão
                empurra a página para o lado nas telas estreitas. */
@@ -293,7 +300,10 @@
         .galeria-card:hover { transform: translateY(-10px); }
 
         .galeria-visual { height: clamp(170px, 30vw, 220px); }
-        .galeria-visual svg, .galeria-visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* object-position 25% e nao 50%: sao fotos de pessoa em quadro
+           deitado, e cortar pelo meio corta a cabeca. */
+        .galeria-visual svg, .galeria-visual img { width: 100%; height: 100%; object-fit: cover;
+            object-position: 50% 25%; display: block; }
         .galeria-card p { padding: 22px 25px; font-size: 0.95rem; }
 
         .timeline { max-width: 900px; margin: 0 auto; }
@@ -822,7 +832,7 @@
                 <button class="btn-hero fade-in" onclick="abrirJoy()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="2.4" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.2"/></svg>Converse com a Joy</button>
             </div>
             <div class="hero-image fade-in">
-                <img id="joy-photo" src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/c22afacb-3289-446f-8898-73ffed59dfdd.jpg" alt="Joy Buolamwini" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800';">
+                <img id="joy-photo" src="https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini,_2018_(cropped).jpg?width=1000" alt="Joy Buolamwini, fotografada na Wikimania 2018" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=900';">
                 <div class="foto-placeholder" id="fotoPlaceholder">JB</div>
             </div>
         </div>
@@ -885,9 +895,9 @@
             <div class="galeria-grid">
                 <div class="galeria-card fade-in">
                     <div class="galeria-visual">
-                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/9cd62ed0-d730-4006-9455-d5f18937c2a7.jpg" alt="Joy Buolamwini segurando a máscara branca" loading="lazy">
+                        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Wikimania_2018_by_Rainer_Halama-095754.jpg?width=900" alt="Joy Buolamwini apresentando a palestra sobre o olhar codificado, na Wikimania 2018" loading="lazy">
                     </div>
-                    <p><strong>A máscara branca</strong><br>O experimento no MIT que revelou o "olhar codificado".</p>
+                    <p><strong>O olhar codificado</strong><br>Ela apresentando a pesquisa em 2018, na palestra "The Dangers of Supremely White Data and The Coded Gaze".</p>
                 </div>
                 <div class="galeria-card fade-in">
                     <div class="galeria-visual">
@@ -897,15 +907,15 @@
                 </div>
                 <div class="galeria-card fade-in">
                     <div class="galeria-visual">
-                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/f5af9eb5-a5f6-461a-953d-c980ebc1daef.jpg" alt="A IA pode ser preconceituosa, e ela provou isso" loading="lazy">
+                        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800" alt="Retrato de Joy Buolamwini na Wikimania 2018" loading="lazy">
                     </div>
                     <p><strong>Ela provou</strong><br>A pesquisa Gender Shades expôs o preconceito escondido nos algoritmos.</p>
                 </div>
                 <div class="galeria-card fade-in">
                     <div class="galeria-visual">
-                        <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/2cedd518-0981-4838-b9a6-b164bc53d1f8.jpg" alt="Joy Buolamwini em evento internacional" loading="lazy">
+                        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/P20230620AS-0276_(53233832252).jpg?width=1000" alt="Reunião sobre inteligência artificial com o presidente dos Estados Unidos, em 2023, com Joy Buolamwini entre os convidados" loading="lazy">
                     </div>
-                    <p><strong>Reconhecimento mundial</strong><br>Presença marcante em eventos e premiações internacionais.</p>
+                    <p><strong>Ouvida no mais alto nível</strong><br>Reunião sobre inteligência artificial com o presidente dos Estados Unidos, em junho de 2023.</p>
                 </div>
             </div>
         </div>
@@ -992,7 +1002,7 @@
 
     <footer>
         <p>&copy; 2024 Blog Joy Buolamwini. Inspirando justiça na tecnologia.</p>
-        <p style="font-size: 0.72rem; opacity: 0.6; margin-top: 12px;">Foto do Capitólio: domínio público (Wikimedia Commons) · Demais imagens: divulgação, uso educacional.</p>
+        <p style="font-size: 0.72rem; opacity: 0.6; margin-top: 12px;">Fotos de Joy Buolamwini na Wikimania 2018: Niccolò Caranti e Rainer Halama, Wikimedia Commons, CC BY-SA 4.0 · Reunião de 2023: Casa Branca (Adam Schultz), domínio público · Capitólio: domínio público. Todas são fotografias reais, nenhuma foi gerada por inteligência artificial.</p>
     </footer>
 
     <!-- ===== WIDGET FLUTUANTE ===== -->
@@ -1009,8 +1019,8 @@
         </div>
         <div class="joy-panel-body" id="voiceBox">
             <figure class="joy-retrato">
-                <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/c22afacb-3289-446f-8898-73ffed59dfdd.jpg" alt="Joy Buolamwini" loading="lazy" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800';">
-                <figcaption>Joy Buolamwini · foto de divulgação, uso educacional</figcaption>
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini,_2018_(cropped).jpg?width=800" alt="Joy Buolamwini" loading="lazy" onerror="this.onerror=null; this.src='https://commons.wikimedia.org/wiki/Special:FilePath/Joy_Buolamwini_-_Wikimania_2018_01.jpg?width=800';">
+                <figcaption>Joy Buolamwini · foto de Niccolò Caranti, Wikimedia Commons, CC BY-SA 4.0</figcaption>
             </figure>
             <div class="conversa">
             <div class="voice-avatar">
