@@ -373,7 +373,7 @@ const opt = (key, btn, label, apply) => {
   el.onclick = () => { game.opts[key] = !game.opts[key]; if (apply) apply(game.opts[key]); draw(); };
   draw();
 };
-opt('sound', 'b-sound', 'SOM', (v) => game.sfx.setEnabled(v));
+opt('sound', 'b-sound', 'SOM', (v) => { game.sfx.setEnabled(v); if (!v) game.calaVoz(); });
 opt('shake', 'b-shake', STR.a11y_shake.toUpperCase());
 opt('flash', 'b-flash', STR.a11y_flash.toUpperCase());
 opt('bigText', 'b-text', STR.a11y_text.toUpperCase(), (v) => document.body.classList.toggle('big', v));

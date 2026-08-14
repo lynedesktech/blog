@@ -29,14 +29,15 @@ import { Sfx, TRILHAS } from './audio.js';
 const P = {
   STAND_H: 1.78, CROUCH_H: 1.06, EYE_OFF: 0.14,
   RADIUS: 0.36,
-  // ANDAR E PULAR. Andar estava em 5,4 m/s e o pulo em 8,6, que dá 1,61 m de
-  // altura. Ficava pesado: o corredor é longo e o pulo mal passava do vão.
-  // 6,6 m/s e 9,6 de impulso dão 2,00 m de altura, e o controle no ar subiu
-  // junto porque altura sem controle no ar vira pulo que erra a borda.
-  // Conferido contra o cenário: a meia-parede da cobertura tem 2,6 m de topo,
-  // então nem com o pulo novo dá para passar por cima dela.
-  SPEED: 6.6, CROUCH_SPEED: 2.9, AIR_CTRL: 0.52,
-  ACCEL: 52, FRICTION: 13,
+  // ANDAR E PULAR. Foi de 5,4 para 6,6 e continuava devagar: num corredor de
+  // 70 m, 6,6 m/s ainda é caminhada apressada. 8,2 m/s é corrida de jogo de
+  // tiro, e a aceleração subiu junto para o arranque não ficar mole, que é o
+  // que faz parecer devagar mesmo quando a velocidade final está alta.
+  // O pulo de 9,6 dá 1,91 m de altura. Conferido contra o cenário: a
+  // meia-parede da cobertura tem 2,6 m de topo, então nem assim dá para subir
+  // nela, e a parede-scanner é barreira de altura cheia.
+  SPEED: 8.2, CROUCH_SPEED: 3.4, AIR_CTRL: 0.58,
+  ACCEL: 64, FRICTION: 14,
   GRAV: 23, JUMP: 9.6,
   COYOTE: 0.12, JUMP_BUF: 0.16,
   TERM_VEL: -32,
@@ -1764,6 +1765,10 @@ export class Game {
   // botões de tela (celular)
   press(what) { if (what === 'duck') this.duckBtn = !this.duckBtn; else this.tap[what] = true; }
 
+  // desligar o som tem que calar a AYA junto, senão a voz continua falando
+  // sozinha com o resto do jogo mudo
+  calaVoz() { if (this._voz) { try { this._voz.pause(); } catch (e) {} this._voz = null; } }
+
   // Solta só o que é DEDO e MOUSE. É isto que roda ao trocar de fase e ao
   // morrer: um dedo que estava na tela no instante da morte deixava
   // `touchMove` preso num identificador que nunca mais volta, e como o
@@ -1897,7 +1902,42 @@ export class Game {
 
   stop() { this.mode = 'idle'; this.sfx.droneStop(); this.sfx.musicStop(); if (this.ayaVideo) this.ayaVideo.pause(); }
 
-  _say(text, dur) { this.s.aya = text; this.s.ayaT = dur || 4.5; this._subDirty = true; }
+  _say(text, dur) {
+    this.s.aya = text; this.s.ayaT = dur || 4.5; this._subDirty = true;
+    this._fala(text);
+  }
+
+  // ---- a voz da AYA -----------------------------------------------------
+  // Ela sempre teve fala escrita e nunca teve VOZ: o jogador estava correndo,
+  // desviando de feixe, e a explicação passava como legenda no rodapé, que é
+  // exatamente onde ninguém olha no meio da ação. Agora a mesma frase sai
+  // falada.
+  //
+  // O áudio vem de /api/voz, o mesmo endereço que dá voz à Joy no blog, e por
+  // isso não precisa de chave nenhuma aqui dentro. As falas dela são um
+  // conjunto FIXO, então o pedido é GET e a resposta fica guardada no CDN: a
+  // primeira pessoa que ouvir cada frase paga por ela, todas as outras pegam
+  // de graça.
+  //
+  // Nada disso é essencial: sem internet, sem chave ou com o som desligado, o
+  // jogo continua igual, só com a legenda, como era antes.
+  _fala(texto) {
+    if (!texto || !this.sfx.enabled) return;
+    if (this._vozMorta) return;                 // já respondeu que não dá
+    if (texto === this._vozUltima) return;      // não repete a mesma linha
+    this._vozUltima = texto;
+    if (this._voz) { try { this._voz.pause(); } catch (e) {} }
+    const a = new Audio('/api/voz?texto=' + encodeURIComponent(texto));
+    a.volume = 0.95;
+    // Sem chave configurada o endpoint responde 503 e não adianta insistir a
+    // cada fala; qualquer outra falha (rede caindo) apenas silencia esta.
+    a.addEventListener('error', () => {
+      const st = a.error && a.error.code;
+      if (st === 4) this._vozMorta = true;
+      this._voz = null;
+    });
+    a.play().then(() => { this._voz = a; }).catch(() => { this._voz = null; });
+  }
   _sayOnce(key, dur) {
     if (!this.s || this.s.said[key]) return;
     this.s.said[key] = true;
