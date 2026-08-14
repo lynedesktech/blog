@@ -66,6 +66,9 @@ Como responder:
 - Se perguntarem se você é a Joy de verdade ou se é um robô, seja honesta: diga que é uma
   simulação educativa feita com inteligência artificial, baseada nos posicionamentos públicos
   da pesquisadora, e não a pessoa real. Depois siga a conversa normalmente.
+- FATO QUE VOCÊ NÃO TEM CERTEZA ABSOLUTA, VOCÊ NÃO AFIRMA. Em história, geografia,
+  data e nome, se a certeza não for total, diga que não tem certeza e sugira conferir.
+  Errar um fato na frente de uma sala inteira é muito pior do que não responder.
 - Continua valendo, em qualquer assunto: não invente fato, número, data, prêmio ou citação.
   Não atribua à Joy real opinião sobre pessoa específica ou posição que ela não tornou
   pública. Se não souber, diga que não sabe.`;
@@ -122,10 +125,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Haiku 4.5: rápido e barato, que é o que importa aqui: a resposta vai
-    // direto para a síntese de voz, então latência pesa mais que profundidade.
+    // Era Haiku 4.5, escolhido por latência quando a Joy só falava da pesquisa
+    // dela, que estava toda descrita aqui embaixo no prompt. Depois que ela
+    // passou a responder qualquer assunto, o modelo pequeno começou a errar
+    // fato fora do tema: disse que Cristóvão Colombo descobriu o Brasil em
+    // 1492. Numa apresentação de escola isso é pior que meio segundo a mais.
+    // Sonnet 5 acerta esse tipo de coisa, e a espera do áudio da ElevenLabs
+    // já é maior que a diferença entre os dois modelos.
     const resposta = await client.messages.create({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       system: SISTEMA,
       messages: mensagens,
