@@ -27,7 +27,7 @@ export const STR = {
   ],
 
   ctrl_title: 'CONTROLES',
-  ctrl_vr: 'VR: analógico esquerdo anda · direito gira · gatilho atira · grip veste a máscara · B agacha, ou agache de verdade',
+  ctrl_vr: 'VR: analógico esquerdo anda · direito gira · virar o rosto também gira · gatilho atira · grip veste a máscara · B agacha, ou agache de verdade',
   ctrl_desk: 'PC: WASD anda · ESPAÇO pula · CTRL agacha · clique atira · F veste a máscara',
   ctrl_touch: 'Celular: metade esquerda anda · metade direita olha · botões PULO, AGACHAR e MÁSCARA',
   ctrl_pad: 'Controle: analógico esquerdo anda · direito gira · A pula · RT atira · LB máscara',
@@ -180,6 +180,7 @@ export const STR = {
   a11y_flash: 'Flashes',
   a11y_text: 'Texto grande',
   a11y_snap: 'Giro em passos (se enjoar)',
+  a11y_cabeca: 'Corpo segue o rosto (VR)',
   a11y_on: 'LIGADO',
   a11y_off: 'DESLIGADO',
 };

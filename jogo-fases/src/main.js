@@ -254,7 +254,10 @@ export class Game {
     // era o padrao, mas saltar de 45 em 45 graus le como camera travada. O
     // giro suave e o padrao agora, com a vinheta fechando enquanto se gira
     // para compensar; quem enjoar liga os passos no menu.
-    this.opts = { shake: true, flash: true, bigText: false, sound: true, snapTurn: false };
+    // giroCabeca: virar o rosto leva o corpo junto, como o analógico. Fica
+    // ligado porque é o que faz os dois modos de virar serem um só; quem
+    // preferir o pescoço solto desliga no menu.
+    this.opts = { shake: true, flash: true, bigText: false, sound: true, snapTurn: false, giroCabeca: true };
     this.onEnd = null; this.onObjective = null; this.onPhase = null;
     this.mode = 'idle';
     this.level = null;
@@ -1450,6 +1453,67 @@ export class Game {
     return g;
   }
 
+  // A MÃO. Dentro do óculos existia UMA mão só, e nem era uma mão: era a
+  // arma, presa ao controle direito. O controle esquerdo não tinha nada
+  // desenhado, então o braço esquerdo simplesmente não existia no jogo. Quem
+  // levantava a mão para vestir a máscara via o vazio.
+  //
+  // O desenho segue a mesma gramática do resto: caixa escura com aresta
+  // ciano, sem luz e sem textura, porque a cena inteira é assim e porque uma
+  // mão realista aqui só chamaria atenção para o quanto não é realista. São
+  // sete caixas, o suficiente para o olho ler "mão" e leve o bastante para
+  // não cobrar quadro nenhum dos 60.
+  _makeHand(esquerda) {
+    // Palma, quatro dedos dobrados, polegar por cima e um toco de pulso.
+    // Os dedos são finos com folga entre eles de propósito: colados viram uma
+    // caixa só, e aí a mão lê como um tijolo flutuando. O pulso é o que diz
+    // para que lado a mão aponta quando ela aparece de relance.
+    const caixas = [[0.062, 0.028, 0.092, 0, 0, 0, 0]];
+    for (let i = 0; i < 4; i++) caixas.push([0.011, 0.024, 0.050, -0.0225 + i * 0.015, -0.004, -0.064, -0.6]);
+    caixas.push([0.019, 0.021, 0.042, esquerda ? 0.035 : -0.035, 0.010, -0.028, -0.25]);
+    caixas.push([0.044, 0.036, 0.038, 0, 0.002, 0.068, 0]);
+
+    // SETE peças, DUAS chamadas de desenho. Cada caixa como um objeto próprio
+    // custaria catorze desenhos por mão, e a fase inteira desenha por volta de
+    // cinquenta: duas mãos assim engoliriam metade do orçamento de quadro que
+    // o piso de 60 fps depende. Como nenhuma peça se mexe em relação à outra,
+    // as posições são assadas na própria geometria e coladas numa malha só.
+    const solidos = [], fios = [];
+    for (const [lx, ly, lz, px, py, pz, rx] of caixas) {
+      const geo = new THREE.BoxGeometry(lx, ly, lz);
+      if (rx) geo.rotateX(rx);
+      geo.translate(px, py, pz);
+      solidos.push(geo.toNonIndexed().getAttribute('position').array);
+      const ar = new THREE.EdgesGeometry(geo);
+      fios.push(ar.getAttribute('position').array);
+      ar.dispose(); geo.dispose();
+    }
+    const junta = (partes) => {
+      let n = 0;
+      for (const a of partes) n += a.length;
+      const tudo = new Float32Array(n);
+      let o = 0;
+      for (const a of partes) { tudo.set(a, o); o += a.length; }
+      const bg = new THREE.BufferGeometry();
+      bg.setAttribute('position', new THREE.BufferAttribute(tudo, 3));
+      return bg;
+    };
+
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(junta(solidos), new THREE.MeshBasicMaterial({
+      color: 0x1a1030, depthTest: false, transparent: true,
+    })));
+    g.add(new THREE.LineSegments(junta(fios), new THREE.LineBasicMaterial({
+      color: COL.wire, depthTest: false, transparent: true, opacity: 0.85,
+    })));
+    // A mão fica um pouco atrás e abaixo do ponto de mira do controle, que é
+    // onde ela cai de verdade quando se segura um controle de VR.
+    g.position.set(0, -0.012, 0.048);
+    g.renderOrder = 1004;
+    g.traverse((o) => { o.renderOrder = 1004; });
+    return g;
+  }
+
   _makeDroneMesh() {
     const g = new THREE.Group();
     const corpo = new THREE.Group();
@@ -1693,14 +1757,12 @@ export class Game {
     this.controllers = [];
     for (let i = 0; i < 2; i++) {
       const c = this.renderer.xr.getController(i);
-      const ray = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.005, 0.005, 1, 6),
-        new THREE.MeshBasicMaterial({ color: COL.wire, transparent: true, opacity: 0.55 })
-      );
-      ray.geometry.translate(0, -0.5, 0);
-      ray.geometry.rotateX(-Math.PI / 2);
-      ray.scale.z = 5;
-      c.add(ray);
+      // Aqui saía um cilindro ciano de cinco metros de cada controle, o
+      // "raio" de apontar. Ele nasceu para mostrar onde a arma mira, mas
+      // dentro do óculos vira o contrário: duas listras azuis atravessando o
+      // corredor inteiro, sempre no campo de visão, tampando o cenário e
+      // apontando também com a mão que não atira. A arma já mostra a direção
+      // pelo próprio cano, e o tiro deixa um traço. As linhas saíram.
       c.addEventListener('selectstart', () => { this.xrTrigger = i; this.activeCtrl = i; });
       c.addEventListener('selectend', () => { if (this.xrTrigger === i) this.xrTrigger = -1; });
       c.addEventListener('squeezestart', () => { this.tap.mask = true; });
@@ -1728,6 +1790,21 @@ export class Game {
       c.add(arma);
       c.userData.arma = arma;
 
+      // as DUAS mãos. A que atira segura a arma, a outra fica livre — é ela
+      // que aperta o grip para vestir a máscara. O polegar é espelhado, então
+      // a mão é refeita quando o aparelho informa de que lado é o controle.
+      const poeMao = (esquerda) => {
+        const velha = c.userData.mao;
+        if (velha) {
+          c.remove(velha);
+          velha.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+        }
+        const m = this._makeHand(esquerda);
+        c.add(m);
+        c.userData.mao = m;
+      };
+      poeMao(i === 0);
+
       c.addEventListener('connected', (e) => {
         if (this.activeCtrl == null) this.activeCtrl = i;
         const hand = e.data && e.data.handedness;
@@ -1735,6 +1812,7 @@ export class Game {
         // a arma vai na mão do gatilho: a direita, quando o aparelho informa
         if (c.userData.arma) c.userData.arma.visible = hand !== 'left';
         if (hand !== 'left') this.weaponVR = c.userData.arma;
+        poeMao(hand === 'left');
         if (hand && c.userData.etiqueta) {
           c.userData.etiqueta.material.map =
             this._label(hand === 'left' ? STR.vr_ctrl_l : STR.vr_ctrl_r, '#00E5FF', 30);
@@ -1771,6 +1849,7 @@ export class Game {
   _calibraVR() {
     this.vrAltura = null;
     this.vrYOff = 0;
+    this._neutro = null;   // o "reto" do giro pelo rosto se refaz a cada sessão
     this.rig.scale.setScalar(1);
     // A amostragem acontece DENTRO do _frame (setAnimationLoop): dentro de
     // sessao imersiva o requestAnimationFrame da janela nao dispara no Quest,
@@ -1873,6 +1952,81 @@ export class Game {
     return trig;
   }
 
+  // UM giro só, dentro do óculos.
+  //
+  // Havia dois jeitos de virar a câmera no VR e eles eram duas coisas
+  // diferentes: o analógico girava o corpo (o rig) e a cabeça girava só a
+  // cabeça, com o pescoço no fim do curso. Virar 90 graus com o analógico e
+  // virar 90 graus com o pescoço davam resultados que não combinavam, e era
+  // preciso escolher um dos dois no meio da partida.
+  //
+  // Daqui para a frente todo giro passa por esta função, venha do analógico,
+  // do passo (snap) ou da cabeça. E ela gira em volta da CABEÇA, não da
+  // origem do rig. O rig nasce no chão entre os pés; quem joga de pé um metro
+  // fora do centro do quarto era jogado num arco a cada giro, e arco é
+  // movimento lateral que o corpo não sente. Girando em volta do próprio
+  // ponto de vista o mundo só roda, e nada empurra.
+  //
+  // A compensação vai por `_moveAxis`, e não somando na posição direto: a
+  // correção pode chegar a alguns centímetros por quadro, e sem colisão isso
+  // atravessa parede.
+  _gira(rad) {
+    if (!rad) return;
+    const a = this.rig.rotation.y, b = a + rad;
+    const hx = this.camera.position.x, hz = this.camera.position.z;
+    this.rig.rotation.y = b;
+    if (!this.renderer.xr.isPresenting) return;
+    if (hx * hx + hz * hz < 1e-6) return;
+    const sa = Math.sin(a), ca = Math.cos(a), sb = Math.sin(b), cb = Math.cos(b);
+    this._moveAxis('x', (hx * ca + hz * sa) - (hx * cb + hz * sb));
+    this._moveAxis('z', (-hx * sa + hz * ca) - (-hx * sb + hz * cb));
+  }
+
+  // A CABEÇA VIRA COMO O ANALÓGICO.
+  //
+  // O rosto passa a ser um analógico: virado além da folga, o mundo roda para
+  // aquele lado. Voltou o rosto para o meio, para na hora, igual a soltar o
+  // analógico. Não há mais dois jeitos de virar, há um só, com dois jeitos de
+  // pedir.
+  //
+  // O ângulo do rosto vem do rastreamento, e o rastreamento mede em relação à
+  // SALA, não ao corpo dentro do jogo: girar o rig não muda esse número. Ou
+  // seja, o giro não se cancela sozinho, e é isso que o faz funcionar como um
+  // analógico em vez de "endireitar o pescoço".
+  //
+  // Só que um zero preso à sala tem um jeito feio de quebrar: quem se plantar
+  // de lado em relação ao ponto onde a sessão começou fica com o rosto torto o
+  // tempo todo, e aí o mundo roda para sempre, sem nada que a pessoa possa
+  // fazer. Por isso o zero é MÓVEL: enquanto o rosto está dentro da folga ele
+  // fica parado, e quando passa da folga ele começa a perseguir o rosto
+  // devagar, com uns dois segundos de atraso. Uma virada de rosto decidida
+  // gira o mundo; um rosto torto o tempo todo vira o novo "reto" em poucos
+  // segundos e o giro para. Não existe caso em que ele roda sem fim.
+  //
+  // A folga de 22 graus é o que separa "olhar para o lado" de "virar para o
+  // lado". Sem ela o cenário rodava a cada olhada, que é enjoo puro. E o teto
+  // fica em pouco mais da metade do analógico: giro que a pessoa não pediu com
+  // o dedo tem que ser sempre mais manso que o que ela pediu.
+  _giroCabeca(dt) {
+    if (!this.renderer.xr.isPresenting || !this.opts.giroCabeca) return;
+    if (this.opts.snapTurn) return;   // quem escolheu passos não quer giro contínuo nenhum
+    _v1.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    _v1.y = 0;
+    if (_v1.lengthSq() < 1e-6) return;
+    const rosto = Math.atan2(-_v1.x, -_v1.z);
+    if (this._neutro == null) this._neutro = rosto;
+    let d = rosto - this._neutro;
+    while (d > Math.PI) d -= 2 * Math.PI;      // pelo caminho curto
+    while (d < -Math.PI) d += 2 * Math.PI;
+    const folga = 0.38;                        // 22 graus
+    const sobra = Math.abs(d) - folga;
+    if (sobra <= 0) return;
+    this._neutro += d * Math.min(1, dt / 2.0);
+    const vel = Math.min(sobra * 2.0, P.TURN_SPEED * 0.55);
+    this._gira(Math.sign(d) * vel * dt);
+    this._giroVel = Math.max(this._giroVel || 0, vel);   // a vinheta conta este giro também
+  }
+
   _xrSticks(dt) {
     const session = this.renderer.xr.getSession();
     if (!session) return { x: 0, y: 0 };
@@ -1934,7 +2088,7 @@ export class Game {
       // repeticao era um passo por toque, e virar de costas exigia seis
       // toques com solta entre eles.
       if (dir !== 0 && (dir !== this._snapDir || this._snapT <= 0)) {
-        this.rig.rotation.y -= dir * P.SNAP_TURN;
+        this._gira(-dir * P.SNAP_TURN);
         this._snapT = P.SNAP_REPETE;
         this._pisca = P.SNAP_PISCA;   // escurece por um instante: corta o enjoo do salto
       }
@@ -1944,7 +2098,7 @@ export class Game {
       // curva suave: o comeco do curso do analogico gira devagar, para mirar,
       // e o fim gira rapido, para se virar. Reta pura fica nervosa no meio.
       const g = Math.sign(turn) * Math.pow(Math.abs(turn), 1.35);
-      this.rig.rotation.y -= g * P.TURN_SPEED * dt;
+      this._gira(-g * P.TURN_SPEED * dt);
       this._giroVel = Math.abs(g) * P.TURN_SPEED;   // a vinheta usa isto
     }
     if (this.opts.snapTurn) this._giroVel = 0;
@@ -2216,7 +2370,10 @@ export class Game {
       if (this.held.has('sleft')) str -= 1;
       fwd += this.stick.y; str += this.stick.x;
       if (this._padMove) { fwd += this._padMove.y; str += this._padMove.x; }
-      if (this.renderer.xr.isPresenting) { const v = this._xrSticks(dt); fwd += v.y; str += v.x; }
+      if (this.renderer.xr.isPresenting) {
+        const v = this._xrSticks(dt); fwd += v.y; str += v.x;
+        this._giroCabeca(dt);   // depois do analógico: os dois somam no mesmo giro
+      }
     }
 
     this.camera.getWorldDirection(_v1);
