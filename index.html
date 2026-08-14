@@ -1103,6 +1103,7 @@
             bubble.classList.remove('aberto');
             tamanhoJoy(false);
             window.speechSynthesis && window.speechSynthesis.cancel();
+            window.JoyPararVoz && window.JoyPararVoz();
         }
 
         bubble.addEventListener('click', () => panelAberto ? fecharJoy() : abrirJoy());
@@ -1215,28 +1216,90 @@
             // ninguem obedecer: a fonte encolhe ate cada frase caber numa linha
             // so. Tem piso, entao nunca fica ilegivel; se nem no piso couber,
             // deixa quebrar, que e melhor que letra de bula.
-            const CAP_MAX = 22, CAP_MIN = 14;   // pixels
+            // No computador dá para descer bastante sem perder leitura de longe.
+            // No celular a tela já é pequena: 15px é o mínimo aceitável ali.
+            const CAP_MAX = 22, CAP_MIN_LARGO = 14, CAP_MIN_ESTREITO = 15;
             function caberUmaPorLinha(texto) {
                 if (!caption) return;
                 const linhas = texto.split('\n').filter(Boolean).length;
                 caption.style.removeProperty('--cap-fonte');
                 if (!panel.classList.contains('tela-cheia') || linhas < 2) return;
-                // Numa coluna estreita, encolher nao resolve: uma frase de 70
-                // caracteres precisaria de uns 10px para caber em 343px, e ai
-                // ninguem le. Melhor manter o tamanho bom e deixar quebrar.
-                if (caption.getBoundingClientRect().width < 520) return;
-                for (let px = CAP_MAX; px >= CAP_MIN; px--) {
+
+                const largura = caption.getBoundingClientRect().width;
+                const minimo = largura < 520 ? CAP_MIN_ESTREITO : CAP_MIN_LARGO;
+
+                for (let px = CAP_MAX; px >= minimo; px--) {
                     caption.style.setProperty('--cap-fonte', px + 'px');
                     const alt = parseFloat(getComputedStyle(caption).lineHeight);
-                    if (caption.scrollHeight <= alt * linhas + 2) return;
+                    if (caption.scrollHeight <= alt * linhas + 2) return;   // coube
                 }
+                // Não coube nem no menor tamanho: encolher a letra só piorou,
+                // porque a frase quebra do mesmo jeito. Volta ao tamanho bom e
+                // deixa quebrar, que é melhor que letra de bula quebrando.
+                caption.style.removeProperty('--cap-fonte');
             }
             window.addEventListener('resize', () => {
                 if (caption && caption.textContent) caberUmaPorLinha(caption.textContent);
             });
 
+            // ---- Áudio da ElevenLabs -------------------------------------
+            // A voz do navegador muda de aparelho para aparelho e em muitos
+            // sai robótica. Aqui o áudio vem pronto de /api/voz, igual em
+            // qualquer celular e em qualquer computador da escola. Se o
+            // endpoint não responder, por falta de chave ou de internet, cai
+            // sozinho na voz do navegador: nunca fica mudo por causa disso.
+            const VOZ_API = '/api/voz';
+            let vozApiViva = null;      // null = ainda não sei; true/false = já testei
+            let tocando = null;
+
+            // O iPhone só deixa tocar áudio a partir de um gesto. O primeiro
+            // toque em qualquer lugar destrava o elemento de áudio, que fica
+            // reservado para quando a resposta chegar.
+            let audioEl = null;
+            function destravarAudio() {
+                if (audioEl) return;
+                audioEl = new Audio();
+                audioEl.preload = 'auto';
+                try { audioEl.play().catch(function () {}); audioEl.pause(); } catch (e) {}
+            }
+            ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+                document.addEventListener(ev, destravarAudio, { once: true, passive: true });
+            });
+
+            function pararAudio() {
+                if (tocando) { try { tocando.pause(); } catch (e) {} tocando = null; }
+                if (audioEl) { try { audioEl.pause(); } catch (e) {} }
+            }
+            window.JoyPararVoz = pararAudio;   // o botão de fechar vive fora daqui
+
+            async function falarPelaApi(texto, aoTerminar) {
+                if (vozApiViva === false) return false;
+                try {
+                    const r = await fetch(VOZ_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ texto: texto })
+                    });
+                    if (!r.ok) { if (r.status === 503) vozApiViva = false; return false; }
+                    const url = URL.createObjectURL(await r.blob());
+                    destravarAudio();
+                    const a = audioEl || new Audio();
+                    a.src = url;
+                    a.onended = function () { URL.revokeObjectURL(url); aoTerminar(); };
+                    a.onerror = function () { URL.revokeObjectURL(url); aoTerminar(); };
+                    await a.play();
+                    tocando = a;
+                    vozApiViva = true;
+                    return true;
+                } catch (e) {
+                    console.warn('Voz da ElevenLabs indisponível:', e.message);
+                    return false;
+                }
+            }
+
             function falar(texto) {
                 synth.cancel();
+                pararAudio();
 
                 // O texto aparece SEMPRE, antes de qualquer coisa de áudio. Ele
                 // estava sendo escrito só dentro do onstart da voz: em aparelho
@@ -1257,21 +1320,28 @@
                     status.innerHTML = ICO.mic + 'Pergunte outra coisa. Ela lembra do que já foi dito.';
                 }
 
-                const u = new SpeechSynthesisUtterance(texto);
-                u.lang = 'pt-BR';
-                if (vozPt) u.voice = vozPt;
-                u.rate = VOZ.taxa;
-                u.pitch = VOZ.tom;
-                u.volume = VOZ.volume;
-                let comecou = false;
-                u.onstart = function () { comecou = true; };
-                u.onend = fim;
-                u.onerror = fim;
-                try { synth.speak(u); } catch (e) { fim(); return; }
+                function vozDoNavegador() {
+                    const u = new SpeechSynthesisUtterance(texto);
+                    u.lang = 'pt-BR';
+                    if (vozPt) u.voice = vozPt;
+                    u.rate = VOZ.taxa;
+                    u.pitch = VOZ.tom;
+                    u.volume = VOZ.volume;
+                    let comecou = false;
+                    u.onstart = function () { comecou = true; };
+                    u.onend = fim;
+                    u.onerror = fim;
+                    try { synth.speak(u); } catch (e) { fim(); return; }
 
-                // Se a fala nem começar, a tela não pode ficar presa em
-                // "respondendo": passa sozinha para o estado de espera.
-                setTimeout(function () { if (!comecou) fim(); }, 1800);
+                    // Se a fala nem começar, a tela não pode ficar presa em
+                    // "respondendo": passa sozinha para o estado de espera.
+                    setTimeout(function () { if (!comecou) fim(); }, 1800);
+                }
+
+                // Primeiro a voz boa; só cai na do navegador se ela falhar.
+                falarPelaApi(texto, fim).then(function (deu) {
+                    if (!deu) vozDoNavegador();
+                });
             }
 
             // Reserva local: só entra em ação se a chamada à API falhar.
@@ -1383,6 +1453,7 @@
 
             stopBtn.addEventListener('click', function () {
                 synth.cancel();
+                pararAudio();
                 if (rec) try { rec.abort(); } catch (e) {}
                 box.classList.remove('falando', 'ouvindo');
                 status.innerHTML = ICO.mic + 'Toque no microfone, escreva ou use as sugestões.';
