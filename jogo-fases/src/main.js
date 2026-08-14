@@ -131,10 +131,10 @@ const CDN = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZD
 const ASSETS = {
   wall: CDN + 'b0e8c0f8-065e-4073-b662-299921b70594.jpg',
   floor: CDN + 'b2921ab3-5b4b-44aa-b7ae-3c7287a022ba.jpg',
-  panel: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260807_142522_7b9947ec-a91a-4a95-bbbc-1946d19710a4.png',
+  panel: 'https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/7a3f8125-6930-4a32-86ae-490c5008460c.jpg',
   sky: CDN + '796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg',
   ayaVid: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_212107_31ec2646-f050-4da4-baec-602f160a2cf4.mp4',
-  door: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_213418_bcd63cc3-9702-4a7e-a2f4-c9c782bf6e5c.png',
+  door: 'https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/887ac478-615a-404d-9ef8-258ebfe39f84.jpg',
   // AYA nova: personagem fictícia, na paleta do jogo (vácuo preto-violeta,
   // luz ciano de um lado, contraluz dourado do outro). A anterior não
   // conversava com o resto da cena.
@@ -145,8 +145,8 @@ const ASSETS = {
   // soma luz em vez de tapar, então o preto simplesmente não aparece. Sai mais
   // barato que pedir recorte com alfa e casa com o resto da cena, que é toda
   // emissiva.
-  boss: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260813_173108_8708d352-217d-47cb-bd8c-28cf26c04537.png',
-  drone: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260813_173108_7ee83d4d-d203-484c-a68e-7d60c0e6291a.png',
+  boss: 'https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/c94cd638-f6e1-4048-bb4f-f9ad8e1ee42b.png',
+  drone: 'https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/2dc2e84f-fa66-47ab-8789-cd069e8c7543.png',
 };
 
 // MALHAS 3D (GLB). Chefe e drone eram sprites: um retângulo que sempre encara
@@ -1810,7 +1810,12 @@ export class Game {
 
   // desligar o som tem que calar a AYA junto, senão a voz continua falando
   // sozinha com o resto do jogo mudo
-  calaVoz() { if (this._voz) { try { this._voz.pause(); } catch (e) {} this._voz = null; } }
+  // cala a que está tocando E esvazia a fila: desligar o som ou trocar de fase
+  // não pode deixar uma frase guardada para entrar depois
+  calaVoz() {
+    this._naFila = null;
+    if (this._voz) { try { this._voz.pause(); } catch (e) {} this._voz = null; }
+  }
 
   // Solta só o que é DEDO e MOUSE. É isto que roda ao trocar de fase e ao
   // morrer: um dedo que estava na tela no instante da morte deixava
@@ -2134,22 +2139,42 @@ export class Game {
     // cada pedido leva um número: se o play() de um áudio velho resolver
     // depois que outra fala já começou, ele se cala sozinho. Era essa corrida
     // que sobrava.
-    this.calaVoz();
+    // E ELA PASSA A ESPERAR A VEZ, em vez de cortar.
+    //
+    // Calar a anterior no meio tira a sobreposição e cria outra coisa ruim: a
+    // frase morre pela metade, e duas metades emendadas soam quase como duas
+    // falas juntas. Aqui a nova fica na FILA e entra quando a de agora
+    // terminar. A fila guarda UMA, a mais recente: se três eventos
+    // acontecerem juntos, ouve-se o que está tocando e depois o mais novo,
+    // nunca uma pilha de frases velhas atrasadas.
+    if (this._voz && !this._voz.paused && !this._voz.ended) { this._naFila = texto; return; }
+    this._toca(texto);
+  }
+
+  _toca(texto) {
     const a = new Audio('/api/voz?texto=' + encodeURIComponent(texto));
     a.volume = 0.95;
     const meu = this._vozN = (this._vozN || 0) + 1;
     this._voz = a;
+    const acabou = () => {
+      if (this._voz !== a) return;
+      this._voz = null;
+      const proxima = this._naFila;
+      this._naFila = null;
+      if (proxima) this._toca(proxima);
+    };
     // Sem chave configurada o endpoint responde 503 e não adianta insistir a
     // cada fala; qualquer outra falha (rede caindo) apenas silencia esta.
     a.addEventListener('error', () => {
       const st = a.error && a.error.code;
-      if (st === 4) this._vozMorta = true;
-      if (this._voz === a) this._voz = null;
+      if (st === 4) { this._vozMorta = true; this._naFila = null; }
+      acabou();
     });
-    a.addEventListener('ended', () => { if (this._voz === a) this._voz = null; });
+    a.addEventListener('ended', acabou);
     a.play().then(() => {
+      // se outra fala tomou a frente enquanto esta carregava, esta nasceu velha
       if (meu !== this._vozN) { try { a.pause(); } catch (e) {} }
-    }).catch(() => { if (this._voz === a) this._voz = null; });
+    }).catch(() => acabou());
   }
   _sayOnce(key, dur) {
     if (!this.s || this.s.said[key]) return;
