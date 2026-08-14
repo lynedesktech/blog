@@ -29,9 +29,15 @@ import { Sfx, TRILHAS } from './audio.js';
 const P = {
   STAND_H: 1.78, CROUCH_H: 1.06, EYE_OFF: 0.14,
   RADIUS: 0.36,
-  SPEED: 5.4, CROUCH_SPEED: 2.5, AIR_CTRL: 0.42,
-  ACCEL: 46, FRICTION: 13,
-  GRAV: 23, JUMP: 8.6,
+  // ANDAR E PULAR. Andar estava em 5,4 m/s e o pulo em 8,6, que dá 1,61 m de
+  // altura. Ficava pesado: o corredor é longo e o pulo mal passava do vão.
+  // 6,6 m/s e 9,6 de impulso dão 2,00 m de altura, e o controle no ar subiu
+  // junto porque altura sem controle no ar vira pulo que erra a borda.
+  // Conferido contra o cenário: a meia-parede da cobertura tem 2,6 m de topo,
+  // então nem com o pulo novo dá para passar por cima dela.
+  SPEED: 6.6, CROUCH_SPEED: 2.9, AIR_CTRL: 0.52,
+  ACCEL: 52, FRICTION: 13,
+  GRAV: 23, JUMP: 9.6,
   COYOTE: 0.12, JUMP_BUF: 0.16,
   TERM_VEL: -32,
 
@@ -89,7 +95,13 @@ const P = {
   BOSS_SPAWN: 2,          // drones invocados por ciclo
   BOSS_SPAWN_MAX: 6,      // teto de drones vivos que ele mantém em pé
 
-  TURN_SPEED: 2.1, SNAP_TURN: Math.PI / 6,
+  // GIRO EM VR. O passo era de 30° e só valia UM por toque: para virar 180°
+  // eram seis toques, soltando o analógico entre cada um. É isso que dava a
+  // sensação de câmera travada. Agora o passo é de 45° e, segurando, ele
+  // repete a cada 0,26 s, que é o comportamento normal de VR.
+  TURN_SPEED: 2.6, SNAP_TURN: Math.PI / 4,
+  SNAP_REPETE: 0.26,     // segundos entre passos com o analógico segurado
+  SNAP_PISCA: 0.09,      // escurecida curta no passo, contra o enjoo
   VR_CROUCH_Y: 1.25,     // reserva, so ate a calibracao medir a pessoa
   VR_OLHO: 1.64,         // altura de olho para a qual o mundo foi desenhado
 };
@@ -1807,7 +1819,7 @@ export class Game {
   _xrSticks(dt) {
     const session = this.renderer.xr.getSession();
     if (!session) return { x: 0, y: 0 };
-    let mx = 0, my = 0, turn = 0, aApertado = false;
+    let mx = 0, my = 0, turn = 0, aApertado = false, bApertado = false;
     for (const src of session.inputSources) {
       const gp = src.gamepad;
       if (!gp || !gp.axes) continue;
@@ -1829,17 +1841,37 @@ export class Game {
         if (Math.abs(vy) > Math.abs(my)) my = vy;
       }
       if (gp.buttons && gp.buttons[4] && gp.buttons[4].pressed) aApertado = true;
+      // B/Y agacha. Antes so dava para agachar AGACHANDO de verdade, o que
+      // e' bonito de demonstrar e cansativo de jogar: quem esta sentado, ou
+      // quem tem o teto do quarto baixo, simplesmente nao passava por baixo
+      // de feixe nenhum.
+      if (gp.buttons && gp.buttons[5] && gp.buttons[5].pressed) bApertado = true;
     }
     // latch do pulo fora do laco: dentro, o segundo controle sobrescrevia o
     // estado do primeiro e comia o aperto do botao A
     if (aApertado) {
       if (!this._xrA) { this.tap.jump = true; this._xrA = true; }
     } else this._xrA = false;
+    // agachar e' liga-desliga, nao segurar: segurar um botao agachado durante
+    // um corredor inteiro cansa a mao e nao ha nada que peca isso.
+    if (bApertado) {
+      if (!this._xrB) { this.press('duck'); this._xrB = true; }
+    } else this._xrB = false;
     if (this.opts.snapTurn) {
       // o latch guarda a DIRECAO: virar para o lado oposto destrava na hora,
       // mesmo que algum eixo preso mantenha o modulo acima do limiar
       const dir = Math.abs(turn) > 0.7 ? Math.sign(turn) : 0;
-      if (dir !== 0 && dir !== this._snapDir) this.rig.rotation.y -= dir * P.SNAP_TURN;
+      this._snapT = (this._snapT || 0) - dt;
+      // Passo novo quando MUDA de direcao (resposta imediata) ou quando o
+      // tempo de repeticao venceu com o analogico ainda segurado. Sem a
+      // repeticao era um passo por toque, e virar de costas exigia seis
+      // toques com solta entre eles.
+      if (dir !== 0 && (dir !== this._snapDir || this._snapT <= 0)) {
+        this.rig.rotation.y -= dir * P.SNAP_TURN;
+        this._snapT = P.SNAP_REPETE;
+        this._pisca = P.SNAP_PISCA;   // escurece por um instante: corta o enjoo do salto
+      }
+      if (dir === 0) this._snapT = 0;
       this._snapDir = dir;
     } else this.rig.rotation.y -= turn * P.TURN_SPEED * dt;
     return { x: mx, y: my };
@@ -3096,10 +3128,27 @@ export class Game {
     // vinheta acompanha a velocidade: fechada andando, aberta parado
     if (this.vinheta) {
       const emVR = this.renderer.xr.isPresenting;
-      const v = this.pl ? Math.hypot(this.pl.vel.x, this.pl.vel.z) : 0;
-      const alvo = emVR ? Math.min(0.72, Math.max(0, (v - 0.6) / 4.2) * 0.72) : 0;
+      // Conta o SUBIR E CAIR junto com o andar. A vinheta media so a
+      // velocidade horizontal, e pulo e queda sao dos momentos que mais
+      // embrulham o estomago em VR, porque o mundo se move na vertical e o
+      // corpo continua parado no chao do quarto. Com o pulo mais alto isso
+      // pesou mais ainda. O vertical entra com peso 0,7: ele e' curto, mas e'
+      // intenso.
+      const vh = this.pl ? Math.hypot(this.pl.vel.x, this.pl.vel.z) : 0;
+      const vv = this.pl ? Math.abs(this.pl.vel.y) * 0.7 : 0;
+      const v = Math.max(vh, vv);
+      // A velocidade de andar subiu de 5,4 para 6,6, e vista periferica em
+      // movimento e' de onde vem o enjoo: a vinheta fecha um pouco mais e
+      // comeca mais cedo para compensar o passo mais rapido.
+      let alvo = emVR ? Math.min(0.80, Math.max(0, (v - 0.4) / 4.0) * 0.80) : 0;
+      // durante o passo do giro ela fecha quase de vez, por um instante. O
+      // olho perde a referencia periferica bem no momento em que o mundo
+      // salta, que e' o truque padrao de conforto em VR.
+      if (this._pisca > 0) { this._pisca -= dt; if (emVR) alvo = 0.95; }
       const m = this.vinheta.material;
-      m.opacity += (alvo - m.opacity) * Math.min(1, dt * 6);
+      // fecha rapido, abre devagar: fechar tem que acompanhar o salto
+      const vel = alvo > m.opacity ? 22 : 6;
+      m.opacity += (alvo - m.opacity) * Math.min(1, dt * vel);
       this.vinheta.visible = m.opacity > 0.01;
     }
 

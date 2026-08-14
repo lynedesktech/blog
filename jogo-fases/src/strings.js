@@ -27,7 +27,7 @@ export const STR = {
   ],
 
   ctrl_title: 'CONTROLES',
-  ctrl_vr: 'VR: analógico esquerdo anda · direito gira · gatilho atira · grip veste a máscara · agache de verdade sob feixes e tetos baixos',
+  ctrl_vr: 'VR: analógico esquerdo anda · direito gira · gatilho atira · grip veste a máscara · B agacha, ou agache de verdade',
   ctrl_desk: 'PC: WASD anda · ESPAÇO pula · CTRL agacha · clique atira · F veste a máscara',
   ctrl_touch: 'Celular: metade esquerda anda · metade direita olha · botões PULO, AGACHAR e MÁSCARA',
   ctrl_pad: 'Controle: analógico esquerdo anda · direito gira · A pula · RT atira · LB máscara',
@@ -154,7 +154,7 @@ export const STR = {
 
   win_title: 'SISTEMA CORRIGIDO',
   vr_ctrl_l: 'ANALÓGICO anda · GRIP máscara',
-  vr_ctrl_r: 'GATILHO atira · A pula · ANALÓGICO gira',
+  vr_ctrl_r: 'GATILHO atira · A pula · B agacha · ANALÓGICO gira',
   vr_reinicio: 'Você zerou. Aperte o gatilho para jogar de novo.',
   win_body: 'Você atravessou as cinco fases e obrigou o modelo a enxergar o seu rosto.',
   lose_title: 'APAGADO DO QUADRO',
