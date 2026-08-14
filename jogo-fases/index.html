@@ -6,6 +6,20 @@
 <meta name="theme-color" content="#05020c">
 <meta name="description" content="Jogo de fases em primeira pessoa sobre viés algorítmico, inspirado no estudo Gender Shades de Joy Buolamwini.">
 <title>O Corredor Codificado</title>
+<!-- AS TEXTURAS COMECAM A BAIXAR AGORA, e nao daqui a pouco.
+     Sem isto o navegador so descobre que elas existem depois de baixar o
+     main.js, ler o modulo e chegar na linha do TextureLoader: sao dois
+     tempos de ida e volta perdidos antes do primeiro byte de imagem. Com o
+     preload as quatro superficies e o ceu saem junto com o codigo, em
+     paralelo. `crossorigin` e obrigatorio aqui porque o three pede as
+     imagens em modo anonimo; sem ele o preload cai numa entrada de cache
+     diferente e o download aconteceria duas vezes. -->
+<link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" crossorigin>
+<link rel="preload" as="image" crossorigin href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/b0e8c0f8-065e-4073-b662-299921b70594.jpg">
+<link rel="preload" as="image" crossorigin href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/b2921ab3-5b4b-44aa-b7ae-3c7287a022ba.jpg">
+<link rel="preload" as="image" crossorigin href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HBsC4pkD2oWljt5W8Aky7ZDxwD/796ad1bc-e6e1-4606-a9c6-804dd53c2ac0.jpg">
+<link rel="preload" as="image" crossorigin href="https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/7a3f8125-6930-4a32-86ae-490c5008460c.jpg">
+<link rel="preload" as="image" crossorigin href="https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/887ac478-615a-404d-9ef8-258ebfe39f84.jpg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305020c'/%3E%3Cpath d='M16 4 L25 11 L23 24 L16 28 L9 24 L7 11 Z' fill='none' stroke='%23FFC93C' stroke-width='2'/%3E%3Crect x='11' y='14' width='4' height='2' fill='%2300E5FF'/%3E%3Crect x='17' y='14' width='4' height='2' fill='%2300E5FF'/%3E%3C/svg%3E">
 <style>
   :root{ --void:#05020c; --cyan:#00E5FF; --gold:#FFC93C; --mag:#FF2D9B; --bone:#F3EFE6; --fs:16px; }

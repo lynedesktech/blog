@@ -333,6 +333,10 @@ export class Game {
     // Sprites do chefe e do drone, gerados na STYLE FORMULA do jogo.
     const spr = (url) => {
       const t = new THREE.TextureLoader().load(url);
+      // aditivo: preto aqui nao pinta nada, entao a peca so aparece quando a
+      // imagem chegar, em vez de virar um retangulo preto no meio da cena
+      t.image = this._corProvisoria('#000000', false);
+      t.needsUpdate = true;
       t.colorSpace = THREE.SRGBColorSpace;
       return t;
     };
@@ -349,18 +353,34 @@ export class Game {
     // Texturas geradas por IA (costuradas pelo pipeline de tiling).
     // Cada placa de superfície mostra o tile UMA vez, então repeat fica em 1 e
     // a emenda só aparece entre placas vizinhas, que é onde ela é invisível.
-    const load = (url) => {
+    // NADA NASCE PRETO.
+    //
+    // Era esta a razao de tudo aparecer preto no comeco. Um material com `map`
+    // apontando para uma textura que ainda nao chegou nao desenha a cor do
+    // material: o three sobe uma textura vazia de 1x1 no lugar, e vazia quer
+    // dizer preta. Ou seja, o cenario inteiro ficava preto ate o download
+    // terminar, e so entao aparecia de uma vez.
+    //
+    // Agora cada textura JA NASCE com uma imagem: 8 por 8 pixels da cor daquela
+    // superficie, feita aqui mesmo, sem baixar nada, pronta no primeiro quadro.
+    // O corredor abre colorido na hora. Quando o arquivo de verdade chega, o
+    // proprio TextureLoader troca a imagem por baixo (ele faz
+    // `texture.image = image; texture.needsUpdate = true`) e o detalhe entra
+    // sem que nenhum material precise ser tocado.
+    const load = (url, cor) => {
       const t = new THREE.TextureLoader().load(url);
+      t.image = this._corProvisoria(cor);
+      t.needsUpdate = true;
       t.colorSpace = THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = 4;
       return t;
     };
     this.surf = {
-      wall: load(ASSETS.wall),
-      floor: load(ASSETS.floor),
-      panel: load(ASSETS.panel),
-      door: load(ASSETS.door),
+      wall: load(ASSETS.wall, '#332a56'),
+      floor: load(ASSETS.floor, '#2b2049'),
+      panel: load(ASSETS.panel, '#7d8695'),
+      door: load(ASSETS.door, '#6f7789'),
     };
     this._buildSky();
 
@@ -401,10 +421,39 @@ export class Game {
     this.scene.add(this.dust);
   }
 
+  // A IMAGEM QUE SEGURA O LUGAR enquanto o arquivo de verdade não chega.
+  //
+  // 64 por 64 desenhados aqui, sem baixar nada, prontos no primeiro quadro. Não
+  // é uma cor lisa de propósito: cor lisa numa parede grande continua lendo
+  // como "não carregou". Com uma grade fina por cima, do mesmo azul do jogo, a
+  // superfície já lê como superfície, e quando a textura de verdade entra a
+  // troca passa como um ganho de detalhe, não como a cena aparecendo do nada.
+  _corProvisoria(cor, grade) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const g = cv.getContext('2d');
+    g.fillStyle = cor;
+    g.fillRect(0, 0, 64, 64);
+    if (grade !== false) {
+      g.strokeStyle = 'rgba(0,229,255,0.10)';
+      g.lineWidth = 1;
+      for (let i = 16; i < 64; i += 16) {
+        g.beginPath(); g.moveTo(i + 0.5, 0); g.lineTo(i + 0.5, 64); g.stroke();
+        g.beginPath(); g.moveTo(0, i + 0.5); g.lineTo(64, i + 0.5); g.stroke();
+      }
+      g.fillStyle = 'rgba(255,255,255,0.045)';
+      g.fillRect(0, 0, 64, 2);
+    }
+    return cv;
+  }
+
   // Fundo do vazio: cilindro grande virado para dentro que acompanha o jogador.
   // Sem fog, com opacidade baixa, para ler como brilho distante e não como parede.
+
   _buildSky() {
     const t = new THREE.TextureLoader().load(ASSETS.sky);
+    t.image = this._corProvisoria('#1b1533', false);   // ver a nota em `load`: nada nasce preto
+    t.needsUpdate = true;
     t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = THREE.RepeatWrapping;
     t.wrapT = THREE.ClampToEdgeWrapping;
@@ -1810,12 +1859,8 @@ export class Game {
 
   // desligar o som tem que calar a AYA junto, senão a voz continua falando
   // sozinha com o resto do jogo mudo
-  // cala a que está tocando E esvazia a fila: desligar o som ou trocar de fase
-  // não pode deixar uma frase guardada para entrar depois
-  calaVoz() {
-    this._naFila = null;
-    if (this._voz) { try { this._voz.pause(); } catch (e) {} this._voz = null; }
-  }
+  // desligar o som ou trocar de fase cala na hora, sem desvanecer
+  calaVoz() { this._cala(0); }
 
   // Solta só o que é DEDO e MOUSE. É isto que roda ao trocar de fase e ao
   // morrer: um dedo que estava na tela no instante da morte deixava
@@ -2139,43 +2184,53 @@ export class Game {
     // cada pedido leva um número: se o play() de um áudio velho resolver
     // depois que outra fala já começou, ele se cala sozinho. Era essa corrida
     // que sobrava.
-    // E ELA PASSA A ESPERAR A VEZ, em vez de cortar.
+    // A FALA NOVA ENTRA NA HORA, e a de antes sai na hora.
     //
-    // Calar a anterior no meio tira a sobreposição e cria outra coisa ruim: a
-    // frase morre pela metade, e duas metades emendadas soam quase como duas
-    // falas juntas. Aqui a nova fica na FILA e entra quando a de agora
-    // terminar. A fila guarda UMA, a mais recente: se três eventos
-    // acontecerem juntos, ouve-se o que está tocando e depois o mais novo,
-    // nunca uma pilha de frases velhas atrasadas.
-    if (this._voz && !this._voz.paused && !this._voz.ended) { this._naFila = texto; return; }
-    this._toca(texto);
-  }
-
-  _toca(texto) {
+    // Passei por duas versões erradas antes desta. Deixar as duas tocando é o
+    // defeito original. Pôr a nova numa fila tira a sobreposição mas cria
+    // atraso: a AYA avisaria do drone depois de o drone já ter passado, e uma
+    // fala presa esperando a outra é o mesmo problema visto do outro lado.
+    //
+    // Aqui a anterior é desligada na hora, com o volume descendo em 90 ms para
+    // não dar estalo, e a nova começa a carregar no mesmo instante. Como a
+    // nova ainda leva um tempo de rede para soar, na prática nem chegam a se
+    // encontrar: quando ela sai, a velha já está muda.
+    this._cala(0.09);
     const a = new Audio('/api/voz?texto=' + encodeURIComponent(texto));
     a.volume = 0.95;
     const meu = this._vozN = (this._vozN || 0) + 1;
     this._voz = a;
-    const acabou = () => {
-      if (this._voz !== a) return;
-      this._voz = null;
-      const proxima = this._naFila;
-      this._naFila = null;
-      if (proxima) this._toca(proxima);
-    };
     // Sem chave configurada o endpoint responde 503 e não adianta insistir a
     // cada fala; qualquer outra falha (rede caindo) apenas silencia esta.
     a.addEventListener('error', () => {
       const st = a.error && a.error.code;
-      if (st === 4) { this._vozMorta = true; this._naFila = null; }
-      acabou();
+      if (st === 4) this._vozMorta = true;
+      if (this._voz === a) this._voz = null;
     });
-    a.addEventListener('ended', acabou);
+    a.addEventListener('ended', () => { if (this._voz === a) this._voz = null; });
     a.play().then(() => {
       // se outra fala tomou a frente enquanto esta carregava, esta nasceu velha
       if (meu !== this._vozN) { try { a.pause(); } catch (e) {} }
-    }).catch(() => acabou());
+    }).catch(() => { if (this._voz === a) this._voz = null; });
   }
+
+  // desliga a fala de agora: descendo o volume em `seg`, ou de uma vez se 0
+  _cala(seg) {
+    const a = this._voz;
+    this._voz = null;
+    if (!a) return;
+    if (!seg) { try { a.pause(); } catch (e) {} return; }
+    const passo = 0.015, vezes = Math.max(1, Math.round(seg / passo));
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      try {
+        a.volume = Math.max(0, 0.95 * (1 - i / vezes));
+        if (i >= vezes) { a.pause(); clearInterval(id); }
+      } catch (e) { clearInterval(id); }
+    }, passo * 1000);
+  }
+
   _sayOnce(key, dur) {
     if (!this.s || this.s.said[key]) return;
     this.s.said[key] = true;
