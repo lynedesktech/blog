@@ -55,6 +55,14 @@
   button:hover,.btn:hover{background:var(--cyan);color:var(--void)}
   button.primary{border-color:var(--gold);color:var(--gold)}
   button.primary:hover{background:var(--gold);color:var(--void)}
+  /* link com cara de botao secundario: mesma familia dos outros, um degrau
+     mais discreto, porque sair nao e a acao principal desta tela */
+  .botao-link{display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;
+    font:inherit;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    font-size:.78rem;padding:.6rem 1.15rem;border-radius:2px;
+    border:2px solid rgba(207,216,230,.35);color:#cfd8e6;
+    transition:background .15s,color .15s,border-color .15s}
+  .botao-link:hover{background:#cfd8e6;color:var(--void);border-color:#cfd8e6}
   button.ghost{border-color:#4a4258;color:#9aa4b4;font-size:.78rem;padding:.5rem .9rem}
   button.ghost:hover{background:#4a4258;color:var(--bone)}
 
@@ -227,6 +235,18 @@
     <button class="primary" id="b-flat"></button>
     <button id="b-how"></button>
     <button id="b-credits"></button>
+  </div>
+  <!-- O mesmo caminho de volta na fileira do menu, e nao so no canto: na tela
+       de inicio ele tem que estar onde a pessoa esta olhando, junto com as
+       outras escolhas. O do canto continua existindo para as outras telas. -->
+  <div class="row" style="margin-top:.1rem">
+    <a class="botao-link" id="b-blog" href="../index.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="14" height="14"
+           fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 12H5M11 6l-6 6 6 6"/>
+      </svg>
+      VOLTAR PARA O BLOG
+    </a>
   </div>
   <p class="fine" id="t-ctrl"></p>
   <p class="fine" id="t-vrmsg"></p>

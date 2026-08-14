@@ -670,11 +670,11 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
          slide de conclusao e' para a plateia ler a conclusao, e este botao e'
          para depois, quando alguem pedir "onde eu vejo isso?". -->
     <a class="problog item d5" href="../index.html">
-      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false"
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"
            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 12h15M13 6l6 6-6 6"/>
+        <path d="M20 12H5M11 6l-6 6 6 6"/>
       </svg>
-      ver o blog, o jogo e o quiz
+      voltar para o blog
     </a>
     <p class="credit item d5">Fotos: Niccolò Caranti / Wikimedia Commons (CC BY-SA 4.0) · Dados: estudo Gender Shades, MIT (2018) · Vídeos: YouTube</p>
   </section>
@@ -880,8 +880,28 @@ addEventListener('touchend',e=>{
   }
   document.body.classList.add('zonas');
   const z=document.getElementById('zonas');
-  z.querySelector('.z-ant').addEventListener('click',()=>ir(-1));
-  z.querySelector('.z-prox').addEventListener('click',()=>ir(1));
+  // A ZONA DEIXA PASSAR O QUE FOR LINK.
+  //
+  // As duas metades da tela ficam POR CIMA do slide (z-index 65 contra o 2 do
+  // slide, e o slide abre contexto proprio, entao nada dentro dele consegue
+  // subir acima disto). No celular, com isso, nenhum link de slide era
+  // clicavel: o toque virava sempre "proximo slide". Pegava o botao de voltar
+  // para o blog do slide 12 e os dois "assistir com som no YouTube" do 07.
+  //
+  // Em vez de abrir buraco na zona, que muda a navegacao, a zona olha o que
+  // esta embaixo do dedo: se for link ou botao do slide ativo, repassa o
+  // clique para ele; se nao for, troca de slide como sempre.
+  const zonaClicou=(ev,d)=>{
+    const abaixo=document.elementsFromPoint(ev.clientX,ev.clientY);
+    for(const el of abaixo){
+      if(!el.closest)continue;
+      const alvo=el.closest('a[href],button');
+      if(alvo&&alvo.closest('.slide.active')){alvo.click();return;}
+    }
+    ir(d);
+  };
+  z.querySelector('.z-ant').addEventListener('click',(e)=>zonaClicou(e,-1));
+  z.querySelector('.z-prox').addEventListener('click',(e)=>zonaClicou(e,1));
   new MutationObserver(pintar).observe(document.getElementById('deck'),
     {subtree:true,attributes:true,attributeFilter:['class']});
   pintar();
