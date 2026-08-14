@@ -82,6 +82,43 @@ export default async function handler(req, res) {
                  req.query.voz ? String(req.query.voz) : null);
   }
 
+  // GET ?cota=1 diz quanto ainda sobra no mês.
+  //
+  // Existe porque a pergunta "quanto tempo isso dura?" não tem resposta fixa:
+  // depende de quantas perguntas as pessoas fizerem. O plano free dá 10 mil
+  // créditos por mês, e cada resposta da Joy gasta por volta de 320
+  // caracteres. O que este endereço faz é trocar a estimativa pelo número
+  // real, a qualquer momento, sem precisar entrar no painel da ElevenLabs.
+  //
+  // A conta de quantas respostas ainda cabem é a PESSIMISTA, de um crédito
+  // por caractere. Os modelos flash costumam custar metade disso, então o
+  // número que aparece aqui é o piso, não o teto.
+  if (req.method === "GET" && req.query?.cota) {
+    try {
+      const r = await fetch(API + "/user/subscription", { headers: { "xi-api-key": chave } });
+      if (!r.ok) return res.status(502).json({ erro: "HTTP " + r.status + " ao ler a cota." });
+      const s = await r.json();
+      const limite = s.character_limit || 0;
+      const usados = s.character_count || 0;
+      const restam = Math.max(0, limite - usados);
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({
+        plano: s.tier || null,
+        limiteDoMes: limite,
+        jaUsados: usados,
+        restam,
+        zeraEm: s.next_character_count_reset_unix
+          ? new Date(s.next_character_count_reset_unix * 1000).toISOString().slice(0, 10)
+          : null,
+        umaRespostaDaJoy: 320,
+        respostasQueAindaCabem: Math.floor(restam / 320),
+        observacao: "Conta pessimista, de 1 credito por caractere. No flash costuma ser metade.",
+      });
+    } catch (e) {
+      return res.status(502).json({ erro: e.message });
+    }
+  }
+
   // GET sem texto lista as vozes da conta, para escolher qual usar e colar o
   // id na variável de ambiente. Serve de diagnóstico também: se isto
   // responde, a chave está certa.

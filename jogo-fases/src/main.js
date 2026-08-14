@@ -488,7 +488,15 @@ export class Game {
 
   _buildHud() {
     this.hud = this._panel(1.9, 0.40, 1280, 270, 998);
-    this.sub = this._panel(2.0, 0.34, 1280, 218, 999);
+    // A LEGENDA É PARA SER LIDA DENTRO DO ÓCULOS.
+    //
+    // Ela era um painel de 2,0 por 0,34 m a QUATRO metros. Isso dá uma letra
+    // de 0,45 grau de altura no olho, e 0,45 grau em tela de óculos é meia
+    // dúzia de pixels: fica ilegível, e não por falta de resolução da textura,
+    // mas por falta de tamanho angular. Agora o painel é mais alto, a letra é
+    // maior nele, e ele vive a 2,6 m (ver `_vis`), o que dá 1,2 grau de altura
+    // de letra, quase o triplo.
+    this.sub = this._panel(1.9, 0.52, 1280, 350, 999);
     this.sub.mesh.material.opacity = 0;
     this.banner = this._panel(2.2, 0.52, 1360, 320, 1000);
     // relogio de pulso (VR): o MESMO canvas do HUD, preso ao controle
@@ -1725,34 +1733,12 @@ export class Game {
       this.camera.add(this.vinheta);
     }
 
-    // ---- moldura da mascara (VR) ---------------------------------------
-    // Dentro do oculos nao havia NENHUM sinal de que a mascara estava no
-    // rosto: o painel do pulso mostra, mas ninguem joga olhando para o pulso.
-    // Aqui a propria visao ganha a borda de uma mascara branca, que e' o que
-    // voce veria se estivesse mesmo usando uma. Ela pulsa devagar enquanto
-    // aguenta e fica vermelha quando esta superaquecendo, entao da para saber
-    // que ela vai acabar sem ler numero nenhum.
-    {
-      const cv = document.createElement('canvas');
-      cv.width = cv.height = 256;
-      const g2 = cv.getContext('2d');
-      const grad = g2.createRadialGradient(128, 128, 84, 128, 128, 128);
-      grad.addColorStop(0, 'rgba(255,255,255,0)');
-      grad.addColorStop(0.72, 'rgba(255,255,255,0)');
-      grad.addColorStop(0.86, 'rgba(255,255,255,0.85)');
-      grad.addColorStop(1, 'rgba(255,255,255,1)');
-      g2.fillStyle = grad;
-      g2.fillRect(0, 0, 256, 256);
-      const tx = new THREE.CanvasTexture(cv);
-      this.moldura = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.5, 1.5),
-        new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 0,
-          depthTest: false, depthWrite: false, fog: false })
-      );
-      this.moldura.position.z = -0.44;   // na frente da vinheta
-      this.moldura.renderOrder = 1000;
-      this.camera.add(this.moldura);
-    }
+    // Aqui existia uma SEGUNDA moldura de máscara, branca, que eu tinha posto
+    // porque dentro do óculos não aparecia nenhum sinal da máscara no rosto.
+    // O diagnóstico estava errado: o sinal já existia (`maskView`, a arte da
+    // máscara de verdade, com o fio dourado), só que desenhado FORA do campo
+    // de visão do aparelho. Ver `_ajustaMascaraVR`. Com aquilo consertado esta
+    // moldura só empilharia duas bordas uma na outra, então saiu.
 
     this.controllers = [];
     for (let i = 0; i < 2; i++) {
@@ -1782,11 +1768,16 @@ export class Game {
       // está apontando de verdade, não de um ponto invisível.
       // sem `principal`: esta é uma cópia, não pode roubar as referências que
       // o afinador usa
+      // A ARMA NAS DUAS MÃOS. Ela era desenhada só na direita, e o gatilho da
+      // esquerda disparava do mesmo jeito, só que de uma mão vazia: sem cano,
+      // sem coice, sem nada saindo de lugar nenhum. Quem jogou leu isso como
+      // "a esquerda não atira". Agora as duas estão armadas e cada gatilho
+      // dispara da sua própria mão.
       const arma = this._makeWeapon(false);
       arma.position.set(0, -0.01, -0.03);
       arma.rotation.set(0, 0, 0);
       arma.userData.base = arma.position.z;
-      arma.visible = false;              // só aparece na mão que atira
+      arma.visible = true;
       c.add(arma);
       c.userData.arma = arma;
 
@@ -1809,8 +1800,6 @@ export class Game {
         if (this.activeCtrl == null) this.activeCtrl = i;
         const hand = e.data && e.data.handedness;
         c.userData.hand = hand;
-        // a arma vai na mão do gatilho: a direita, quando o aparelho informa
-        if (c.userData.arma) c.userData.arma.visible = hand !== 'left';
         if (hand !== 'left') this.weaponVR = c.userData.arma;
         poeMao(hand === 'left');
         if (hand && c.userData.etiqueta) {
@@ -1950,6 +1939,41 @@ export class Game {
     }
     this._padMove = { x: mx, y: my };
     return trig;
+  }
+
+  // A MÁSCARA ESTAVA DESENHADA FORA DO CAMPO DE VISÃO.
+  //
+  // O overlay da máscara é um plano de 2,6 por 1,95 m preso à câmera a 62 cm
+  // do olho, e a arte só tem tinta na BEIRADA dele: o meio é a abertura por
+  // onde se joga. Numa tela de computador, com uns 70 graus de campo, a
+  // beirada cai dentro do quadro e a máscara aparece. Num óculos não: o plano
+  // ocupa 129 graus na horizontal e 115 na vertical, e um Quest enxerga por
+  // volta de 110 por 96. A borda inteira ficava para fora do que o olho
+  // alcança. Não era "falta indicação de máscara": a indicação existia e era
+  // desenhada onde ninguém pode ver.
+  //
+  // A correção não pode ser um número escolhido no olho, porque cada aparelho
+  // tem um campo diferente. O próprio aparelho informa o dele na matriz de
+  // projeção do olho, e dela saem as tangentes do tronco. O plano é então
+  // dimensionado para o campo real, com 8% de sobra para a borda encostar
+  // mesmo na beirada, e afastado para 3 m: a 62 cm cada olho vê a moldura num
+  // lugar diferente (6 cm de distância entre eles é muito, tão perto), e a
+  // 3 m essa diferença some.
+  _ajustaMascaraVR() {
+    const cam = this.renderer.xr.getCamera && this.renderer.xr.getCamera();
+    const olho = cam && cam.cameras && cam.cameras.length ? cam.cameras[0] : cam;
+    if (!olho || !olho.projectionMatrix) return false;
+    const e = olho.projectionMatrix.elements;
+    if (!e[0] || !e[5]) return false;
+    // tronco possivelmente assimétrico: fico com o menor lado, que é o que
+    // garante a borda visível nas duas direções
+    const tanX = Math.min((1 + e[8]) / e[0], (1 - e[8]) / e[0]);
+    const tanY = Math.min((1 + e[9]) / e[5], (1 - e[9]) / e[5]);
+    if (!(tanX > 0.1) || !(tanY > 0.1)) return false;
+    const D = 3.0, SOBRA = 1.08;
+    this.maskView.position.z = -D;
+    this.maskView.scale.set((D * tanX * SOBRA) / 1.3, (D * tanY * SOBRA) / 0.975, 1);
+    return true;
   }
 
   // UM giro só, dentro do óculos.
@@ -2288,6 +2312,7 @@ export class Game {
   _mask(dt) {
     const s = this.s;
     if (!s.maskHave) { s.maskOn = false; return; }
+    const estava = s.maskOn;
     if (this.tap.mask) {
       this.tap.mask = false;
       if (s.maskLock <= 0) {
@@ -2307,6 +2332,42 @@ export class Game {
       }
     } else {
       s.maskHeat = Math.max(0, s.maskHeat - P.MASK_REGEN * dt);
+    }
+    if (estava && !s.maskOn) this._saiDoScanner();
+  }
+
+  // TIRAR A MÁSCARA DENTRO DA PAREDE ATIRAVA O JOGADOR PARA CIMA.
+  //
+  // A parede-scanner só é sólida para quem o sistema não reconhece: de máscara
+  // ela deixa passar, e é assim que a fase 2 funciona. Só que nada impedia
+  // tirar a máscara com o corpo NO MEIO dela, e aí a parede aparecia em volta
+  // de um jogador que já estava dentro. Quem resolvia isso era a colisão do
+  // quadro seguinte, no eixo Y, descendo: a regra dela é "pousou em cima do
+  // bloco", então ela punha o jogador no TOPO da parede. A parede vai do chão
+  // ao teto, e era esse o arremesso.
+  //
+  // Vale para os dois jeitos de a máscara sair, o botão e o superaquecimento,
+  // e o segundo não dá para proibir: a máscara acaba onde ela acabar.
+  //
+  // A saída é pela face mais perto em Z, que é a espessura da parede (meio
+  // metro). O jogador é cuspido para o lado de onde veio ou para o de lá,
+  // o que estiver mais perto, que é o que a leitura da cena pede: a parede
+  // rejeitou você.
+  _saiDoScanner() {
+    const lv = this.level, p = this.pl.pos;
+    if (!lv || !lv.scanners || !lv.scanners.length) return;
+    const r = P.RADIUS, alto = this.pl.h;
+    for (const sc of lv.scanners) {
+      const hz = 0.25;
+      if (Math.abs(p.z - sc.z) >= hz + r) continue;
+      if (Math.abs(p.x) >= sc.w / 2 + r) continue;
+      const meio = lv.def.h / 2, hy = sc.h / 2;   // a mesma caixa que `_solids` monta
+      if (p.y >= meio + hy || p.y + alto <= meio - hy) continue;
+      const fora = hz + r + 0.02;
+      p.z = p.z < sc.z ? sc.z - fora : sc.z + fora;
+      this.pl.vel.z = 0;
+      this.sfx.corrupt();
+      return;
     }
   }
 
@@ -2840,6 +2901,17 @@ export class Game {
       // em VR a arma vai na MÃO, presa ao controle: a da câmera some
       w.visible = !this.renderer.xr.isPresenting;
     }
+    // o coice na mão que atirou, e só nela: as duas armas dando coice a cada
+    // disparo faria as duas mãos parecerem uma coisa só
+    if (this.renderer.xr.isPresenting) {
+      for (let i = 0; i < this.controllers.length; i++) {
+        const a = this.controllers[i].userData.arma;
+        if (!a) continue;
+        const k = i === this._kickCtrl ? this.weaponKick : 0;
+        a.position.z = a.userData.base + k * 0.05;
+        a.rotation.x = k * 0.28;
+      }
+    }
     if (s.flashVis > 0) {
       s.flashVis -= dt;
       const k = Math.max(0, s.flashVis / 0.22);
@@ -2850,6 +2922,7 @@ export class Game {
     if (!firing || s.shotCd > 0) return;
     s.shotCd = P.SHOT_CD;
     this.weaponKick = 1;
+    this._kickCtrl = this.renderer.xr.isPresenting ? this.activeCtrl : -1;
 
     const src = (this.renderer.xr.isPresenting && this.activeCtrl != null) ? this.controllers[this.activeCtrl] : this.camera;
     src.getWorldPosition(_v1);
@@ -2925,7 +2998,14 @@ export class Game {
     // representação — quem manda é o centro da tela.
     const alvo = _v3.copy(_v1).addScaledVector(_v2, hitD);
     const origem = new THREE.Vector3();
-    const w = this.weapon;
+    // No VR quem atira é a MÃO que puxou o gatilho, então o traço tem que sair
+    // do cano DAQUELA arma. Antes ele saía da origem do controle, um ponto
+    // invisível dentro do punho: com as duas mãos armadas isso ficaria
+    // esquisito nas duas.
+    const w = (this.renderer.xr.isPresenting && this.activeCtrl != null &&
+               this.controllers[this.activeCtrl])
+      ? this.controllers[this.activeCtrl].userData.arma
+      : this.weapon;
     if (w && w.visible && w.userData.bocaLocal) {
       // ponto medido na malha: a ponta do cano, não a origem do grupo
       origem.copy(w.userData.bocaLocal);
@@ -3367,22 +3447,44 @@ export class Game {
     g.strokeStyle = 'rgba(255,201,60,0.6)'; g.lineWidth = 4;
     g.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
     g.textAlign = 'left';
-    g.fillStyle = '#FFC93C'; g.font = 'bold 28px system-ui, sans-serif';
-    g.fillText(STR.aya_name, 24, 42);
-    g.fillStyle = '#F3EFE6'; g.font = '29px system-ui, sans-serif';
-    this._wrap(g, this.s.aya, 24, 88, canvas.width - 48, 38);
+    g.fillStyle = '#FFC93C'; g.font = 'bold 38px system-ui, sans-serif';
+    g.fillText(STR.aya_name, 28, 56);
+    // A LETRA É A MAIOR QUE COUBER.
+    //
+    // Um corpo fixo grande resolve a legibilidade das falas curtas, que são a
+    // maioria, e corta a mais longa do jogo pela metade: com 52 px ela pede
+    // sete linhas num painel que tem espaço para cinco. Um corpo fixo pequeno
+    // não corta nada e não se lê. Então o tamanho é escolhido por medida: o
+    // maior que fizer o texto inteiro caber, com piso em 30 px para não virar
+    // formiga.
+    const topo = 118, larg = canvas.width - 56, fundo = canvas.height - 14;
+    let corpo = 52, linhas = [];
+    for (; corpo >= 30; corpo -= 2) {
+      g.font = corpo + 'px system-ui, sans-serif';
+      linhas = this._quebra(g, this.s.aya, larg);
+      if (topo + (linhas.length - 1) * corpo * 1.24 <= fundo) break;
+    }
+    g.fillStyle = '#F3EFE6';
+    linhas.forEach((l, i) => g.fillText(l, 28, topo + i * corpo * 1.24));
     tex.needsUpdate = true;
   }
 
-  _wrap(g, text, x, y, maxW, lh) {
-    const words = String(text).split(' ');
-    let line = '', yy = y;
-    for (const w of words) {
+  // quebra em linhas SEM desenhar: é o que deixa medir antes de escolher o
+  // tamanho da letra
+  _quebra(g, text, maxW) {
+    const out = [];
+    let line = '';
+    for (const w of String(text).split(' ')) {
       const test = line ? line + ' ' + w : w;
-      if (g.measureText(test).width > maxW && line) { g.fillText(line, x, yy); line = w; yy += lh; }
+      if (g.measureText(test).width > maxW && line) { out.push(line); line = w; }
       else line = test;
     }
-    if (line) g.fillText(line, x, yy);
+    if (line) out.push(line);
+    return out;
+  }
+
+  _wrap(g, text, x, y, maxW, lh) {
+    this._quebra(g, text, maxW).forEach((l, i) => g.fillText(l, x, y + i * lh));
   }
 
   // ---------------------------------------------------- 60 quadros de piso
@@ -3506,19 +3608,6 @@ export class Game {
       this.vinheta.visible = m.opacity > 0.01;
     }
 
-    // moldura da mascara: so aparece com ela no rosto
-    if (this.moldura) {
-      const s2 = this.s;
-      const ligada = !!(s2 && s2.maskOn) && this.renderer.xr.isPresenting;
-      const quente = s2 && s2.maskHeat > P.MASK_MAX * 0.62;
-      const pulso = 0.30 + Math.sin(t * (quente ? 9 : 2.4)) * (quente ? 0.16 : 0.06);
-      const alvoM = ligada ? pulso : 0;
-      const mm = this.moldura.material;
-      mm.opacity += (alvoM - mm.opacity) * Math.min(1, dt * 8);
-      // branca enquanto aguenta, vermelha quando esta para superaquecer
-      mm.color.setHex(quente ? 0xFF5A6E : 0xFFFFFF);
-      this.moldura.visible = mm.opacity > 0.01;
-    }
 
     if (this.mode === 'playing' && this.level) {
       this._acc = (this._acc || 0) + dt;
@@ -3578,7 +3667,33 @@ export class Game {
       this.ayaMat.opacity += (target + Math.sin(t * 2.1) * 0.05 - this.ayaMat.opacity) * Math.min(1, dt * 4);
     }
 
-    this.maskView.material.opacity = s && s.maskOn ? 0.90 : 0;
+    // A MÁSCARA NO ROSTO, dentro do óculos.
+    //
+    // A arte da máscara sempre esteve aqui, e no monitor ela aparece. No
+    // aparelho, não: ela é uma borda desenhada na beirada de um plano que fica
+    // fora do que o olho enxerga (a conta está em `_ajustaMascaraVR`). Ou seja,
+    // o jogo mostrava a máscara para um lugar onde ninguém olha.
+    //
+    // Ajustado o tamanho, ela ganha aqui o que faltava para não ser só
+    // decoração: pulsa devagar enquanto aguenta e vira vermelha quando está
+    // perto de superaquecer, então dá para saber que ela vai acabar sem ler
+    // número nenhum no pulso.
+    if (this.renderer.xr.isPresenting) {
+      if (!this._mascaraOk) this._mascaraOk = this._ajustaMascaraVR();
+      const quente = s && s.maskHeat > P.MASK_MAX * 0.62;
+      const pulso = 0.88 + Math.sin(t * (quente ? 9 : 2.2)) * (quente ? 0.10 : 0.05);
+      const mv = this.maskView.material;
+      mv.opacity += ((s && s.maskOn ? pulso : 0) - mv.opacity) * Math.min(1, dt * 9);
+      mv.color.setHex(quente && s && s.maskOn ? 0xFF8A96 : 0xFFFFFF);
+    } else {
+      if (this._mascaraOk) {           // saiu do óculos: devolve o tamanho de tela
+        this._mascaraOk = false;
+        this.maskView.scale.set(1, 1, 1);
+        this.maskView.position.z = -0.62;
+        this.maskView.material.color.setHex(0xFFFFFF);
+      }
+      this.maskView.material.opacity = s && s.maskOn ? 0.90 : 0;
+    }
     this.hurt.material.opacity = s ? s.hurt * (this.opts.flash ? 0.5 : 0.2) : 0;
     this.playerLight.intensity = s && s.maskOn ? 2.1 : 2.8;
 
@@ -3590,17 +3705,28 @@ export class Game {
       this.camera.getWorldQuaternion(_q1);
       _v2.set(0, 0, -1).applyQuaternion(_q1);
       let yaw = Math.atan2(-_v2.x, -_v2.z);
-      // o painel SEGUE a cabeca em vez de vir grudado nela: HUD que gruda na
-      // nuca obriga o olho a reler a cada micro-movimento e cansa rapido
+      // O PAINEL NÃO GIRA COM A CABEÇA.
+      //
+      // Ele seguia o rosto com 0,2 s de atraso, o que na prática é grudado: o
+      // texto virava junto com a cabeça, sempre na frente, e não havia para
+      // onde olhar que ele não estivesse. Agora existe uma folga de 17 graus
+      // em que ele fica PARADO no mundo, e só depois disso ele é arrastado,
+      // devagar, ficando sempre na beirada dessa folga. Olhar para o lado
+      // passa a deixar o texto para trás, que é o que se espera de uma coisa
+      // pendurada no cenário, e virar de verdade traz o texto junto.
       if (this._hudYaw === undefined) this._hudYaw = yaw;
       let dy = yaw - this._hudYaw;
       if (dy > Math.PI) dy -= 2 * Math.PI;
       if (dy < -Math.PI) dy += 2 * Math.PI;
-      this._hudYaw += dy * Math.min(1, dt * 5);
+      const FOLGA = 0.30;
+      if (Math.abs(dy) > FOLGA) {
+        const alvo = this._hudYaw + (dy - Math.sign(dy) * FOLGA);
+        this._hudYaw += (alvo - this._hudYaw) * Math.min(1, dt * 3);
+      }
       yaw = this._hudYaw;
       // o status agora mora no pulso; flutuando ficam so legenda e banner
       for (const [pan, dist, hgt, tilt] of [
-        [this.sub, 4.0, -0.88, -0.26], [this.banner, 5.0, 0.65, -0.02],
+        [this.sub, 2.6, -0.55, -0.16], [this.banner, 3.4, 0.55, -0.02],
       ]) {
         pan.mesh.position.set(_v1.x - Math.sin(yaw) * dist, _v1.y + hgt, _v1.z - Math.cos(yaw) * dist);
         pan.mesh.rotation.set(tilt, yaw, 0, 'YXZ');
