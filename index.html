@@ -647,8 +647,29 @@
             margin-top: 8px;
         }
 
-        .joy-panel.tela-cheia .voice-avatar { display: none; }
-        .joy-panel.tela-cheia .voice-bars { justify-content: flex-start; }
+        /* Na tela cheia o retrato dela já é a presença. A bolinha "JB" e as
+           seis barrinhas pulando sozinhas no meio de uma página vazia ficavam
+           soltas, sem nada a ver com o resto. Saem as duas. */
+        .joy-panel.tela-cheia .voice-avatar,
+        .joy-panel.tela-cheia .voice-bars { display: none; }
+
+        /* Quem mostra que ela está falando passa a ser o retrato: um anel que
+           respira devagar em volta da foto. Devagar de propósito, 2,4s por
+           ciclo: a pulsação rápida de antes cansava a vista de quem só queria
+           ler a resposta. */
+        .joy-retrato img { transition: box-shadow 0.4s ease; }
+        .falando .joy-retrato img { animation: respira 2.4s ease-in-out infinite; }
+        .pensando .joy-retrato img { opacity: 0.82; }
+
+        @keyframes respira {
+            0%, 100% { box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 3px rgba(108,92,231,.55); }
+            50%      { box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 10px rgba(108,92,231,.14); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .falando .joy-retrato img { animation: none;
+                box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 3px rgba(108,92,231,.55); }
+        }
 
         .joy-panel.tela-cheia .voice-caption {
             font-size: var(--cap-fonte, clamp(1rem, 1.5vw, 1.4rem));
@@ -1272,7 +1293,7 @@
             }
             window.JoyPararVoz = pararAudio;   // o botão de fechar vive fora daqui
 
-            async function falarPelaApi(texto, aoTerminar) {
+            async function falarPelaApi(texto, aoTerminar, aoComecar) {
                 if (vozApiViva === false) return false;
                 try {
                     // GET e não POST de propósito: assim o CDN da Vercel guarda
@@ -1291,6 +1312,7 @@
                     await a.play();
                     tocando = a;
                     vozApiViva = true;
+                    aoComecar();          // só agora ela está falando de verdade
                     return true;
                 } catch (e) {
                     console.warn('Voz da ElevenLabs indisponível:', e.message);
@@ -1307,17 +1329,29 @@
                 // sem voz instalada, ou com a fala bloqueada pelo navegador, a
                 // resposta simplesmente nunca aparecia na tela. A resposta é o
                 // conteúdo; a voz é o extra.
-                box.classList.remove('ouvindo');
-                box.classList.add('falando');
-                status.innerHTML = ICO.som + 'Joy está respondendo...';
                 caption.textContent = texto;   // o CSS usa pre-line: cada frase, uma linha
                 caberUmaPorLinha(texto);
+
+                // A animação de falar NÃO entra aqui. O áudio da ElevenLabs
+                // demora uns segundos para chegar, e ligar a animação junto com
+                // o texto deixava ela gesticulando em silêncio, o que é
+                // exatamente o que dá estranheza. Enquanto o áudio não começa,
+                // o estado é "preparando".
+                box.classList.remove('ouvindo', 'falando');
+                box.classList.add('pensando');
+                status.innerHTML = ICO.som + 'Preparando a voz...';
+
+                function comecouAFalar() {
+                    box.classList.remove('pensando');
+                    box.classList.add('falando');
+                    status.innerHTML = ICO.som + 'Joy está respondendo...';
+                }
 
                 let acabou = false;
                 function fim() {
                     if (acabou) return;
                     acabou = true;
-                    box.classList.remove('falando');
+                    box.classList.remove('falando', 'pensando');
                     status.innerHTML = ICO.mic + 'Pergunte outra coisa. Ela lembra do que já foi dito.';
                 }
 
@@ -1329,7 +1363,7 @@
                     u.pitch = VOZ.tom;
                     u.volume = VOZ.volume;
                     let comecou = false;
-                    u.onstart = function () { comecou = true; };
+                    u.onstart = function () { comecou = true; comecouAFalar(); };
                     u.onend = fim;
                     u.onerror = fim;
                     try { synth.speak(u); } catch (e) { fim(); return; }
@@ -1340,7 +1374,7 @@
                 }
 
                 // Primeiro a voz boa; só cai na do navegador se ela falhar.
-                falarPelaApi(texto, fim).then(function (deu) {
+                falarPelaApi(texto, fim, comecouAFalar).then(function (deu) {
                     if (!deu) vozDoNavegador();
                 });
             }
