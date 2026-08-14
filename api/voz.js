@@ -18,19 +18,35 @@ const MODELO = process.env.ELEVENLABS_MODEL || "eleven_flash_v2_5";
 
 const LIMITE_CARACTERES = 700;   // a resposta da Joy tem 5 linhas curtas
 
-// O id da voz sai do painel da ElevenLabs. Se não vier configurado, este
-// arquivo escolhe sozinho uma voz da conta (ver escolherVoz abaixo), para o
-// blog funcionar antes de alguém ter decidido qual voz quer.
+// Voz padrão: a Lily.
+//
+// A escolha não foi no gosto. Medi a frequência de base da AYA, a guia do
+// jogo, no vídeo dela: 205 Hz. Depois gerei a mesma frase em português com as
+// seis vozes femininas disponíveis e medi cada uma. Lily deu 205 Hz cravado,
+// Alice 213, Jessica 232, Sarah 229, Matilda 254, Bella 276. A voz do blog
+// ficou sendo a que mais se aproxima da voz do jogo.
+//
+// As vozes brasileiras da conta (Carla, Roberta, Michelle) soariam melhor,
+// mas são "library voices" e o plano free não libera elas pela API. Assinando
+// um plano pago, basta colar o id de uma delas em ELEVENLABS_VOICE_ID.
+const VOZ_PADRAO = "pFZP5JQG7iQjIQuC4Bku";   // Lily
+
 let vozEmCache = process.env.ELEVENLABS_VOICE_ID || null;
 
 async function escolherVoz(chave) {
   if (vozEmCache) return vozEmCache;
 
+  // A padrão só vale se a conta realmente tiver ela.
   const r = await fetch(API + "/voices", { headers: { "xi-api-key": chave } });
   if (!r.ok) throw new Error("Não consegui listar as vozes: HTTP " + r.status);
 
   const { voices = [] } = await r.json();
   if (!voices.length) throw new Error("A conta da ElevenLabs não tem voz nenhuma.");
+
+  if (voices.some((v) => v.voice_id === VOZ_PADRAO)) {
+    vozEmCache = VOZ_PADRAO;
+    return vozEmCache;
+  }
 
   // Preferência: voz feminina, e de preferência marcada como multilíngue.
   const nota = (v) => {
@@ -55,9 +71,20 @@ export default async function handler(req, res) {
     return res.status(503).json({ erro: "ELEVENLABS_API_KEY não configurada." });
   }
 
-  // GET lista as vozes da conta, para escolher qual usar e colar o id na
-  // variável de ambiente. Serve de diagnóstico também: se isto responde, a
-  // chave está certa.
+  // GET com ?texto= devolve o áudio. Parece detalhe, mas não é: com POST o
+  // CDN da Vercel não guarda nada e cada visitante que clicar na mesma
+  // pergunta sugerida gasta caracteres de novo. Sendo GET, a segunda pessoa
+  // em diante recebe o áudio da borda, de graça. Com 10 mil caracteres por
+  // mês no plano free, isso é a diferença entre durar a feira inteira e
+  // acabar no primeiro intervalo.
+  if (req.method === "GET" && (req.query?.texto || "").trim()) {
+    return gerar(res, chave, String(req.query.texto).trim().slice(0, LIMITE_CARACTERES),
+                 req.query.voz ? String(req.query.voz) : null);
+  }
+
+  // GET sem texto lista as vozes da conta, para escolher qual usar e colar o
+  // id na variável de ambiente. Serve de diagnóstico também: se isto
+  // responde, a chave está certa.
   if (req.method === "GET") {
     try {
       const r = await fetch(API + "/voices", { headers: { "xi-api-key": chave } });
@@ -83,9 +110,12 @@ export default async function handler(req, res) {
 
   const texto = String(req.body?.texto || "").trim().slice(0, LIMITE_CARACTERES);
   if (!texto) return res.status(400).json({ erro: "Envie { texto }." });
+  return gerar(res, chave, texto, null);
+}
 
+async function gerar(res, chave, texto, vozPedida) {
   try {
-    const voz = await escolherVoz(chave);
+    const voz = vozPedida || (await escolherVoz(chave));
     const r = await fetch(
       API + "/text-to-speech/" + voz + "?output_format=mp3_44100_128",
       {
@@ -109,13 +139,21 @@ export default async function handler(req, res) {
     if (!r.ok) {
       const detalhe = await r.text().catch(() => "");
       console.error("ElevenLabs:", r.status, detalhe.slice(0, 300));
-      return res.status(502).json({ erro: "A ElevenLabs devolveu HTTP " + r.status });
+      // 401 chave errada, 402 sem crédito, 429 rápido demais. Nos três casos
+      // não adianta o blog insistir: ele repassa como 503 e volta para a voz
+      // do navegador até a página ser recarregada.
+      const desistir = r.status === 401 || r.status === 402 || r.status === 429;
+      return res.status(desistir ? 503 : 502)
+                .json({ erro: "A ElevenLabs devolveu HTTP " + r.status });
     }
 
     const audio = Buffer.from(await r.arrayBuffer());
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Content-Length", String(audio.length));
-    res.setHeader("Cache-Control", "public, max-age=86400");
+    // s-maxage é o que faz o CDN da Vercel guardar e servir sem gastar
+    // caracteres de novo. Uma semana: a resposta para a mesma pergunta não
+    // muda, e se mudar é só trocar o texto.
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
     return res.status(200).send(audio);
   } catch (e) {
     console.error("Erro ao gerar voz:", e);

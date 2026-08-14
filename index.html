@@ -1275,11 +1275,12 @@
             async function falarPelaApi(texto, aoTerminar) {
                 if (vozApiViva === false) return false;
                 try {
-                    const r = await fetch(VOZ_API, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ texto: texto })
-                    });
+                    // GET e não POST de propósito: assim o CDN da Vercel guarda
+                    // o áudio e a segunda pessoa que clicar na mesma pergunta
+                    // não gasta caracteres da conta de novo.
+                    const r = await fetch(VOZ_API + '?texto=' + encodeURIComponent(texto));
+                    // 503 é "não adianta insistir": sem chave, sem crédito, ou
+                    // pedidos rápido demais. Para de tentar até recarregar.
                     if (!r.ok) { if (r.status === 503) vozApiViva = false; return false; }
                     const url = URL.createObjectURL(await r.blob());
                     destravarAudio();
