@@ -156,6 +156,10 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
   background:#000}
 .vid iframe{position:absolute;top:50%;left:50%;width:130%;height:130%;
   transform:translate(-50%,-50%);border:0;pointer-events:none}
+/* o video proprio nao precisa do corte de 130%, que existe so para esconder a
+   tarja do YouTube: ele preenche o quadro e pronto */
+.vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  display:block;pointer-events:none;background:#000}
 .vmute{position:absolute;top:10px;right:12px;z-index:5;
   font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:1px;
   color:rgba(241,242,246,.7);background:rgba(7,8,13,.7);
@@ -579,14 +583,22 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
         </div>
         <a class="vlink" href="https://www.youtube.com/watch?v=XQr4Xklqzw8" target="_blank">▶ assistir com som no YouTube</a>
       </div>
+      <!-- O lado "hoje" era um video do YouTube, e todo video que se acha por
+           la com esse teste ja traz o de 2023 dentro dele, lado a lado. Isso
+           estraga a comparacao justamente no lado que deveria mostrar so o
+           agora. Este aqui foi gerado pelo grupo, do zero, com IA de video,
+           com a mesma cena do teste de 2023: um homem comendo espaguete. Nao
+           e' o Will Smith de proposito, porque gerar o rosto de uma pessoa
+           real e' outro assunto, e o que o slide precisa mostrar e' a
+           QUALIDADE de hoje, nao aquele rosto. -->
       <div class="vcard item d4">
-        <span class="vlabel vnew">[ HOJE · A MESMA IA, AGORA ]</span>
+        <span class="vlabel vnew">[ HOJE · A MESMA CENA, IA DE 2026 ]</span>
         <div class="vid">
-          <iframe data-src="https://www.youtube-nocookie.com/embed/Pi0xPcHJ_4I?autoplay=1&mute=1&loop=1&playlist=Pi0xPcHJ_4I&controls=0&playsinline=1&rel=0&modestbranding=1"
-                  title="Will Smith IA hoje, gerado com Sora 2" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+          <video data-src="https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260814_190755_7ce631ab-cb2b-4e63-b0c6-b88dac2c48bf.mp4"
+                 muted loop playsinline preload="none" aria-label="Homem comendo espaguete, video gerado por IA em 2026"></video>
           <span class="vmute"><i class="fas fa-volume-xmark"></i> LOOP AUTOMÁTICO</span>
         </div>
-        <a class="vlink" href="https://www.youtube.com/watch?v=Pi0xPcHJ_4I" target="_blank">▶ assistir com som no YouTube</a>
+        <span class="vlink">gerado por nós com IA, em minutos</span>
       </div>
     </div>
     <p class="item d5" style="color:var(--muted);margin-top:22px;text-align:center;max-width:760px">Se a IA já engana nossos olhos, <b style="color:var(--accent)">quem garante que ela está sendo usada com justiça?</b> É exatamente por isso que o trabalho de Joy é tão urgente.</p>
@@ -781,6 +793,17 @@ function handleVideos(){
     const on=f.closest('.slide').classList.contains('active');
     if(on&&!f.getAttribute('src'))f.src=f.dataset.src;
     if(!on&&f.getAttribute('src'))f.removeAttribute('src');
+  });
+  /* o mesmo para o video que e' nosso, e nao do YouTube: ele so baixa quando
+     o slide abre, e para quando o slide sai, senao fica rodando escondido */
+  document.querySelectorAll('video[data-src]').forEach(v=>{
+    const on=v.closest('.slide').classList.contains('active');
+    if(on){
+      if(!v.getAttribute('src')){v.src=v.dataset.src;v.load();}
+      const t=v.play();if(t&&t.catch)t.catch(()=>{});
+    }else if(v.getAttribute('src')){
+      v.pause();v.currentTime=0;
+    }
   });
 }
 
