@@ -3178,6 +3178,16 @@ export class Game {
     g.fillText(!s.maskHave ? 'SEM'
       : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'GUARDADA'), W - 30, 112);
 
+    // quadros por segundo, canto de cima. Sem isto nao ha como alguem dizer
+    // "esta a 60?" sem chutar, nem ver o guarda de desempenho agindo.
+    if (this._pf) {
+      const f = Math.round(this._pf.fps);
+      g.textAlign = 'right';
+      g.fillStyle = f >= 58 ? '#6BCB77' : (f >= 45 ? '#FFC93C' : '#FF5A6E');
+      g.font = 'bold 22px system-ui, sans-serif';
+      g.fillText(f + ' fps' + (this._pf.grau ? ' · leve ' + this._pf.grau : ''), W - 30, 34);
+    }
+
     // faixa do objetivo
     g.fillStyle = 'rgba(255,201,60,0.14)'; g.fillRect(0, H - 74, W, 74);
     g.textAlign = 'left';
@@ -3214,6 +3224,59 @@ export class Game {
     if (line) g.fillText(line, x, yy);
   }
 
+  // ---------------------------------------------------- 60 quadros de piso
+  // Abaixo de 60 quadros por segundo o VR passa de desconfortavel a doloroso:
+  // a imagem chega atrasada em relacao ao movimento da cabeca, e nenhuma
+  // vinheta conserta isso. So que eu nao tenho como saber daqui qual e o
+  // aparelho de quem joga: um celular de 2019 e um Quest 3 nao aguentam a
+  // mesma coisa. Entao o jogo mede a si mesmo e desce a qualidade sozinho
+  // ate alcancar o piso, em degraus, comecando pelo que custa caro e vale
+  // pouco.
+  //
+  // Degraus, do primeiro ao ultimo:
+  //   1. congela o video da AYA, que e' um video decodificando e virando
+  //      textura a cada quadro, o item mais caro da cena por larga margem
+  //   2. resolucao em 1,2 (fora do VR) ou 0,85 no oculos
+  //   3. resolucao em 1,0 / 0,75
+  //   4. resolucao em 0,8 / 0,65
+  //
+  // Se sobrar folga por seis segundos seguidos, sobe um degrau de volta.
+  _perf(dt) {
+    if (!this._pf) this._pf = { jan: [], grau: 0, baixo: 0, alto: 0, fps: 60 };
+    const pf = this._pf;
+    if (dt > 0 && dt < 0.5) {
+      pf.jan.push(dt);
+      if (pf.jan.length > 45) pf.jan.shift();
+    }
+    if (pf.jan.length < 20) return;
+    const media = pf.jan.reduce((a, b) => a + b, 0) / pf.jan.length;
+    pf.fps = 1 / media;
+
+    const ALVO = 60;
+    if (pf.fps < ALVO - 2) { pf.baixo += dt; pf.alto = 0; } else
+    if (pf.fps > ALVO + 10) { pf.alto += dt; pf.baixo = 0; } else { pf.baixo = 0; pf.alto = 0; }
+
+    if (pf.baixo > 1.5 && pf.grau < 3) { pf.grau++; pf.baixo = 0; this._aplicaGrau(); }
+    else if (pf.alto > 6 && pf.grau > 0) { pf.grau--; pf.alto = 0; this._aplicaGrau(); }
+  }
+
+  _aplicaGrau() {
+    const g = this._pf.grau;
+    // 1. o video da AYA para de virar textura. Ela continua ali, com o rosto
+    //    parado no ultimo quadro: perde a boca mexendo, mantem a presenca.
+    if (this.ayaVideo) {
+      if (g >= 1) { try { this.ayaVideo.pause(); } catch (e) {} }
+      else if (this.mode === 'playing') { this.ayaVideo.play().catch(() => {}); }
+    }
+    // 2 a 4. resolucao de renderizacao
+    const plano = [1.5, 1.2, 1.0, 0.8][g];
+    const oculos = [0.92, 0.85, 0.75, 0.65][g];
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, plano));
+    if (this.renderer.xr.setFramebufferScaleFactor) {
+      this.renderer.xr.setFramebufferScaleFactor(oculos);
+    }
+  }
+
   // ------------------------------------------------------------- laço
   _frame(now) {
     const t = now / 1000;
@@ -3222,6 +3285,7 @@ export class Game {
     this._last = t;
     if (dt > 0.2) dt = 0.2;
 
+    this._perf(dt);
     this._padTrig = this._pad(dt);
     this._vrCalibraPasso();
     // fim de jogo dentro do oculos: gatilho recomeca (2 s de guarda para o

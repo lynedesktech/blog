@@ -180,6 +180,9 @@
   <div class="row"><span class="lab" id="hl-mask"></span>
     <span style="display:flex;align-items:center;gap:.5rem"><span id="maskbar"><span id="maskfill"></span></span><span id="hv-mask" style="font-size:.62rem;color:#8fa0b4"></span></span></div>
   <div class="phase" id="hv-phase"></div>
+  <!-- quadros por segundo: sem este numero na tela ninguem consegue dizer se
+       o jogo esta a 60 no proprio aparelho, so achar que esta ou nao esta -->
+  <div class="phase" id="hv-fps" style="opacity:.85"></div>
 </div>
 <div id="bossbar">
   <div class="nome" id="boss-nome"></div>
@@ -447,6 +450,14 @@ setInterval(() => {
   $('maskfill').style.background = s.maskLock > 0 ? 'var(--mag)' : s.maskOn ? 'var(--bone)' : 'var(--cyan)';
   $('hv-mask').textContent = !s.maskHave ? 'SEM' : s.maskLock > 0 ? STR.hud_overheat : (s.maskOn ? 'NO ROSTO' : 'E LIGA');
   $('hv-phase').textContent = `${STR.hud_phase} ${s.phase + 1}/5`;
+  // verde a partir de 58, amarelo ate 45, vermelho abaixo disso. O "leve N"
+  // aparece quando o jogo baixou a qualidade sozinho para segurar a taxa.
+  if (game._pf) {
+    const f = Math.round(game._pf.fps);
+    const e = $('hv-fps');
+    e.textContent = `${f} FPS${game._pf.grau ? ' · LEVE ' + game._pf.grau : ''}`;
+    e.style.color = f >= 58 ? '#6BCB77' : f >= 45 ? '#FFC93C' : '#FF5A6E';
+  }
 
   // fala da AYA como legenda fixa
   $('aya2d').classList.toggle('on', !!s.aya);
