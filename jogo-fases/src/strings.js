@@ -179,7 +179,7 @@ export const STR = {
   a11y_shake: 'Tremor de tela',
   a11y_flash: 'Flashes',
   a11y_text: 'Texto grande',
-  a11y_snap: 'Giro em passos (VR)',
+  a11y_snap: 'Giro em passos (se enjoar)',
   a11y_on: 'LIGADO',
   a11y_off: 'DESLIGADO',
 };

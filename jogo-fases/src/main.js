@@ -100,7 +100,7 @@ const P = {
   // eram seis toques, soltando o analógico entre cada um. É isso que dava a
   // sensação de câmera travada. Agora o passo é de 45° e, segurando, ele
   // repete a cada 0,26 s, que é o comportamento normal de VR.
-  TURN_SPEED: 2.6, SNAP_TURN: Math.PI / 4,
+  TURN_SPEED: 3.0, SNAP_TURN: Math.PI / 4,   // 3,0 rad/s = 172 graus por segundo no fim do curso
   SNAP_REPETE: 0.26,     // segundos entre passos com o analógico segurado
   SNAP_PISCA: 0.09,      // escurecida curta no passo, contra o enjoo
   VR_CROUCH_Y: 1.25,     // reserva, so ate a calibracao medir a pessoa
@@ -246,7 +246,11 @@ export class Game {
   constructor(host) {
     this.host = host;
     this.sfx = new Sfx();
-    this.opts = { shake: true, flash: true, bigText: false, sound: true, snapTurn: true };
+    // GIRO EM PASSOS desligado por padrao. Ele existe por conforto, e por isso
+    // era o padrao, mas saltar de 45 em 45 graus le como camera travada. O
+    // giro suave e o padrao agora, com a vinheta fechando enquanto se gira
+    // para compensar; quem enjoar liga os passos no menu.
+    this.opts = { shake: true, flash: true, bigText: false, sound: true, snapTurn: false };
     this.onEnd = null; this.onObjective = null; this.onPhase = null;
     this.mode = 'idle';
     this.level = null;
@@ -1802,7 +1806,7 @@ export class Game {
     this.in.pitch = Math.max(-1.3, Math.min(1.3, this.in.pitch + dy));
   }
 
-  _pad() {
+  _pad(dt) {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     let trig = false, mx = 0, my = 0;
     for (const gp of pads) {
@@ -1812,10 +1816,25 @@ export class Game {
       if (b[0] && b[0].pressed) { if (!this._padA) { this.tap.jump = true; this._padA = true; } } else this._padA = false;
       if (b[4] && b[4].pressed) { if (!this._padL) { this.tap.mask = true; this._padL = true; } } else this._padL = false;
       this.duckPad = !!(b[1] && b[1].pressed);
-      const dz = (v) => (Math.abs(v) > 0.18 ? v : 0);
+      // Mesma correcao do analogico do VR, aplicada aqui: a zona morta
+      // reescala em vez de cortar, entao o giro nasce do zero em vez de
+      // comecar num tranco de 18% da velocidade.
+      const ZM = 0.14;
+      const dz = (v) => {
+        const a = Math.abs(v);
+        if (a <= ZM) return 0;
+        return Math.sign(v) * ((a - ZM) / (1 - ZM));
+      };
       mx += dz(ax[0] || 0); my += -dz(ax[1] || 0);
       const rx = dz(ax[2] || 0), ry = dz(ax[3] || 0);
-      if (rx || ry) this._look(-rx * 0.05, -ry * 0.035);
+      // Este giro NAO usava dt: era um tanto fixo por quadro, entao girava o
+      // dobro num aparelho de 120 Hz e a metade quando a taxa caia. Agora e
+      // por segundo, igual em qualquer tela, com a mesma curva do VR.
+      if (rx || ry) {
+        const cur = (v) => Math.sign(v) * Math.pow(Math.abs(v), 1.35);
+        const passo = dt || 1 / 60;
+        this._look(-cur(rx) * P.TURN_SPEED * passo, -cur(ry) * P.TURN_SPEED * 0.62 * passo);
+      }
     }
     this._padMove = { x: mx, y: my };
     return trig;
@@ -1831,7 +1850,17 @@ export class Game {
       const ax = gp.axes;
       const x = ax.length > 2 ? ax[2] : (ax[0] || 0);
       const y = ax.length > 3 ? ax[3] : (ax[1] || 0);
-      const dz = (v) => (Math.abs(v) > 0.30 ? v : 0);
+      // Zona morta de 0,30 com o valor CRU: assim que o analogico passava do
+      // limiar o giro ja comecava em 30% da velocidade, um tranco. Agora a
+      // zona morta e menor e o que sobra e reescalado de 0 a 1, entao o giro
+      // nasce do zero e cresce junto com o dedo. Isso e' o que faz ele ler
+      // como linear em vez de degrau.
+      const ZM = 0.16;
+      const dz = (v) => {
+        const a = Math.abs(v);
+        if (a <= ZM) return 0;
+        return Math.sign(v) * ((a - ZM) / (1 - ZM));
+      };
       // O MAIOR sinal vence, nada de somar. Somar era o bug do giro para um
       // lado so: rastreamento de mao e eixo com drift tambem se apresentam
       // como 'right', e um drift de +0,8 somado ao seu -1,0 dava -0,2, que
@@ -1878,7 +1907,14 @@ export class Game {
       }
       if (dir === 0) this._snapT = 0;
       this._snapDir = dir;
-    } else this.rig.rotation.y -= turn * P.TURN_SPEED * dt;
+    } else {
+      // curva suave: o comeco do curso do analogico gira devagar, para mirar,
+      // e o fim gira rapido, para se virar. Reta pura fica nervosa no meio.
+      const g = Math.sign(turn) * Math.pow(Math.abs(turn), 1.35);
+      this.rig.rotation.y -= g * P.TURN_SPEED * dt;
+      this._giroVel = Math.abs(g) * P.TURN_SPEED;   // a vinheta usa isto
+    }
+    if (this.opts.snapTurn) this._giroVel = 0;
     return { x: mx, y: my };
   }
 
@@ -3145,7 +3181,7 @@ export class Game {
     this._last = t;
     if (dt > 0.2) dt = 0.2;
 
-    this._padTrig = this._pad();
+    this._padTrig = this._pad(dt);
     this._vrCalibraPasso();
     // fim de jogo dentro do oculos: gatilho recomeca (2 s de guarda para o
     // tiro que matou o chefe nao reiniciar sem querer)
@@ -3176,7 +3212,12 @@ export class Game {
       // intenso.
       const vh = this.pl ? Math.hypot(this.pl.vel.x, this.pl.vel.z) : 0;
       const vv = this.pl ? Math.abs(this.pl.vel.y) * 0.7 : 0;
-      const v = Math.max(vh, vv);
+      // GIRAR SUAVE enjoa mais que ANDAR: os olhos veem o mundo rodar e o
+      // ouvido interno jura que a cabeca esta parada. Como o giro suave virou
+      // o padrao, ele entra na conta da vinheta com peso alto. Sem isto, o
+      // giro linear que ele pediu sairia mais bonito e mais enjoativo.
+      const vg = (this._giroVel || 0) * 1.6;
+      const v = Math.max(vh, vv, vg);
       // A velocidade de andar subiu de 5,4 para 6,6, e vista periferica em
       // movimento e' de onde vem o enjoo: a vinheta fecha um pouco mais e
       // comeca mais cedo para compensar o passo mais rapido.
