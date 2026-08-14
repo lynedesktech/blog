@@ -17,6 +17,16 @@
   canvas{display:block}
   #host{position:fixed;inset:0}
 
+  /* botao de voltar para o blog: acima das telas de menu (z 20) e do HUD */
+  #voltar-blog{position:fixed;top:max(.7rem,env(safe-area-inset-top));left:.8rem;z-index:60;
+    display:inline-flex;align-items:center;gap:.4rem;padding:.42rem .8rem .42rem .6rem;
+    font:600 .74rem/1 system-ui,sans-serif;letter-spacing:.14em;
+    color:#cfd8e6;text-decoration:none;background:rgba(5,2,12,.72);
+    border:1px solid rgba(255,255,255,.22);border-radius:999px;
+    backdrop-filter:blur(4px);transition:opacity .25s,color .2s,border-color .2s}
+  #voltar-blog:hover{color:#FFC93C;border-color:rgba(255,201,60,.6)}
+  #voltar-blog.off{opacity:0;pointer-events:none}
+
   .screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
     justify-content:center;gap:1.1rem;padding:max(1.2rem,env(safe-area-inset-top)) 1.2rem;
     background:radial-gradient(ellipse at 50% 40%,rgba(42,15,74,.92),rgba(5,2,12,.97) 70%);
@@ -193,6 +203,19 @@
 <div id="aya2d"><b id="aya2d-name"></b><span id="aya2d-text"></span></div>
 <div id="banner2d"><h3 id="banner2d-t"></h3><p id="banner2d-s"></p></div>
 <div id="toast"></div>
+
+<!-- VOLTAR PARA O BLOG. Quem entra no jogo pelo blog nao tinha caminho de
+     volta: so o botao de voltar do navegador, e no totem da feira nem isso,
+     porque ele roda em tela cheia sem barra nenhuma. Este fica por cima de
+     tudo, em qualquer tela do jogo, e some enquanto se joga para nao ocupar
+     canto de tela no meio de uma fase. -->
+<a id="voltar-blog" href="../index.html">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="15" height="15"
+       fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 5l-7 7 7 7"/>
+  </svg>
+  <span>BLOG</span>
+</a>
 
 <section class="screen on" id="s-title">
   <video class="aya-face" src="https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_212107_31ec2646-f050-4da4-baec-602f160a2cf4.mp4" poster="https://d8j0ntlcm91z4.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/hf_20260806_204404_58318017-1aec-4b39-8c99-94a4344ea1c8.png" autoplay muted loop playsinline aria-label="AYA, a guia do jogo"></video>
@@ -398,6 +421,8 @@ setInterval(() => {
   const jogando = game.mode === 'playing' && s && !game.renderer.xr.isPresenting &&
     !document.querySelector('.screen.on');
   $('hud2d').classList.toggle('on', jogando);
+  // o voltar some enquanto se joga e dentro do oculos, onde ele nem existe
+  $('voltar-blog').classList.toggle('off', jogando || game.renderer.xr.isPresenting);
   if (!jogando) {
     $('aya2d').classList.remove('on'); $('banner2d').classList.remove('on');
     $('bossbar').classList.remove('on');

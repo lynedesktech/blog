@@ -964,14 +964,15 @@
                 </div>
             </div>
 
-            <!-- ===== TRAILER E GAMEPLAY =====
-                 Os dois videos sao captura real do jogo rodando no navegador, nao
-                 arte conceitual: quem nao quiser ou nao puder jogar na hora ve o
-                 que o jogo e de verdade. O trailer tem narracao; a partida
-                 inteira tem so a trilha, para poder ficar rodando no totem. -->
+            <!-- ===== A PARTIDA GRAVADA =====
+                 Ficavam aqui dois trailers alem desta gravacao. Sairam: eram
+                 recorte e montagem, e quem chega na pagina quer ver o jogo
+                 acontecendo, nao um anuncio dele. O que ficou e a partida
+                 inteira, sem corte, que tambem e o que roda no totem quando
+                 nao tem ninguem jogando. -->
             <style>
-                .videos{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,3vw,34px);margin-top:70px}
-                @media (max-width:900px){ .videos{grid-template-columns:1fr} }
+                .videos{display:grid;grid-template-columns:1fr;gap:clamp(20px,3vw,34px);margin-top:70px;
+                    max-width:820px;margin-left:auto;margin-right:auto}
                 .vcaixa{background:#0d0618;border:1px solid rgba(255,201,60,.28);border-radius:10px;overflow:hidden}
                 .vcaixa video{width:100%;display:block;background:#000;aspect-ratio:16/9}
                 .vcaixa .leg{padding:16px 20px 20px}
@@ -981,27 +982,11 @@
             </style>
             <div class="fade-in videos">
                 <div class="vcaixa">
-                    <video controls preload="metadata" playsinline src="https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/ad1f0a63-004c-4356-96db-db01c3131571.mp4"></video>
-                    <div class="leg">
-                        <h4>Trailer</h4>
-                        <p>Um minuto com as cinco fases e a explicação do que é o jogo, narrado.</p>
-                        <small>Captura real do jogo rodando, sem arte conceitual. Trilha do próprio jogo.</small>
-                    </div>
-                </div>
-                <div class="vcaixa">
-                    <video controls preload="metadata" playsinline src="https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/ba0c9210-6bf1-4f25-9297-dac2255bafd1.mp4"></video>
-                    <div class="leg">
-                        <h4>Trailer</h4>
-                        <p>Os momentos que importam nas cinco fases: os pedaços do rosto, os feixes, o dano e a máscara indo ao rosto.</p>
-                        <small>Montado em cima da partida real. Cada corte cai em cima de um acontecimento do jogo, marcado pelo próprio placar enquanto a partida rodava.</small>
-                    </div>
-                </div>
-                <div class="vcaixa">
                     <video controls preload="metadata" playsinline src="https://d2ol7oe51mr4n9.cloudfront.net/user_3Dh1q30VATNRdqHL0qWXAdgGyv8/043b8ff2-7c56-4990-8f5e-71827934063c.mp4"></video>
                     <div class="leg">
                         <h4>Partida completa</h4>
                         <p>Cinco minutos jogando as cinco fases inteiras, uma depois da outra, sem cortes.</p>
-                        <small>Serve para deixar rodando no totem quando não tiver ninguém jogando.</small>
+                        <small>Captura real do jogo rodando no navegador. Serve para deixar rodando no totem quando não tiver ninguém jogando.</small>
                     </div>
                 </div>
             </div>

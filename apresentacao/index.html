@@ -100,6 +100,13 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
 @keyframes blinktag{0%,100%{opacity:1}50%{opacity:.45}}
 .credit{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:#5b6070;
   margin-top:10px;text-align:center;letter-spacing:1px}
+/* botao pequeno do ultimo slide, para o blog */
+.problog{display:inline-flex;align-items:center;gap:7px;margin-top:16px;
+  font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:2px;
+  text-transform:uppercase;text-decoration:none;color:var(--cyan);
+  padding:7px 15px;border:1px solid rgba(0,229,255,.42);border-radius:999px;
+  background:rgba(0,229,255,.06);transition:background .2s,border-color .2s}
+.problog:hover{background:rgba(0,229,255,.14);border-color:var(--cyan)}
 
 .row{display:flex;gap:56px;align-items:center;justify-content:center;
   max-width:1120px;width:100%}
@@ -138,7 +145,13 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
   padding:7px 16px;border-radius:4px;align-self:center}
 .vold{color:#ff4d5e;border:1px solid #ff4d5e;background:rgba(255,77,94,.08)}
 .vnew{color:var(--cyan);border:1px solid var(--cyan);background:rgba(0,229,255,.08)}
-.vid{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+/* A largura tambem olha para a ALTURA da tela. Com width:100% puro, os dois
+   videos ficam com a altura amarrada a largura da coluna (16/9), e num
+   projetor de 768 eles sozinhos comiam a tela toda, empurrando a frase de
+   fecho para fora. Limitando a largura em 52vh, a altura fica em 29vh e sobra
+   espaco para o texto de baixo em qualquer tela. */
+.vid{position:relative;width:min(100%,52vh);margin-inline:auto;aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
   border:1px solid rgba(108,92,231,.4);box-shadow:0 20px 55px rgba(0,0,0,.6);
   background:#000}
 .vid iframe{position:absolute;top:50%;left:50%;width:130%;height:130%;
@@ -278,23 +291,47 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
 /* ===================== APRESENTACAO ESCOLAR, SALA CHEIA =====================
    O deck era legivel de perto, na tela do computador. Numa sala com muita
    gente, quem esta no fundo le menos da metade. Tudo sobe de tamanho, o texto
-   corrido encurta e o contraste aumenta. */
-.slide{padding:70px 6% 80px}
-.slide h1{font-size:clamp(3rem,9vw,7rem)!important;line-height:.95}
-.slide h2{font-size:clamp(2.2rem,6vw,4.4rem)!important;line-height:1.03;
+   corrido encurta e o contraste aumenta.
+
+   POR QUE OS SLIDES TRANSBORDAVAM. Todo tamanho aqui cresce com a LARGURA da
+   tela (vw) e para de crescer num teto fixo em rem. Numa tela larga o teto e'
+   alcancado sempre, entao o texto tem exatamente o mesmo tamanho num monitor
+   de 1920x1080 e num projetor de 1366x768 - so que o segundo tem 30% menos
+   ALTURA para caber a mesma coisa. Por isso a 1080 nada transbordava e a 768
+   sobrava texto para fora da tela.
+
+   O conserto e' o teto passar a olhar tambem para a altura: min(Xvw, Yvh),
+   com Y calculado para dar o mesmo valor de hoje numa tela de 1080. Entao em
+   1080 nada muda, e daí para baixo tudo encolhe junto, na mesma proporcao em
+   que a tela encolheu. Vale para os doze slides de uma vez, que e' o unico
+   jeito honesto de arrumar isto: slide a slide, o proximo projetor diferente
+   quebra tudo de novo. */
+.slide{padding:min(70px,6.5vh) 6% min(80px,7.4vh)}
+.slide h1{font-size:clamp(2.4rem,min(9vw,10.4vh),7rem)!important;line-height:.95}
+.slide h2{font-size:clamp(1.8rem,min(6vw,6.5vh),4.4rem)!important;line-height:1.03;
   letter-spacing:-.02em;max-width:16ch;text-wrap:balance;text-align:center}
-.slide .kicker{font-size:clamp(.85rem,1.5vw,1.15rem)!important;letter-spacing:4px}
-.slide .sub{font-size:clamp(1.15rem,2.2vw,1.7rem)!important;max-width:24ch;
+.slide .kicker{font-size:clamp(.7rem,min(1.5vw,1.7vh),1.15rem)!important;letter-spacing:4px}
+.slide .sub{font-size:clamp(.95rem,min(2.2vw,2.5vh),1.7rem)!important;max-width:24ch;
   color:#e8ebf5}
-.slide h3,.slide h4{font-size:clamp(1.1rem,2vw,1.55rem)!important}
+/* O 07 e' o slide mais cheio do deck: titulo, subtitulo, dois videos, duas
+   etiquetas, dois links e a frase de fecho. Com o subtitulo em 24ch ele
+   ocupava cinco linhas so para dizer duas frases. Aqui ele espalha, e as
+   tres linhas que sobram viram folga para o resto caber. */
+.slide[data-num="07"] .sub{max-width:52ch}
+.slide h3,.slide h4{font-size:clamp(.92rem,min(2vw,2.3vh),1.55rem)!important}
 .slide .box p,.slide .col.text p,.pcard p,.peca p,.eitem p{
-  font-size:clamp(1.05rem,1.9vw,1.45rem)!important;color:#dfe3ee}
-.slide .quote{font-size:clamp(1.6rem,3.6vw,3rem)!important;max-width:22ch;line-height:1.25}
-.clabel{font-size:clamp(1rem,1.8vw,1.4rem)!important}
-.cnum{font-size:clamp(1.4rem,2.8vw,2.4rem)!important;font-weight:900}
-.ctrack{height:26px!important}
-.tl-item span{font-size:clamp(1rem,1.8vw,1.35rem)!important}
-.term{font-size:clamp(1rem,1.8vw,1.4rem)!important}
+  font-size:clamp(.88rem,min(1.9vw,2.15vh),1.45rem)!important;color:#dfe3ee}
+.slide .quote{font-size:clamp(1.3rem,min(3.6vw,4.45vh),3rem)!important;max-width:22ch;line-height:1.25}
+.clabel{font-size:clamp(.85rem,min(1.8vw,2.07vh),1.4rem)!important}
+.cnum{font-size:clamp(1.1rem,min(2.8vw,3.55vh),2.4rem)!important;font-weight:900}
+.ctrack{height:min(26px,2.4vh)!important}
+.tl-item span{font-size:clamp(.85rem,min(1.8vw,2vh),1.35rem)!important}
+.term{font-size:clamp(.85rem,min(1.8vw,2.07vh),1.4rem)!important}
+/* Rede de seguranca: se ainda assim sobrar conteudo para fora (projetor com
+   proporcao esquisita, fonte do sistema maior), o slide rola em vez de cortar.
+   A barra fica escondida para nao aparecer na projecao. */
+.slide{overflow-y:auto;scrollbar-width:none}
+.slide::-webkit-scrollbar{display:none}
 /* o rodape de quem fala cresce junto, para o proprio grupo enxergar do palco */
 /* Os canvas de fundo ficavam POR CIMA e engoliam o clique: com eles assim,
    nenhum botao de slide interativo funcionava no projetor. */
@@ -302,7 +339,8 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
 /* A classe .item, que o deck usa para animar a entrada, carrega
    pointer-events:none. Como os elementos clicaveis tambem usam .item, o clique
    morria neles. Reativa so no que e' para clicar. */
-.slide.active .face,.slide.active .revelar,.slide.active .jogo,.slide.active .jogo iframe{pointer-events:auto}
+.slide.active .face,.slide.active .revelar,.slide.active .jogo,.slide.active .jogo iframe,
+.slide.active .problog,.slide.active .vlink{pointer-events:auto}
 /* ---- blocos de quem fala ---- */
 .quemfala{position:fixed;left:26px;bottom:22px;z-index:60;display:flex;gap:10px;
   align-items:center;font-size:.9rem;letter-spacing:3px;color:var(--muted);
@@ -628,6 +666,16 @@ h2{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3.1rem);
       </div>
     </div>
     <p class="term item d5">> fim_da_apresentacao :: <b>OBRIGADO!</b> _</p>
+    <!-- O caminho para o resto do trabalho. Fica pequeno de proposito: o
+         slide de conclusao e' para a plateia ler a conclusao, e este botao e'
+         para depois, quando alguem pedir "onde eu vejo isso?". -->
+    <a class="problog item d5" href="../index.html">
+      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false"
+           fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 12h15M13 6l6 6-6 6"/>
+      </svg>
+      ver o blog, o jogo e o quiz
+    </a>
     <p class="credit item d5">Fotos: Niccolò Caranti / Wikimedia Commons (CC BY-SA 4.0) · Dados: estudo Gender Shades, MIT (2018) · Vídeos: YouTube</p>
   </section>
 
