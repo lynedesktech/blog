@@ -1768,16 +1768,18 @@ export class Game {
       // está apontando de verdade, não de um ponto invisível.
       // sem `principal`: esta é uma cópia, não pode roubar as referências que
       // o afinador usa
-      // A ARMA NAS DUAS MÃOS. Ela era desenhada só na direita, e o gatilho da
-      // esquerda disparava do mesmo jeito, só que de uma mão vazia: sem cano,
-      // sem coice, sem nada saindo de lugar nenhum. Quem jogou leu isso como
-      // "a esquerda não atira". Agora as duas estão armadas e cada gatilho
-      // dispara da sua própria mão.
+      // UMA ARMA SÓ, na direita. A esquerda é mão limpa: é ela que aperta o
+      // grip para vestir a máscara.
+      //
+      // O gatilho esquerdo continua atirando, mas o tiro sai da mão ARMADA,
+      // não da vazia. Era esse o defeito antes: os dois gatilhos disparavam,
+      // e o da esquerda disparava de uma mão sem cano, sem coice e sem nada
+      // saindo de lugar nenhum, o que se lê como "a esquerda não atira".
       const arma = this._makeWeapon(false);
       arma.position.set(0, -0.01, -0.03);
       arma.rotation.set(0, 0, 0);
       arma.userData.base = arma.position.z;
-      arma.visible = true;
+      arma.visible = i !== 0;      // palpite até o aparelho informar o lado
       c.add(arma);
       c.userData.arma = arma;
 
@@ -1800,7 +1802,9 @@ export class Game {
         if (this.activeCtrl == null) this.activeCtrl = i;
         const hand = e.data && e.data.handedness;
         c.userData.hand = hand;
-        if (hand !== 'left') this.weaponVR = c.userData.arma;
+        // a arma vai na mão do gatilho: a direita, quando o aparelho informa
+        if (c.userData.arma) c.userData.arma.visible = hand !== 'left';
+        if (hand !== 'left') { this.weaponVR = c.userData.arma; this.maoArmada = i; }
         poeMao(hand === 'left');
         if (hand && c.userData.etiqueta) {
           c.userData.etiqueta.material.map =
@@ -2027,10 +2031,17 @@ export class Game {
   // gira o mundo; um rosto torto o tempo todo vira o novo "reto" em poucos
   // segundos e o giro para. Não existe caso em que ele roda sem fim.
   //
-  // A folga de 22 graus é o que separa "olhar para o lado" de "virar para o
+  // A folga de 15 graus é o que separa "olhar para o lado" de "virar para o
   // lado". Sem ela o cenário rodava a cada olhada, que é enjoo puro. E o teto
   // fica em pouco mais da metade do analógico: giro que a pessoa não pediu com
   // o dedo tem que ser sempre mais manso que o que ela pediu.
+  //
+  // FLUIDEZ. A velocidade não é aplicada crua. Ela passa por um amortecedor de
+  // uns dois décimos de segundo, e é isso que faz o corpo ACOMPANHAR o rosto
+  // em vez de dar partida e freada: o rastreamento de cabeça treme, e uma
+  // conta que responde direto a ele treme junto. Com o amortecedor o giro
+  // nasce do zero, cresce enquanto o rosto vai virando e morre devagar quando
+  // ele volta, sem nenhum degrau na entrada nem na saída da folga.
   _giroCabeca(dt) {
     if (!this.renderer.xr.isPresenting || !this.opts.giroCabeca) return;
     if (this.opts.snapTurn) return;   // quem escolheu passos não quer giro contínuo nenhum
@@ -2042,13 +2053,16 @@ export class Game {
     let d = rosto - this._neutro;
     while (d > Math.PI) d -= 2 * Math.PI;      // pelo caminho curto
     while (d < -Math.PI) d += 2 * Math.PI;
-    const folga = 0.38;                        // 22 graus
+    const folga = 0.26;                        // 15 graus
     const sobra = Math.abs(d) - folga;
-    if (sobra <= 0) return;
-    this._neutro += d * Math.min(1, dt / 2.0);
-    const vel = Math.min(sobra * 2.0, P.TURN_SPEED * 0.55);
-    this._gira(Math.sign(d) * vel * dt);
-    this._giroVel = Math.max(this._giroVel || 0, vel);   // a vinheta conta este giro também
+    // o zero persegue o rosto devagar, e só quando ele está fora da folga:
+    // é o que impede o giro sem fim de quem fica plantado de lado
+    if (sobra > 0) this._neutro += d * Math.min(1, dt / 3.5);
+    const alvo = sobra > 0 ? Math.sign(d) * Math.min(sobra * 1.9, P.TURN_SPEED * 0.55) : 0;
+    this._velCab = (this._velCab || 0) + (alvo - (this._velCab || 0)) * Math.min(1, dt * 5.5);
+    if (Math.abs(this._velCab) < 0.002) { this._velCab = 0; return; }
+    this._gira(this._velCab * dt);
+    this._giroVel = Math.max(this._giroVel || 0, Math.abs(this._velCab));   // a vinheta conta este giro
   }
 
   _xrSticks(dt) {
@@ -2871,6 +2885,16 @@ export class Game {
     }
   }
 
+  // O CONTROLE QUE ESTÁ COM A ARMA. Normalmente o direito, mas o aparelho é
+  // quem diz de que lado cada controle está, e enquanto ele não disser vale o
+  // palpite feito na montagem. Fora do óculos não existe controle nenhum.
+  _ctrlArmado() {
+    if (!this.renderer.xr.isPresenting || !this.controllers) return null;
+    if (this.maoArmada != null && this.controllers[this.maoArmada]) return this.controllers[this.maoArmada];
+    return this.controllers.find((c) => c.userData.arma && c.userData.arma.visible) ||
+           (this.activeCtrl != null ? this.controllers[this.activeCtrl] : null);
+  }
+
   _shooting(dt) {
     const s = this.s;
     const firing = this.mode === 'playing' && !s.morto && (this.mouseDown || this.xrTrigger >= 0 || this._padTrig);
@@ -2901,15 +2925,13 @@ export class Game {
       // em VR a arma vai na MÃO, presa ao controle: a da câmera some
       w.visible = !this.renderer.xr.isPresenting;
     }
-    // o coice na mão que atirou, e só nela: as duas armas dando coice a cada
-    // disparo faria as duas mãos parecerem uma coisa só
+    // o coice vai na arma da mão armada, que é a única que existe
     if (this.renderer.xr.isPresenting) {
-      for (let i = 0; i < this.controllers.length; i++) {
-        const a = this.controllers[i].userData.arma;
-        if (!a) continue;
-        const k = i === this._kickCtrl ? this.weaponKick : 0;
-        a.position.z = a.userData.base + k * 0.05;
-        a.rotation.x = k * 0.28;
+      const c = this._ctrlArmado();
+      const a = c && c.userData.arma;
+      if (a) {
+        a.position.z = a.userData.base + this.weaponKick * 0.05;
+        a.rotation.x = this.weaponKick * 0.28;
       }
     }
     if (s.flashVis > 0) {
@@ -2922,9 +2944,12 @@ export class Game {
     if (!firing || s.shotCd > 0) return;
     s.shotCd = P.SHOT_CD;
     this.weaponKick = 1;
-    this._kickCtrl = this.renderer.xr.isPresenting ? this.activeCtrl : -1;
 
-    const src = (this.renderer.xr.isPresenting && this.activeCtrl != null) ? this.controllers[this.activeCtrl] : this.camera;
+    // Quem mira é a mão que segura a arma, tenha sido qual gatilho for. Com
+    // uma arma só, deixar o tiro sair do controle que apertou faria a mão
+    // vazia mirar, que é o que ninguém entende.
+    const ctrl = this._ctrlArmado();
+    const src = ctrl || this.camera;
     src.getWorldPosition(_v1);
     src.getWorldQuaternion(_q1);
     _v2.set(0, 0, -1).applyQuaternion(_q1).normalize();
@@ -2998,14 +3023,9 @@ export class Game {
     // representação — quem manda é o centro da tela.
     const alvo = _v3.copy(_v1).addScaledVector(_v2, hitD);
     const origem = new THREE.Vector3();
-    // No VR quem atira é a MÃO que puxou o gatilho, então o traço tem que sair
-    // do cano DAQUELA arma. Antes ele saía da origem do controle, um ponto
-    // invisível dentro do punho: com as duas mãos armadas isso ficaria
-    // esquisito nas duas.
-    const w = (this.renderer.xr.isPresenting && this.activeCtrl != null &&
-               this.controllers[this.activeCtrl])
-      ? this.controllers[this.activeCtrl].userData.arma
-      : this.weapon;
+    // o traço sai da BOCA do cano da arma que está na mão, e não da origem do
+    // controle, que é um ponto invisível dentro do punho
+    const w = ctrl ? ctrl.userData.arma : this.weapon;
     if (w && w.visible && w.userData.bocaLocal) {
       // ponto medido na malha: a ponta do cano, não a origem do grupo
       origem.copy(w.userData.bocaLocal);
